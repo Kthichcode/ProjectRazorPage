@@ -437,45 +437,6 @@
     </div>
 </section>
 
-<!-- ═══ SEARCH CARD ═══ -->
-<section class="search-wrap pb-5" style="background: var(--gray-50);">
-    <div class="container">
-        <div class="search-card">
-            <h5 class="fw-700 mb-3" style="color:var(--primary); font-weight:700;">
-                <i class="fa-solid fa-magnifying-glass me-2"></i>Tìm kiếm phòng
-            </h5>
-            <form method="get" asp-page="/Index">
-                <div class="row g-3 align-items-end">
-                    <div class="col-sm-6 col-lg-3">
-                        <label class="form-label">Ngày nhận phòng</label>
-                        <input asp-for="CheckIn" type="date" class="form-control"
-                               min="@DateTime.Today.ToString("yyyy-MM-dd")" />
-                    </div>
-                    <div class="col-sm-6 col-lg-3">
-                        <label class="form-label">Ngày trả phòng</label>
-                        <input asp-for="CheckOut" type="date" class="form-control"
-                               min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" />
-                    </div>
-                    <div class="col-sm-6 col-lg-3">
-                        <label class="form-label">Loại phòng</label>
-                        <select asp-for="SelectedRoomTypeId" class="form-select">
-                            <option value="">Tất cả loại phòng</option>
-                            @foreach (var rt in Model.RoomTypes)
-                            {
-                                <option value="@rt.Id">@rt.Name</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-sm-6 col-lg-3">
-                        <button type="submit" class="btn-search">
-                            <i class="fa-solid fa-search"></i>Tìm phòng trống
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</section>
 
 <!-- ═══ ROOMS ═══ -->
 <section id="rooms" class="py-5" style="background:var(--white);">
