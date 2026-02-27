@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="BussinessObjects/BussinessObjects.csproj" />
+  <Project Path="HotelManagementRazorPage/HotelManagementRazorPage.csproj" />
+  <Project Path="Repositories/Repositories.csproj" />
+  <Project Path="Services/Services.csproj" />
+</Solution>

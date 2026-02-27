@@ -1,0 +1,61 @@
+@page "{id:int}"
+@model HotelManagementRazorPage.Pages.Admin.RoomTypes.DeleteModel
+@{
+    ViewData["Title"] = "Xóa loại phòng";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="page-header">
+    <h1><i class="fa-solid fa-trash me-2" style="color:#DC2626;"></i>Xóa loại phòng</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-page="/Admin/Index">Dashboard</a></li>
+            <li class="breadcrumb-item"><a asp-page="/Admin/RoomTypes/Index">Loại phòng</a></li>
+            <li class="breadcrumb-item active">Xóa</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="admin-card">
+            <div class="admin-card-header" style="background:#FEF2F2;border-color:#FECACA;">
+                <h5 style="color:#DC2626;"><i class="fa-solid fa-triangle-exclamation me-2"></i>Xác nhận xóa</h5>
+            </div>
+            <div class="admin-card-body">
+                <p style="color:var(--text-sub);margin-bottom:1.5rem;">Bạn có chắc chắn muốn xóa loại phòng này? Nếu còn phòng thuộc loại này, thao tác sẽ thất bại.</p>
+
+                <div class="admin-card" style="background:var(--gray-50);">
+                    <div class="admin-card-body">
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <div style="font-size:.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-sub);">Tên loại phòng</div>
+                                <div style="font-weight:700;color:var(--primary);font-size:1.1rem;">@Model.RoomType?.Name</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div style="font-size:.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-sub);">Giá / đêm</div>
+                                <div style="font-weight:600;">@Model.RoomType?.PricePerNight.ToString("N0")₫</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div style="font-size:.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-sub);">Số phòng thuộc loại</div>
+                                <div style="font-weight:600;">@(Model.RoomType?.Rooms.Count ?? 0) phòng</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post" class="mt-4">
+                    <input type="hidden" asp-for="RoomTypeId" />
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn-admin-primary" style="background:#DC2626;">
+                            <i class="fa-solid fa-trash"></i> Xác nhận xóa
+                        </button>
+                        <a asp-page="/Admin/RoomTypes/Index" class="btn-admin-sm btn-edit" style="padding:.5rem 1.2rem;font-size:.875rem;">
+                            <i class="fa-solid fa-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

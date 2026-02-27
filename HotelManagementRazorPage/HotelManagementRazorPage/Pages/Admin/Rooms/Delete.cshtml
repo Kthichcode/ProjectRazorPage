@@ -1,0 +1,65 @@
+@page "{id:int}"
+@model HotelManagementRazorPage.Pages.Admin.Rooms.DeleteModel
+@{
+    ViewData["Title"] = "Xóa phòng";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="page-header">
+    <h1><i class="fa-solid fa-trash me-2" style="color:#DC2626;"></i>Xóa phòng</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-page="/Admin/Index">Dashboard</a></li>
+            <li class="breadcrumb-item"><a asp-page="/Admin/Rooms/Index">Phòng</a></li>
+            <li class="breadcrumb-item active">Xóa</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="admin-card">
+            <div class="admin-card-header" style="background:#FEF2F2;border-color:#FECACA;">
+                <h5 style="color:#DC2626;"><i class="fa-solid fa-triangle-exclamation me-2"></i>Xác nhận xóa</h5>
+            </div>
+            <div class="admin-card-body">
+                <p style="color:var(--text-sub);margin-bottom:1.5rem;">Bạn có chắc chắn muốn xóa phòng này không? Hành động này không thể hoàn tác.</p>
+
+                <div class="admin-card" style="background:var(--gray-50);border-color:#E2EAF4;">
+                    <div class="admin-card-body">
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <div style="font-size:.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-sub);">Số phòng</div>
+                                <div style="font-weight:700;color:var(--primary);font-size:1.1rem;">Phòng @Model.Room?.RoomNumber</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div style="font-size:.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-sub);">Loại phòng</div>
+                                <div style="font-weight:600;">@(Model.Room?.RoomType?.Name ?? "—")</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div style="font-size:.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-sub);">Sức chứa</div>
+                                <div>@Model.Room?.MaxOccupancy khách</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div style="font-size:.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-sub);">Trạng thái</div>
+                                <div>@Model.Room?.Status</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post" class="mt-4">
+                    <input type="hidden" asp-for="RoomId" />
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn-admin-primary" style="background:#DC2626;">
+                            <i class="fa-solid fa-trash"></i> Xác nhận xóa
+                        </button>
+                        <a asp-page="/Admin/Rooms/Index" class="btn-admin-sm btn-edit" style="padding:.5rem 1.2rem;font-size:.875rem;">
+                            <i class="fa-solid fa-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

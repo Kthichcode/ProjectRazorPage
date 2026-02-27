@@ -1,0 +1,64 @@
+@page
+@model HotelManagementRazorPage.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Đăng ký";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <h2 class="text-center mb-4">Đăng ký tài khoản</h2>
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Input.FullName" class="form-label"></label>
+                <input asp-for="Input.FullName" class="form-control" autocomplete="name" placeholder="Nhập họ và tên" />
+                <span asp-validation-for="Input.FullName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.UserName" class="form-label"></label>
+                <input asp-for="Input.UserName" class="form-control" autocomplete="username" placeholder="Nhập tên đăng nhập" />
+                <span asp-validation-for="Input.UserName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Email" class="form-label"></label>
+                <input asp-for="Input.Email" class="form-control" autocomplete="email" placeholder="Nhập email" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.PhoneNumber" class="form-label"></label>
+                <input asp-for="Input.PhoneNumber" class="form-control" autocomplete="tel" placeholder="Nhập số điện thoại" />
+                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Password" class="form-label"></label>
+                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" placeholder="Nhập mật khẩu" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.ConfirmPassword" class="form-label"></label>
+                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" placeholder="Xác nhận mật khẩu" />
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success">Đăng ký</button>
+            </div>
+
+            <div class="text-center mt-3">
+                <span>Đã có tài khoản? </span>
+                <a asp-page="/Account/Login">Đăng nhập</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

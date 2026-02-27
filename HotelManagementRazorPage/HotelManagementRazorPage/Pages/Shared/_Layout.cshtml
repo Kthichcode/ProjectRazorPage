@@ -1,0 +1,233 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Mường Thanh Hotel</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        :root {
+            --primary:   #1565C0;
+            --primary-d: #0D47A1;
+            --primary-l: #1976D2;
+            --accent:    #42A5F5;
+            --white:     #FFFFFF;
+            --gray-50:   #F8FAFF;
+            --gray-100:  #EFF4FF;
+            --gray-400:  #94A3B8;
+            --text:      #1E293B;
+            --text-sub:  #64748B;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            background: var(--white);
+        }
+
+        /* ── NAVBAR ── */
+        .site-navbar {
+            background: var(--white);
+            border-bottom: 1px solid #E2EAF4;
+            padding: 0 1rem;
+            height: 64px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 12px rgba(21,101,192,.08);
+        }
+
+        .navbar-brand-mt {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--primary) !important;
+            text-decoration: none;
+            letter-spacing: .3px;
+            white-space: nowrap;
+        }
+        .navbar-brand-mt i { color: var(--accent); }
+
+        .site-navbar .nav-link {
+            color: var(--text-sub) !important;
+            font-size: .875rem;
+            font-weight: 500;
+            padding: .4rem .9rem !important;
+            border-radius: 6px;
+            transition: color .2s, background .2s;
+        }
+        .site-navbar .nav-link:hover {
+            color: var(--primary) !important;
+            background: var(--gray-100);
+        }
+
+        .navbar-toggler { border: none; padding: .3rem .6rem; }
+        .navbar-toggler:focus { box-shadow: none; }
+
+        .btn-nav-login {
+            border: 1.5px solid var(--primary);
+            color: var(--primary) !important;
+            border-radius: 8px;
+            padding: .38rem 1rem !important;
+            font-size: .875rem;
+            font-weight: 600;
+            transition: all .2s;
+        }
+        .btn-nav-login:hover {
+            background: var(--primary);
+            color: var(--white) !important;
+        }
+
+        .btn-nav-register {
+            background: var(--primary);
+            color: var(--white) !important;
+            border-radius: 8px;
+            padding: .38rem 1rem !important;
+            font-size: .875rem;
+            font-weight: 600;
+            transition: all .2s;
+            border: 1.5px solid var(--primary);
+        }
+        .btn-nav-register:hover {
+            background: var(--primary-d);
+            border-color: var(--primary-d);
+        }
+
+        .nav-user-text {
+            color: var(--primary) !important;
+            font-weight: 600;
+            font-size: .875rem;
+        }
+
+        .btn-nav-logout {
+            background: none;
+            border: 1.5px solid #CBD5E1;
+            color: var(--text-sub) !important;
+            border-radius: 8px;
+            padding: .38rem 1rem !important;
+            font-size: .875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .btn-nav-logout:hover {
+            border-color: #EF4444;
+            color: #EF4444 !important;
+        }
+
+        /* ── FOOTER ── */
+        .site-footer {
+            background: var(--primary-d);
+            color: rgba(255,255,255,.75);
+            padding: 2rem 0 1.2rem;
+            font-size: .82rem;
+            margin-top: auto;
+        }
+        .site-footer .footer-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            color: var(--white);
+            font-weight: 700;
+        }
+        .site-footer a { color: rgba(255,255,255,.6); text-decoration: none; }
+        .site-footer a:hover { color: var(--white); }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+    <!-- NAVBAR -->
+    <nav class="site-navbar navbar navbar-expand-lg">
+        <div class="container">
+            <!-- Brand -->
+            <a class="navbar-brand-mt" asp-page="/Index">
+                <i class="fa-solid fa-hotel me-2"></i>Mường Thanh Hotel
+            </a>
+
+            <!-- Hamburger (mobile only) -->
+            <button class="navbar-toggler" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#siteNav"
+                    aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="fa-solid fa-bars" style="color:var(--primary);font-size:1.1rem;"></i>
+            </button>
+
+            <!-- Collapsible menu -->
+            <div class="collapse navbar-collapse" id="siteNav">
+                <!-- Left links -->
+                <ul class="navbar-nav me-auto gap-1 ms-4">
+                    <li class="nav-item">
+                        <a class="nav-link" asp-page="/Index">
+                            <i class="fa-solid fa-house me-1"></i>Trang chủ
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-page="/Index" asp-fragment="rooms">
+                            <i class="fa-solid fa-bed me-1"></i>Phòng
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Right auth buttons -->
+                <ul class="navbar-nav align-items-center gap-2">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <li class="nav-item">
+                            <span class="nav-link nav-user-text">
+                                <i class="fa-solid fa-circle-user me-1"></i>@User.Identity.Name
+                            </span>
+                        </li>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link btn-nav-register" asp-page="/Admin/Index">
+                                    <i class="fa-solid fa-gear me-1"></i>Admin
+                                </a>
+                            </li>
+                        }
+                        <li class="nav-item">
+                            <form asp-page="/Account/Logout" method="post" class="m-0">
+                                <button type="submit" class="nav-link btn-nav-logout">
+                                    <i class="fa-solid fa-right-from-bracket me-1"></i>Đăng xuất
+                                </button>
+                            </form>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link btn-nav-login" asp-page="/Account/Login">Đăng nhập</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link btn-nav-register" asp-page="/Account/Register">Đăng ký</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN -->
+    <main class="flex-grow-1">
+        @RenderBody()
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <div class="container text-center">
+            <div class="footer-brand mb-1">
+                <i class="fa-solid fa-hotel me-2"></i>Mường Thanh Hotel
+            </div>
+            <p class="mb-0">&copy; 2026 Mường Thanh Hotel. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

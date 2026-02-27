@@ -1,0 +1,206 @@
+@page
+@model HotelManagementRazorPage.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="page-header">
+    <h1><i class="fa-solid fa-chart-pie me-2" style="color:var(--primary)"></i>Dashboard</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item active">Tổng quan hệ thống</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- ── STAT CARDS ── -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background:#EFF4FF;">
+                <i class="fa-solid fa-bed" style="color:#1565C0;"></i>
+            </div>
+            <div class="stat-card-value">@Model.Data.TotalRooms</div>
+            <div class="stat-card-label">Tổng số phòng</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background:#F0FDF4;">
+                <i class="fa-solid fa-circle-check" style="color:#16A34A;"></i>
+            </div>
+            <div class="stat-card-value">@Model.Data.AvailableRooms</div>
+            <div class="stat-card-label">Phòng trống sẵn có</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background:#FFF7ED;">
+                <i class="fa-solid fa-calendar-day" style="color:#C2410C;"></i>
+            </div>
+            <div class="stat-card-value">@Model.Data.BookingsToday</div>
+            <div class="stat-card-label">Đặt phòng hôm nay</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background:#F5F3FF;">
+                <i class="fa-solid fa-sack-dollar" style="color:#7C3AED;"></i>
+            </div>
+            <div class="stat-card-value" style="font-size:1.3rem;">@Model.Data.RevenueThisMonth.ToString("N0")₫</div>
+            <div class="stat-card-label">Doanh thu tháng này</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── SECOND ROW ── -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background:#FEF2F2;">
+                <i class="fa-solid fa-wrench" style="color:#DC2626;"></i>
+            </div>
+            <div class="stat-card-value">@Model.Data.MaintenanceRooms</div>
+            <div class="stat-card-label">Phòng đang bảo trì</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background:#EFF4FF;">
+                <i class="fa-solid fa-calendar-check" style="color:#1565C0;"></i>
+            </div>
+            <div class="stat-card-value">@Model.Data.BookingsThisMonth</div>
+            <div class="stat-card-label">Đặt phòng tháng này</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background:#FFF7ED;">
+                <i class="fa-solid fa-coins" style="color:#C2410C;"></i>
+            </div>
+            <div class="stat-card-value" style="font-size:1.3rem;">@Model.Data.RevenueToday.ToString("N0")₫</div>
+            <div class="stat-card-label">Doanh thu hôm nay</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#0D47A1,#1565C0);border-color:transparent;">
+            <div class="stat-card-icon" style="background:rgba(255,255,255,.15);">
+                <i class="fa-solid fa-door-open" style="color:#fff;"></i>
+            </div>
+            <div class="stat-card-value" style="color:#fff;">@(Model.Data.TotalRooms - Model.Data.AvailableRooms - Model.Data.MaintenanceRooms)</div>
+            <div class="stat-card-label" style="color:rgba(255,255,255,.75);">Phòng đang có khách</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── TABLES ROW ── -->
+<div class="row g-3">
+    <!-- Top Room Types -->
+    <div class="col-lg-6">
+        <div class="admin-card h-100">
+            <div class="admin-card-header">
+                <h5><i class="fa-solid fa-trophy me-2" style="color:#C2410C;"></i>Top loại phòng được đặt nhiều nhất</h5>
+            </div>
+            <div class="admin-card-body p-0">
+                @if (!Model.Data.TopRoomTypes.Any())
+                {
+                    <div class="text-center py-4" style="color:var(--text-sub);">
+                        <i class="fa-solid fa-inbox fa-2x mb-2 d-block" style="color:#CBD5E1;"></i>
+                        Chưa có dữ liệu đặt phòng
+                    </div>
+                }
+                else
+                {
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;">#</th>
+                                <th>Loại phòng</th>
+                                <th style="text-align:right;">Lượt đặt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{ int rank = 1; }
+                            @foreach (var rt in Model.Data.TopRoomTypes)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (rank == 1)
+                                        {
+                                            <span style="color:#FBBF24;">🥇</span>
+                                        }
+                                        else if (rank == 2)
+                                        {
+                                            <span>🥈</span>
+                                        }
+                                        else if (rank == 3)
+                                        {
+                                            <span>🥉</span>
+                                        }
+                                        else
+                                        {
+                                            <span style="color:var(--text-sub);">@rank</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span style="font-weight:600;">@rt.RoomTypeName</span>
+                                    </td>
+                                    <td style="text-align:right;">
+                                        <span class="status-badge badge-confirmed">@rt.BookingCount lượt</span>
+                                    </td>
+                                </tr>
+                                rank++;
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="col-lg-6">
+        <div class="admin-card h-100">
+            <div class="admin-card-header">
+                <h5><i class="fa-solid fa-bolt me-2" style="color:#FBBF24;"></i>Thao tác nhanh</h5>
+            </div>
+            <div class="admin-card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a asp-page="/Admin/Rooms/Create" class="d-block text-center p-3 rounded-3 text-decoration-none"
+                           style="background:#EFF4FF;border:1.5px dashed #93C5FD;transition:all .2s;"
+                           onmouseover="this.style.background='#DBEAFE'" onmouseout="this.style.background='#EFF4FF'">
+                            <i class="fa-solid fa-plus-circle fa-2x mb-2 d-block" style="color:#1565C0;"></i>
+                            <span style="font-size:.85rem;font-weight:600;color:#1565C0;">Thêm phòng mới</span>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a asp-page="/Admin/RoomTypes/Create" class="d-block text-center p-3 rounded-3 text-decoration-none"
+                           style="background:#F0FDF4;border:1.5px dashed #86EFAC;transition:all .2s;"
+                           onmouseover="this.style.background='#DCFCE7'" onmouseout="this.style.background='#F0FDF4'">
+                            <i class="fa-solid fa-layer-group fa-2x mb-2 d-block" style="color:#16A34A;"></i>
+                            <span style="font-size:.85rem;font-weight:600;color:#16A34A;">Thêm loại phòng</span>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a asp-page="/Admin/Bookings/Index" class="d-block text-center p-3 rounded-3 text-decoration-none"
+                           style="background:#FFF7ED;border:1.5px dashed #FCD34D;transition:all .2s;"
+                           onmouseover="this.style.background='#FEF9C3'" onmouseout="this.style.background='#FFF7ED'">
+                            <i class="fa-solid fa-calendar-check fa-2x mb-2 d-block" style="color:#C2410C;"></i>
+                            <span style="font-size:.85rem;font-weight:600;color:#C2410C;">Xem tất cả booking</span>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a asp-page="/Admin/Rooms/Index" class="d-block text-center p-3 rounded-3 text-decoration-none"
+                           style="background:#F5F3FF;border:1.5px dashed #C4B5FD;transition:all .2s;"
+                           onmouseover="this.style.background='#EDE9FE'" onmouseout="this.style.background='#F5F3FF'">
+                            <i class="fa-solid fa-bed fa-2x mb-2 d-block" style="color:#7C3AED;"></i>
+                            <span style="font-size:.85rem;font-weight:600;color:#7C3AED;">Quản lý phòng</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

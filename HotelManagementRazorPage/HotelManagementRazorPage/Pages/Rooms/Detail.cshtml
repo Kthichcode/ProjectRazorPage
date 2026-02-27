@@ -1,0 +1,307 @@
+@page "{id:int}"
+@model HotelManagementRazorPage.Pages.Rooms.DetailModel
+@{
+    ViewData["Title"] = $"Phòng {Model.Room?.RoomNumber}";
+    var fallback = "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=900&q=80";
+    var mainImg = string.IsNullOrEmpty(Model.Room?.ImageUrl) ? fallback : Model.Room.ImageUrl;
+    var extras = Model.ExtraImages;
+}
+
+<style>
+    :root {
+        --primary:#1565C0; --primary-d:#0D47A1; --primary-l:#1976D2;
+        --accent:#42A5F5; --white:#FFFFFF;
+        --gray-50:#F8FAFF; --gray-100:#EFF4FF;
+        --text:#1E293B; --text-sub:#64748B;
+    }
+
+    /* ── GALLERY ── */
+    .gallery-main {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        height: 420px;
+        cursor: pointer;
+    }
+    .gallery-main img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        transition: transform .4s;
+    }
+    .gallery-main:hover img { transform: scale(1.03); }
+
+    .gallery-thumb-list {
+        display: flex;
+        gap: .6rem;
+        margin-top: .6rem;
+        overflow-x: auto;
+        padding-bottom: .25rem;
+    }
+    .gallery-thumb {
+        flex-shrink: 0;
+        width: 90px; height: 65px;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        border: 2.5px solid transparent;
+        transition: border-color .2s;
+    }
+    .gallery-thumb.active { border-color: var(--primary); }
+    .gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* ── INFO CARD ── */
+    .detail-card {
+        background: var(--white);
+        border: 1px solid #E2EAF4;
+        border-radius: 16px;
+        padding: 2rem;
+        position: sticky;
+        top: 90px;
+        box-shadow: 0 4px 24px rgba(21,101,192,.08);
+    }
+    .price-big {
+        font-family: 'Playfair Display', serif;
+        font-size: 2.2rem; font-weight: 700;
+        color: var(--primary); line-height: 1;
+    }
+    .chip {
+        display: inline-flex; align-items: center; gap: .35rem;
+        background: var(--gray-100); color: var(--text-sub);
+        font-size: .78rem; font-weight: 600;
+        padding: .3rem .75rem; border-radius: 20px;
+    }
+    .badge-status-yes {
+        background: #DCFCE7; color: #15803D;
+        font-size: .75rem; font-weight: 700;
+        padding: .25rem .7rem; border-radius: 20px;
+        display: inline-flex; align-items: center; gap: .3rem;
+    }
+    .badge-status-no {
+        background: #FEE2E2; color: #B91C1C;
+        font-size: .75rem; font-weight: 700;
+        padding: .25rem .7rem; border-radius: 20px;
+        display: inline-flex; align-items: center; gap: .3rem;
+    }
+    .btn-book-big {
+        display: flex; align-items: center; justify-content: center; gap: .5rem;
+        background: var(--primary); color: var(--white) !important;
+        font-weight: 700; font-size: 1rem;
+        padding: .9rem 1.5rem; border-radius: 10px;
+        text-decoration: none; transition: all .25s;
+        border: none; width: 100%;
+    }
+    .btn-book-big:hover { background: var(--primary-d); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(21,101,192,.25); }
+    .btn-back {
+        display: inline-flex; align-items: center; gap: .4rem;
+        color: var(--text-sub); font-size: .88rem;
+        text-decoration: none; transition: color .2s;
+    }
+    .btn-back:hover { color: var(--primary); }
+
+    .section-label {
+        font-size: .72rem; font-weight: 700; letter-spacing: 2px;
+        text-transform: uppercase; color: var(--primary);
+        margin-bottom: .6rem;
+    }
+    .divider { border: none; border-top: 1px solid #E2EAF4; margin: 1.4rem 0; }
+
+    /* ── LIGHTBOX ── */
+    #lightbox {
+        display: none; position: fixed; inset: 0; z-index: 9999;
+        background: rgba(0,0,0,.88); align-items: center; justify-content: center;
+    }
+    #lightbox.open { display: flex; }
+    #lightbox img { max-width: 92vw; max-height: 88vh; border-radius: 10px; object-fit: contain; }
+    #lightbox .lb-close {
+        position: absolute; top: 1.2rem; right: 1.5rem;
+        color: #fff; font-size: 2rem; cursor: pointer; line-height: 1;
+    }
+</style>
+
+<div class="container py-5">
+    <!-- Back link -->
+    <div class="mb-4">
+        <a asp-page="/Index" class="btn-back">
+            <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách phòng
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <!-- LEFT: Gallery + Description -->
+        <div class="col-lg-7">
+            <!-- Main photo -->
+            <div class="gallery-main" id="mainImgWrap" onclick="openLightbox(document.getElementById('mainImg').src)">
+                <img id="mainImg" src="@mainImg" alt="Phòng @Model.Room?.RoomNumber"
+                     onerror="this.src='@fallback'" />
+                <div style="position:absolute;bottom:1rem;right:1rem;
+                            background:rgba(0,0,0,.45);color:#fff;
+                            font-size:.75rem;padding:.3rem .7rem;border-radius:6px;
+                            display:flex;align-items:center;gap:.4rem;">
+                    <i class="fa-solid fa-expand"></i> Xem toàn màn hình
+                </div>
+            </div>
+
+            <!-- Thumbnails -->
+            @{
+                var allImgs = new List<string> { mainImg };
+                allImgs.AddRange(extras.Select(e => e.ImageUrl));
+            }
+            @if (allImgs.Count > 1)
+            {
+                <div class="gallery-thumb-list">
+                    @for (int i = 0; i < allImgs.Count; i++)
+                    {
+                        <div class="gallery-thumb @(i == 0 ? "active" : "")" id="thumb-@i"
+                             onclick="switchImage('@allImgs[i]', @i)">
+                            <img src="@allImgs[i]" alt="Ảnh @(i+1)"
+                                 onerror="this.src='@fallback'" />
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Description -->
+            <div class="mt-4">
+                <p class="section-label">Mô tả phòng</p>
+                <p style="color:var(--text-sub);line-height:1.8;">
+                    @(string.IsNullOrEmpty(Model.Room?.Description)
+                        ? "Phòng tiện nghi đầy đủ với thiết kế hiện đại, mang lại không gian nghỉ ngơi thoải mái và sang trọng. Trang bị đầy đủ điều hòa, TV, minibar và phòng tắm riêng biệt với vật dụng chăm sóc cá nhân cao cấp."
+                        : Model.Room.Description)
+                </p>
+            </div>
+
+            <!-- Amenities -->
+            <hr class="divider" />
+            <p class="section-label">Tiện nghi</p>
+            <div class="row g-2 mb-2">
+                @foreach (var amenity in new[] {
+                    ("fa-wifi","WiFi miễn phí"),("fa-snowflake","Điều hòa"),
+                    ("fa-tv","TV màn hình phẳng"),("fa-bath","Phòng tắm riêng"),
+                    ("fa-mug-hot","Mini bar"),("fa-shirt","Giặt ủi"),
+                    ("fa-bell-concierge","Dịch vụ phòng 24/7"),("fa-car","Đỗ xe miễn phí")
+                })
+                {
+                    <div class="col-6 col-sm-4">
+                        <div class="chip"><i class="fa-solid @amenity.Item1" style="color:var(--primary);"></i>@amenity.Item2</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- RIGHT: Booking card -->
+        <div class="col-lg-5">
+            <div class="detail-card">
+                <!-- Room type tag -->
+                <div style="font-size:.72rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:.4rem;">
+                    @(Model.Room?.RoomType?.Name ?? "Phòng")
+                </div>
+
+                <!-- Room name + status -->
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;">
+                    <h1 style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--text);margin:0;">
+                        Phòng @Model.Room?.RoomNumber
+                    </h1>
+                    @{
+                        bool avail = Model.Room?.Status == BusinessObjects.Enums.RoomStatus.Available;
+                    }
+                    @if (avail)
+                    {
+                        <span class="badge-status-yes"><i class="fa-solid fa-circle-check"></i>Còn phòng</span>
+                    }
+                    else
+                    {
+                        <span class="badge-status-no"><i class="fa-solid fa-circle-xmark"></i>Hết phòng</span>
+                    }
+                </div>
+
+                <!-- Price -->
+                <div class="mb-3">
+                    <div class="price-big">@((Model.Room?.RoomType?.PricePerNight ?? 0).ToString("N0"))₫</div>
+                    <div style="font-size:.8rem;color:var(--text-sub);margin-top:.2rem;">/ đêm · chưa bao gồm thuế</div>
+                </div>
+
+                <hr class="divider" />
+
+                <!-- Quick stats -->
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="chip w-100"><i class="fa-solid fa-users" style="color:var(--primary);"></i>Tối đa @(Model.Room?.MaxOccupancy) khách</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="chip w-100"><i class="fa-solid fa-layer-group" style="color:var(--primary);"></i>@(Model.Room?.RoomType?.Name ?? "—")</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="chip w-100"><i class="fa-solid fa-bed" style="color:var(--primary);"></i>Giường đôi lớn</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="chip w-100"><i class="fa-solid fa-expand-arrows-alt" style="color:var(--primary);"></i>35m² diện tích</div>
+                    </div>
+                </div>
+
+                <hr class="divider" />
+
+                @if (avail)
+                {
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <a asp-page="/Booking/Create" asp-route-roomId="@Model.Room?.Id" class="btn-book-big">
+                            <i class="fa-solid fa-calendar-check"></i> Đặt phòng ngay
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-page="/Account/Login" class="btn-book-big">
+                            <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập để đặt phòng
+                        </a>
+                        <p style="text-align:center;font-size:.78rem;color:var(--text-sub);margin-top:.6rem;">
+                            Chưa có tài khoản? <a asp-page="/Account/Register" style="color:var(--primary);font-weight:600;">Đăng ký miễn phí</a>
+                        </p>
+                    }
+                }
+                else
+                {
+                    <button disabled class="btn-book-big" style="background:#94A3B8;cursor:not-allowed;">
+                        <i class="fa-solid fa-ban"></i> Phòng không trống
+                    </button>
+                }
+
+                <hr class="divider" />
+
+                <!-- Contact -->
+                <div style="text-align:center;font-size:.82rem;color:var(--text-sub);line-height:1.8;">
+                    <i class="fa-solid fa-headset" style="color:var(--primary);"></i>
+                    Cần hỗ trợ? Gọi <strong style="color:var(--primary);">1900 1234</strong><br>
+                    hoặc email <strong style="color:var(--primary);">info@muongthanh.com</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox">
+    <span class="lb-close" onclick="closeLightbox()">&times;</span>
+    <img id="lbImg" src="" alt="Ảnh phòng" />
+</div>
+
+@section Scripts {
+<script>
+    function switchImage(src, idx) {
+        document.getElementById('mainImg').src = src;
+        document.querySelectorAll('.gallery-thumb').forEach((t, i) => {
+            t.classList.toggle('active', i === idx);
+        });
+    }
+    function openLightbox(src) {
+        document.getElementById('lbImg').src = src;
+        document.getElementById('lightbox').classList.add('open');
+    }
+    function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('open');
+    }
+    document.getElementById('lightbox').addEventListener('click', function(e) {
+        if (e.target === this) closeLightbox();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+</script>
+}

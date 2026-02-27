@@ -1,0 +1,62 @@
+@page
+@model HotelManagementRazorPage.Pages.Admin.RoomTypes.CreateModel
+@{
+    ViewData["Title"] = "Thêm loại phòng";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="page-header">
+    <h1><i class="fa-solid fa-plus-circle me-2" style="color:var(--primary)"></i>Thêm loại phòng mới</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-page="/Admin/Index">Dashboard</a></li>
+            <li class="breadcrumb-item"><a asp-page="/Admin/RoomTypes/Index">Loại phòng</a></li>
+            <li class="breadcrumb-item active">Thêm mới</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h5><i class="fa-solid fa-layer-group me-2"></i>Thông tin loại phòng</h5>
+            </div>
+            <div class="admin-card-body">
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="admin-alert admin-alert-danger"></div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="admin-form-label">Tên loại phòng <span style="color:#DC2626;">*</span></label>
+                            <input asp-for="Input.Name" class="admin-form-control form-control" placeholder="VD: Phòng Standard, Phòng Deluxe..." />
+                            <span asp-validation-for="Input.Name" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label class="admin-form-label">Giá / đêm (VNĐ) <span style="color:#DC2626;">*</span></label>
+                            <input asp-for="Input.PricePerNight" type="number" min="0" step="10000"
+                                   class="admin-form-control form-control" placeholder="VD: 500000" />
+                            <span asp-validation-for="Input.PricePerNight" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label class="admin-form-label">Mô tả</label>
+                            <textarea asp-for="Input.Description" class="admin-form-control form-control"
+                                      rows="4" placeholder="Mô tả chi tiết về loại phòng..."></textarea>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn-admin-primary">
+                            <i class="fa-solid fa-floppy-disk"></i> Lưu
+                        </button>
+                        <a asp-page="/Admin/RoomTypes/Index" class="btn-admin-sm btn-delete" style="padding:.5rem 1.2rem;font-size:.875rem;">
+                            <i class="fa-solid fa-xmark"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

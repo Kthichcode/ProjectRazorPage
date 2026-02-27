@@ -1,0 +1,92 @@
+@page
+@model HotelManagementRazorPage.Pages.Admin.RoomTypes.IndexModel
+@{
+    ViewData["Title"] = "Quản lý loại phòng";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+}
+
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+        <h1><i class="fa-solid fa-layer-group me-2" style="color:var(--primary)"></i>Quản lý loại phòng</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-page="/Admin/Index">Dashboard</a></li>
+                <li class="breadcrumb-item active">Loại phòng</li>
+            </ol>
+        </nav>
+    </div>
+    <a asp-page="/Admin/RoomTypes/Create" class="btn-admin-primary">
+        <i class="fa-solid fa-plus"></i> Thêm loại phòng
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="admin-alert admin-alert-success">
+        <i class="fa-solid fa-circle-check"></i> @TempData["Success"]
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="admin-alert admin-alert-danger">
+        <i class="fa-solid fa-circle-exclamation"></i> @TempData["Error"]
+    </div>
+}
+
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h5><i class="fa-solid fa-list me-2"></i>Danh sách loại phòng (@Model.RoomTypes.Count loại)</h5>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Tên loại phòng</th>
+                    <th>Mô tả</th>
+                    <th>Giá / đêm</th>
+                    <th>Số phòng</th>
+                    <th style="text-align:center;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.RoomTypes.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-4" style="color:var(--text-sub);">
+                            <i class="fa-solid fa-inbox fa-2x mb-2 d-block" style="color:#CBD5E1;"></i>
+                            Chưa có loại phòng nào
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var rt in Model.RoomTypes)
+                    {
+                        <tr>
+                            <td>
+                                <span style="font-weight:700;color:var(--primary);">@rt.Name</span>
+                            </td>
+                            <td style="max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-sub);">
+                                @(rt.Description ?? "—")
+                            </td>
+                            <td>
+                                <span style="font-weight:700;color:var(--primary);">@rt.PricePerNight.ToString("N0")₫</span>
+                            </td>
+                            <td>
+                                <span class="status-badge badge-confirmed">@rt.Rooms.Count phòng</span>
+                            </td>
+                            <td style="text-align:center;white-space:nowrap;">
+                                <a asp-page="/Admin/RoomTypes/Edit" asp-route-id="@rt.Id" class="btn-admin-sm btn-edit">
+                                    <i class="fa-solid fa-pen-to-square"></i> Sửa
+                                </a>
+                                <a asp-page="/Admin/RoomTypes/Delete" asp-route-id="@rt.Id" class="btn-admin-sm btn-delete ms-1">
+                                    <i class="fa-solid fa-trash"></i> Xóa
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
