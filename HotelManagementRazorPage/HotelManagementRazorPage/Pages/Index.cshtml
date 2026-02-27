@@ -448,28 +448,21 @@
                 <div class="row g-3 align-items-end">
                     <div class="col-sm-6 col-lg-3">
                         <label class="form-label">Ngày nhận phòng</label>
-                        <input type="date" name="checkIn"
-                               value="@Model.CheckIn?.ToString("yyyy-MM-dd")"
-                               class="form-control"
+                        <input asp-for="CheckIn" type="date" class="form-control"
                                min="@DateTime.Today.ToString("yyyy-MM-dd")" />
                     </div>
                     <div class="col-sm-6 col-lg-3">
                         <label class="form-label">Ngày trả phòng</label>
-                        <input type="date" name="checkOut"
-                               value="@Model.CheckOut?.ToString("yyyy-MM-dd")"
-                               class="form-control"
+                        <input asp-for="CheckOut" type="date" class="form-control"
                                min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" />
                     </div>
                     <div class="col-sm-6 col-lg-3">
                         <label class="form-label">Loại phòng</label>
-                        <select name="roomTypeId" class="form-select">
+                        <select asp-for="SelectedRoomTypeId" class="form-select">
                             <option value="">Tất cả loại phòng</option>
                             @foreach (var rt in Model.RoomTypes)
                             {
-                                <option value="@rt.Id"
-                                        selected="@(Model.SelectedRoomTypeId == rt.Id)">
-                                    @rt.Name
-                                </option>
+                                <option value="@rt.Id">@rt.Name</option>
                             }
                         </select>
                     </div>

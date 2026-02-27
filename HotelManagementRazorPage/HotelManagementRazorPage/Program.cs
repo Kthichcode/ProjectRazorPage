@@ -28,6 +28,7 @@ builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
 builder.Services.AddScoped<Repositories.Interfaces.IBookingRepository, Repositories.BookingRepository>();
 builder.Services.AddScoped<Repositories.Interfaces.IPaymentRepository, Repositories.PaymentRepository>();
 builder.Services.AddScoped<Services.Interfaces.IBookingService, Services.BookingService>();
+builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<Services.Interfaces.IDashboardService, Services.DashboardService>();
 
 builder.Services.AddRazorPages();

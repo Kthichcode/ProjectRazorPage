@@ -244,7 +244,7 @@
                 {
                     @if (User.Identity?.IsAuthenticated == true)
                     {
-                        <a asp-page="/Booking/Create" asp-route-roomId="@Model.Room?.Id" class="btn-book-big">
+                        <a asp-page="/Bookings/Create" asp-route-roomId="@Model.Room?.Id" class="btn-book-big">
                             <i class="fa-solid fa-calendar-check"></i> Đặt phòng ngay
                         </a>
                     }

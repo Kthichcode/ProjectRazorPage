@@ -1,0 +1,114 @@
+@page "{roomId:int}"
+@model HotelManagementRazorPage.Pages.Bookings.CreateModel
+@{
+    ViewData["Title"] = "Đặt phòng";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <h2 class="mb-4 text-center">Xác nhận đặt phòng</h2>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Phòng @Model.Room.RoomNumber</h5>
+                    <p class="card-text text-muted">@Model.Room.RoomType?.Name</p>
+                    <hr />
+                    <p class="card-text">
+                        <strong>Giá mỗi đêm:</strong> 
+                        <span class="text-danger fw-bold">@((Model.Room.RoomType?.PricePerNight ?? 0).ToString("N0"))₫</span>
+                    </p>
+                    <p class="card-text">
+                        <strong>Sức chứa tối đa:</strong> @Model.Room.MaxOccupancy người
+                    </p>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger">
+                    <i class="fa-solid fa-circle-exclamation"></i> @Model.ErrorMessage
+                </div>
+            }
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="post">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Ngày nhận phòng</label>
+                                <input type="date" asp-for="CheckIn" class="form-control" 
+                                       min="@DateTime.Today.ToString("yyyy-MM-dd")" required id="checkInDate" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Ngày trả phòng</label>
+                                <input type="date" asp-for="CheckOut" class="form-control" 
+                                       min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" required id="checkOutDate" />
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Tổng tiền tạm tính:</label>
+                            <h4 id="totalAmountDisplay" class="text-primary fw-bold">0₫</h4>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Phương thức thanh toán</label>
+                            <select asp-for="PaymentMethod" class="form-select">
+                                <option value="Cash">Thanh toán tại quầy (Tiền mặt)</option>
+                                <option value="VNPay">Thanh toán trực tuyến (VNPay)</option>
+                            </select>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fa-solid fa-check-circle"></i> Xác nhận đặt phòng
+                            </button>
+                            <a asp-page="/Rooms/Detail" asp-route-id="@Model.Room.Id" class="btn btn-light">Hủy bỏ</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const pricePerNight = @((Model.Room.RoomType?.PricePerNight ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        
+        const checkInInput = document.getElementById('checkInDate');
+        const checkOutInput = document.getElementById('checkOutDate');
+        const amountDisplay = document.getElementById('totalAmountDisplay');
+
+        function calculateTotal() {
+            const checkIn = new Date(checkInInput.value);
+            const checkOut = new Date(checkOutInput.value);
+            
+            if (checkIn && checkOut && checkOut > checkIn) {
+                const diffTime = Math.abs(checkOut - checkIn);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const total = diffDays * pricePerNight;
+                amountDisplay.innerText = total.toLocaleString('vi-VN') + '₫';
+            } else {
+                amountDisplay.innerText = '0₫';
+            }
+        }
+
+        checkInInput.addEventListener('change', () => {
+             // Auto advance checkout if checkin changes to be later
+             const newCheckIn = new Date(checkInInput.value);
+             const currentCheckOut = new Date(checkOutInput.value);
+             if (newCheckIn >= currentCheckOut) {
+                 const newCheckOut = new Date(newCheckIn);
+                 newCheckOut.setDate(newCheckOut.getDate() + 1);
+                 checkOutInput.value = newCheckOut.toISOString().split('T')[0];
+             }
+             calculateTotal();
+        });
+        checkOutInput.addEventListener('change', calculateTotal);
+
+        // Init
+        calculateTotal();
+    </script>
+}
