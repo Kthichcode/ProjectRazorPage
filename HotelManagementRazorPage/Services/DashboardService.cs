@@ -1,3 +1,4 @@
+using BusinessObjects.Entities;
 using BusinessObjects.Enums;
 using Repositories.Interfaces;
 using Services.DTOs;
@@ -63,6 +64,54 @@ namespace Services
                 .ToList();
 
             dto.TopRoomTypes = topTypes;
+
+            return dto;
+        }
+
+        public ManagerDashboardDto GetManagerDashboardData()
+        {
+            var dto = new ManagerDashboardDto();
+            var today = DateTime.Today;
+
+            var bookingsQuery = _bookingRepo.GetQuery();
+
+            // Booking created today
+            dto.BookingsToday = bookingsQuery
+                .Count(b => b.CreatedAt >= today && b.CreatedAt < today.AddDays(1));
+
+            // Check-in today: Confirmed + CheckInDate = today
+            var checkInsToday = bookingsQuery
+                .Where(b => b.CheckInDate.Date == today
+                         && (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.CheckedIn))
+                .ToList();
+            dto.CheckInsToday = checkInsToday.Count(b => b.Status == BookingStatus.Confirmed
+                                                      || b.Status == BookingStatus.CheckedIn);
+
+            // Check-out today: CheckedIn + CheckOutDate = today
+            var checkOutsToday = bookingsQuery
+                .Where(b => b.CheckOutDate.Date == today && b.Status == BookingStatus.CheckedIn)
+                .ToList();
+            dto.CheckOutsToday = checkOutsToday.Count;
+
+            // Currently checked in
+            dto.CurrentlyCheckedIn = bookingsQuery.Count(b => b.Status == BookingStatus.CheckedIn);
+
+            // Pending bookings needing action
+            var pending = bookingsQuery
+                .Where(b => b.Status == BookingStatus.Pending)
+                .OrderBy(b => b.CheckInDate)
+                .ToList();
+            dto.PendingCount = pending.Count;
+            dto.PendingBookings = pending;
+
+            // Check-ins scheduled for today
+            dto.CheckIngToday = bookingsQuery
+                .Where(b => b.CheckInDate.Date == today && b.Status == BookingStatus.Confirmed)
+                .OrderBy(b => b.CheckInDate)
+                .ToList();
+
+            // Check-outs for today
+            dto.CheckingOutToday = checkOutsToday;
 
             return dto;
         }

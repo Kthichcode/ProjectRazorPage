@@ -199,6 +199,17 @@
                                 </a>
                             </li>
                         }
+                        @if (User.IsInRole("Manager"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-page="/Manager/Index"
+                                   style="background:#0D7055;color:#fff!important;border-radius:8px;padding:.38rem 1rem;font-size:.875rem;font-weight:600;border:1.5px solid #0D7055;transition:all .2s;"
+                                   onmouseover="this.style.background='#085C44';this.style.borderColor='#085C44';"
+                                   onmouseout="this.style.background='#0D7055';this.style.borderColor='#0D7055';">
+                                    <i class="fa-solid fa-user-tie me-1"></i>Manager
+                                </a>
+                            </li>
+                        }
                         <li class="nav-item">
                             <form asp-page="/Account/Logout" method="post" class="m-0">
                                 <button type="submit" class="nav-link btn-nav-logout">

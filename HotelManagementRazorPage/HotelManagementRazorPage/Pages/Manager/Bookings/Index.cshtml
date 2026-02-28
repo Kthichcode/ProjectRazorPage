@@ -1,0 +1,149 @@
+@page
+@model HotelManagementRazorPage.Pages.Manager.Bookings.IndexModel
+@{
+    ViewData["Title"] = "Quản lý đặt phòng";
+    Layout = "/Pages/Manager/_ManagerLayout.cshtml";
+}
+
+<div class="page-header">
+    <h1><i class="fa-solid fa-calendar-check me-2" style="color:var(--primary)"></i>Quản lý đặt phòng</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-page="/Manager/Index">Dashboard</a></li>
+            <li class="breadcrumb-item active">Đặt phòng</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- ── FILTER ── -->
+<div class="admin-card mb-3">
+    <div class="admin-card-header">
+        <h5><i class="fa-solid fa-filter me-2"></i>Bộ lọc tìm kiếm</h5>
+    </div>
+    <div class="admin-card-body">
+        <form method="get">
+            <div class="row g-3 align-items-end">
+                <div class="col-sm-6 col-lg-3">
+                    <label class="admin-form-label">Ngày nhận phòng</label>
+                    <input type="date" name="date" value="@Model.FilterDate?.ToString("yyyy-MM-dd")"
+                           class="admin-form-control form-control" />
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <label class="admin-form-label">Trạng thái</label>
+                    <select name="status" class="admin-form-control form-control form-select">
+                        <option value="">-- Tất cả --</option>
+                        <option value="1" selected="@(Model.FilterStatus == BusinessObjects.Enums.BookingStatus.Pending)">Chờ xác nhận</option>
+                        <option value="2" selected="@(Model.FilterStatus == BusinessObjects.Enums.BookingStatus.Confirmed)">Đã xác nhận</option>
+                        <option value="3" selected="@(Model.FilterStatus == BusinessObjects.Enums.BookingStatus.CheckedIn)">Đang ở</option>
+                        <option value="4" selected="@(Model.FilterStatus == BusinessObjects.Enums.BookingStatus.Completed)">Hoàn thành</option>
+                        <option value="5" selected="@(Model.FilterStatus == BusinessObjects.Enums.BookingStatus.Cancelled)">Đã hủy</option>
+                    </select>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <label class="admin-form-label">Số điện thoại khách</label>
+                    <input type="text" name="phone" value="@Model.FilterPhone"
+                           class="admin-form-control form-control" placeholder="VD: 0912..." />
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn-admin-primary" style="flex:1;">
+                            <i class="fa-solid fa-search"></i> Tìm kiếm
+                        </button>
+                        <a asp-page="/Manager/Bookings/Index" class="btn-admin-sm btn-edit" style="padding:.5rem .9rem;font-size:.9rem;">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="admin-alert admin-alert-success"><i class="fa-solid fa-circle-check"></i> @TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="admin-alert admin-alert-danger"><i class="fa-solid fa-circle-exclamation"></i> @TempData["Error"]</div>
+}
+
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h5><i class="fa-solid fa-list me-2"></i>Danh sách đặt phòng (@Model.Bookings.Count kết quả)</h5>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Mã đặt phòng</th>
+                    <th>Khách hàng</th>
+                    <th>Ngày nhận</th>
+                    <th>Ngày trả</th>
+                    <th>Phòng</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th style="text-align:center;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Bookings.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-4" style="color:var(--text-sub);">
+                            <i class="fa-solid fa-inbox fa-2x mb-2 d-block" style="color:#A7F3D0;"></i>
+                            Không có kết quả phù hợp
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var b in Model.Bookings)
+                    {
+                        <tr>
+                            <td><span style="font-weight:700;color:var(--primary);">#@b.Id</span></td>
+                            <td>
+                                <div style="font-weight:600;">@(b.Customer?.UserName ?? "—")</div>
+                                <div style="font-size:.75rem;color:var(--text-sub);">@(b.Customer?.PhoneNumber ?? "")</div>
+                            </td>
+                            <td>@b.CheckInDate.ToString("dd/MM/yyyy")</td>
+                            <td>@b.CheckOutDate.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                @foreach (var br in b.BookingRooms)
+                                {
+                                    <span class="status-badge badge-available">@br.Room?.RoomNumber</span>
+                                }
+                            </td>
+                            <td><span style="font-weight:700;color:var(--primary);">@b.TotalAmount.ToString("N0")₫</span></td>
+                            <td>
+                                @switch (b.Status)
+                                {
+                                    case BusinessObjects.Enums.BookingStatus.Pending:
+                                        <span class="status-badge badge-pending">Chờ xác nhận</span>
+                                        break;
+                                    case BusinessObjects.Enums.BookingStatus.Confirmed:
+                                        <span class="status-badge badge-confirmed">Đã xác nhận</span>
+                                        break;
+                                    case BusinessObjects.Enums.BookingStatus.CheckedIn:
+                                        <span class="status-badge badge-checkedin">Đang ở</span>
+                                        break;
+                                    case BusinessObjects.Enums.BookingStatus.Completed:
+                                        <span class="status-badge badge-completed">Hoàn thành</span>
+                                        break;
+                                    case BusinessObjects.Enums.BookingStatus.Cancelled:
+                                        <span class="status-badge badge-cancelled">Đã hủy</span>
+                                        break;
+                                }
+                            </td>
+                            <td style="text-align:center;">
+                                <a asp-page="/Manager/Bookings/Details" asp-route-id="@b.Id" class="btn-admin-sm btn-view">
+                                    <i class="fa-solid fa-eye"></i> Xem
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
