@@ -1,0 +1,109 @@
+@page
+@model HotelManagementRazorPage.Pages.Manager.Rooms.IndexModel
+@{
+    ViewData["Title"] = "Quản lý phòng";
+    Layout = "/Pages/Manager/_ManagerLayout.cshtml";
+}
+
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+        <h1><i class="fa-solid fa-bed me-2" style="color:var(--primary)"></i>Quản lý phòng</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-page="/Manager/Index">Dashboard</a></li>
+                <li class="breadcrumb-item active">Phòng</li>
+            </ol>
+        </nav>
+    </div>
+    <a asp-page="/Manager/Rooms/Create" class="btn-admin-primary">
+        <i class="fa-solid fa-plus"></i> Thêm phòng mới
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="admin-alert admin-alert-success">
+        <i class="fa-solid fa-circle-check"></i> @TempData["Success"]
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="admin-alert admin-alert-danger">
+        <i class="fa-solid fa-circle-exclamation"></i> @TempData["Error"]
+    </div>
+}
+
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h5><i class="fa-solid fa-list me-2"></i>Danh sách phòng (@Model.Rooms.Count phòng)</h5>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Số phòng</th>
+                    <th>Loại phòng</th>
+                    <th>Trạng thái</th>
+                    <th>Sức chứa</th>
+                    <th>Giá / đêm</th>
+                    <th>Mô tả</th>
+                    <th style="text-align:center;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Rooms.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-4" style="color:var(--text-sub);">
+                            <i class="fa-solid fa-inbox fa-2x mb-2 d-block" style="color:#A7F3D0;"></i>
+                            Chưa có phòng nào
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var room in Model.Rooms)
+                    {
+                        <tr>
+                            <td>
+                                <span style="font-weight:700;color:var(--primary);">Phòng @room.RoomNumber</span>
+                            </td>
+                            <td>@(room.RoomType?.Name ?? "—")</td>
+                            <td>
+                                @switch (room.Status)
+                                {
+                                    case BusinessObjects.Enums.RoomStatus.Available:
+                                        <span class="status-badge badge-available">Còn trống</span>
+                                        break;
+                                    case BusinessObjects.Enums.RoomStatus.Maintenance:
+                                        <span class="status-badge badge-maintenance">Bảo trì</span>
+                                        break;
+                                    default:
+                                        <span class="status-badge badge-occupied">Đang có khách</span>
+                                        break;
+                                }
+                            </td>
+                            <td>@room.MaxOccupancy khách</td>
+                            <td>
+                                <span style="font-weight:600;color:var(--primary);">
+                                    @((room.RoomType?.PricePerNight ?? 0).ToString("N0"))₫
+                                </span>
+                            </td>
+                            <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                @(room.Description ?? "—")
+                            </td>
+                            <td style="text-align:center;white-space:nowrap;">
+                                <a asp-page="/Manager/Rooms/Edit" asp-route-id="@room.Id" class="btn-admin-sm btn-edit">
+                                    <i class="fa-solid fa-pen-to-square"></i> Sửa
+                                </a>
+                                <a asp-page="/Manager/Rooms/Delete" asp-route-id="@room.Id" class="btn-admin-sm btn-delete ms-1">
+                                    <i class="fa-solid fa-trash"></i> Xóa
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

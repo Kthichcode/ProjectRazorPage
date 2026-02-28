@@ -63,35 +63,53 @@ static async Task SeedAdminAsync(WebApplication app)
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
+    // ── Seed Admin ──
     const string adminRole = "Admin";
-    const string adminUser = "Admin";
-    const string adminEmail = "admin@muongthanh.com";
-    const string adminPass = "Admin123@";
-
-    // 1. Tạo role "Admin" nếu chưa có
     if (!await roleManager.RoleExistsAsync(adminRole))
         await roleManager.CreateAsync(new IdentityRole(adminRole));
 
-    // 2. Tạo user Admin nếu chưa có
-    var user = await userManager.FindByNameAsync(adminUser);
-    if (user == null)
+    var adminUser = await userManager.FindByNameAsync("Admin");
+    if (adminUser == null)
     {
-        user = new ApplicationUser
+        adminUser = new ApplicationUser
         {
-            UserName = adminUser,
-            Email = adminEmail,
+            UserName = "Admin",
+            Email = "admin@muongthanh.com",
             EmailConfirmed = true,
             FullName = "Quản trị viên"
         };
-        var result = await userManager.CreateAsync(user, adminPass);
+        var result = await userManager.CreateAsync(adminUser, "Admin123@");
         if (!result.Succeeded)
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
             throw new Exception($"Không thể tạo tài khoản Admin: {errors}");
         }
     }
+    if (!await userManager.IsInRoleAsync(adminUser, adminRole))
+        await userManager.AddToRoleAsync(adminUser, adminRole);
 
-    // 3. Gán role Admin nếu chưa có
-    if (!await userManager.IsInRoleAsync(user, adminRole))
-        await userManager.AddToRoleAsync(user, adminRole);
+    // ── Seed Manager ──
+    const string managerRole = "Manager";
+    if (!await roleManager.RoleExistsAsync(managerRole))
+        await roleManager.CreateAsync(new IdentityRole(managerRole));
+
+    var managerUser = await userManager.FindByNameAsync("Manager");
+    if (managerUser == null)
+    {
+        managerUser = new ApplicationUser
+        {
+            UserName = "Manager",
+            Email = "manager@muongthanh.com",
+            EmailConfirmed = true,
+            FullName = "Quản lý vận hành"
+        };
+        var result = await userManager.CreateAsync(managerUser, "Manager123@");
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            throw new Exception($"Không thể tạo tài khoản Manager: {errors}");
+        }
+    }
+    if (!await userManager.IsInRoleAsync(managerUser, managerRole))
+        await userManager.AddToRoleAsync(managerUser, managerRole);
 }

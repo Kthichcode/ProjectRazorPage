@@ -1,0 +1,242 @@
+@page "{id:int}"
+@model HotelManagementRazorPage.Pages.Manager.Bookings.DetailsModel
+@{
+    ViewData["Title"] = $"Chi tiết đặt phòng #{Model.Booking?.Id}";
+    Layout = "/Pages/Manager/_ManagerLayout.cshtml";
+}
+
+<div class="page-header">
+    <h1><i class="fa-solid fa-eye me-2" style="color:var(--primary)"></i>Chi tiết đặt phòng #@Model.Booking?.Id</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-page="/Manager/Index">Dashboard</a></li>
+            <li class="breadcrumb-item"><a asp-page="/Manager/Bookings/Index">Đặt phòng</a></li>
+            <li class="breadcrumb-item active">#@Model.Booking?.Id</li>
+        </ol>
+    </nav>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="admin-alert admin-alert-success"><i class="fa-solid fa-circle-check"></i> @TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="admin-alert admin-alert-danger"><i class="fa-solid fa-circle-exclamation"></i> @TempData["Error"]</div>
+}
+
+<div class="row g-3">
+    <!-- Left: Booking Info -->
+    <div class="col-lg-8">
+        <!-- Customer Info -->
+        <div class="admin-card mb-3">
+            <div class="admin-card-header">
+                <h5><i class="fa-solid fa-user me-2"></i>Thông tin khách hàng</h5>
+            </div>
+            <div class="admin-card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="admin-form-label">Tên đăng nhập</div>
+                        <div style="font-weight:600;">@(Model.Booking?.Customer?.UserName ?? "—")</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="admin-form-label">Email</div>
+                        <div>@(Model.Booking?.Customer?.Email ?? "—")</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="admin-form-label">Số điện thoại</div>
+                        <div>@(Model.Booking?.Customer?.PhoneNumber ?? "—")</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="admin-form-label">Ngày tạo booking</div>
+                        <div>@Model.Booking?.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Details -->
+        <div class="admin-card mb-3">
+            <div class="admin-card-header">
+                <h5><i class="fa-solid fa-bed me-2"></i>Thông tin đặt phòng</h5>
+            </div>
+            <div class="admin-card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="admin-form-label">Ngày nhận phòng</div>
+                        <div style="font-weight:600;color:var(--primary);">@Model.Booking?.CheckInDate.ToString("dd/MM/yyyy")</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="admin-form-label">Ngày trả phòng</div>
+                        <div style="font-weight:600;color:var(--primary);">@Model.Booking?.CheckOutDate.ToString("dd/MM/yyyy")</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="admin-form-label">Số đêm</div>
+                        <div style="font-weight:700;">
+                            @((Model.Booking?.CheckOutDate - Model.Booking?.CheckInDate)?.Days ?? 0) đêm
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="admin-form-label">Tổng thanh toán</div>
+                        <div style="font-weight:700;font-size:1.15rem;color:var(--primary);">
+                            @Model.Booking?.TotalAmount.ToString("N0")₫
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.Booking?.BookingRooms.Any() == true)
+                {
+                    <hr style="margin:1rem 0;border-color:#D1FAE5;" />
+                    <div class="admin-form-label mb-2">Danh sách phòng đã đặt</div>
+                    <div class="row g-2">
+                        @foreach (var br in Model.Booking.BookingRooms)
+                        {
+                            <div class="col-sm-6">
+                                <div class="admin-card" style="background:var(--gray-50);">
+                                    <div class="admin-card-body" style="padding:.75rem 1rem;">
+                                        <div style="font-weight:700;color:var(--primary);">Phòng @br.Room?.RoomNumber</div>
+                                        <div style="font-size:.8rem;color:var(--text-sub);">@br.Room?.RoomType?.Name</div>
+                                        <div style="font-size:.8rem;">@br.Room?.RoomType?.PricePerNight.ToString("N0")₫/đêm</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Payments -->
+        @if (Model.Booking?.Payments.Any() == true)
+        {
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h5><i class="fa-solid fa-credit-card me-2"></i>Lịch sử thanh toán</h5>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Phương thức</th>
+                                <th>Số tiền</th>
+                                <th>Mã giao dịch</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày thanh toán</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in Model.Booking.Payments)
+                            {
+                                <tr>
+                                    <td><span class="status-badge badge-confirmed">@p.Method</span></td>
+                                    <td style="font-weight:600;">@p.Amount.ToString("N0")₫</td>
+                                    <td style="font-size:.78rem;color:var(--text-sub);">@p.ProviderTransactionId</td>
+                                    <td><span class="status-badge badge-checkedin">@p.Status</span></td>
+                                    <td>@p.PaidAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Right: Status Panel -->
+    <div class="col-lg-4">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h5><i class="fa-solid fa-sliders me-2"></i>Cập nhật trạng thái</h5>
+            </div>
+            <div class="admin-card-body">
+                <!-- Current Status -->
+                <div style="text-align:center;padding:1rem 0 1.5rem;">
+                    <div style="font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-sub);margin-bottom:.6rem;">Trạng thái hiện tại</div>
+                    @switch (Model.Booking?.Status)
+                    {
+                        case BusinessObjects.Enums.BookingStatus.Pending:
+                            <span class="status-badge badge-pending" style="font-size:.9rem;padding:.4rem 1rem;">⏳ Chờ xác nhận</span>
+                            break;
+                        case BusinessObjects.Enums.BookingStatus.Confirmed:
+                            <span class="status-badge badge-confirmed" style="font-size:.9rem;padding:.4rem 1rem;">✅ Đã xác nhận</span>
+                            break;
+                        case BusinessObjects.Enums.BookingStatus.CheckedIn:
+                            <span class="status-badge badge-checkedin" style="font-size:.9rem;padding:.4rem 1rem;">🏨 Đang ở</span>
+                            break;
+                        case BusinessObjects.Enums.BookingStatus.Completed:
+                            <span class="status-badge badge-completed" style="font-size:.9rem;padding:.4rem 1rem;">🎉 Hoàn thành</span>
+                            break;
+                        case BusinessObjects.Enums.BookingStatus.Cancelled:
+                            <span class="status-badge badge-cancelled" style="font-size:.9rem;padding:.4rem 1rem;">❌ Đã hủy</span>
+                            break;
+                    }
+                </div>
+
+                <div style="font-size:.75rem;color:var(--text-sub);text-align:center;margin-bottom:1.2rem;line-height:1.8;">
+                    Chờ xác nhận → Đã xác nhận → Đang ở → Hoàn thành
+                </div>
+
+                @{
+                    bool isFinal = Model.Booking?.Status == BusinessObjects.Enums.BookingStatus.Completed ||
+                                   Model.Booking?.Status == BusinessObjects.Enums.BookingStatus.Cancelled;
+                }
+
+                @if (!isFinal)
+                {
+                    <form method="post" asp-page-handler="UpdateStatus">
+                        <input type="hidden" name="bookingId" value="@Model.Booking?.Id" />
+                        <div class="row g-2">
+                            @if (Model.Booking?.Status == BusinessObjects.Enums.BookingStatus.Pending)
+                            {
+                                <div class="col-12">
+                                    <button type="submit" name="newStatus" value="2"
+                                            class="btn-admin-primary w-100" style="justify-content:center;">
+                                        <i class="fa-solid fa-circle-check"></i> Xác nhận đặt phòng
+                                    </button>
+                                </div>
+                            }
+                            @if (Model.Booking?.Status == BusinessObjects.Enums.BookingStatus.Confirmed)
+                            {
+                                <div class="col-12">
+                                    <button type="submit" name="newStatus" value="3"
+                                            class="btn-admin-primary w-100" style="justify-content:center;background:#16A34A;">
+                                        <i class="fa-solid fa-door-open"></i> Nhận phòng (Check-in)
+                                    </button>
+                                </div>
+                            }
+                            @if (Model.Booking?.Status == BusinessObjects.Enums.BookingStatus.CheckedIn)
+                            {
+                                <div class="col-12">
+                                    <button type="submit" name="newStatus" value="4"
+                                            class="btn-admin-primary w-100" style="justify-content:center;background:#7C3AED;">
+                                        <i class="fa-solid fa-flag-checkered"></i> Hoàn thành (Trả phòng)
+                                    </button>
+                                </div>
+                            }
+                            @if (Model.Booking?.Status != BusinessObjects.Enums.BookingStatus.CheckedIn)
+                            {
+                                <div class="col-12">
+                                    <button type="submit" name="newStatus" value="5"
+                                            class="btn-admin-sm btn-delete w-100" style="justify-content:center;padding:.5rem;">
+                                        <i class="fa-solid fa-ban"></i> Hủy đặt phòng
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <p style="text-align:center;color:var(--text-sub);font-size:.85rem;">
+                        Đặt phòng đã hoàn tất, không thể thay đổi trạng thái.
+                    </p>
+                }
+
+                <hr style="margin:1.2rem 0;border-color:#D1FAE5;" />
+                <a asp-page="/Manager/Bookings/Index" class="btn-admin-sm btn-edit w-100" style="justify-content:center;padding:.5rem;">
+                    <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
