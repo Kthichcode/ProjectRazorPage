@@ -6,6 +6,7 @@ using Repositories;
 using Repositories.Interfaces;
 using Services;
 using Services.Interfaces;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,9 @@ builder.Services.AddScoped<Repositories.Interfaces.IPaymentRepository, Repositor
 builder.Services.AddScoped<Services.Interfaces.IBookingService, Services.BookingService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<Services.Interfaces.IDashboardService, Services.DashboardService>();
+
+// AI Chat Service
+builder.Services.AddScoped<IAiChatService, AiChatService>();
 
 builder.Services.AddRazorPages();
 
