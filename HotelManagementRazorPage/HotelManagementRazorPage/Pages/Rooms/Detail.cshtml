@@ -121,7 +121,7 @@
 <div class="container py-5">
     <!-- Back link -->
     <div class="mb-4">
-        <a asp-page="/Index" class="btn-back">
+        <a asp-page="/Rooms/Index" class="btn-back">
             <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách phòng
         </a>
     </div>
@@ -244,7 +244,7 @@
                 {
                     @if (User.Identity?.IsAuthenticated == true)
                     {
-                        <a asp-page="/Booking/Create" asp-route-roomId="@Model.Room?.Id" class="btn-book-big">
+                        <a asp-page="/Bookings/Create" asp-route-roomId="@Model.Room?.Id" class="btn-book-big">
                             <i class="fa-solid fa-calendar-check"></i> Đặt phòng ngay
                         </a>
                     }

@@ -1,0 +1,35 @@
+@page
+@model HotelManagementRazorPage.Pages.Bookings.PaymentCallbackModel
+@{
+    ViewData["Title"] = "Kết quả thanh toán";
+}
+
+<div class="container py-5 text-center">
+    @if (Model.IsSuccess)
+    {
+        <div class="mb-4">
+            <i class="fa-solid fa-circle-check text-success" style="font-size: 5rem;"></i>
+        </div>
+        <h2 class="mb-3 text-success">Thanh toán thành công!</h2>
+        <p class="text-muted fs-5 mb-4">Giao dịch của bạn đã được VNPAY xử lý thành công.</p>
+        
+        @if (Model.BookingId.HasValue)
+        {
+            <a asp-page="/Bookings/Success" asp-route-id="@Model.BookingId.Value" class="btn btn-primary btn-lg px-5">
+                Xem chi tiết đặt phòng
+            </a>
+        }
+    }
+    else
+    {
+        <div class="mb-4">
+            <i class="fa-solid fa-circle-xmark text-danger" style="font-size: 5rem;"></i>
+        </div>
+        <h2 class="mb-3 text-danger">Thanh toán thất bại</h2>
+        <p class="text-muted fs-5 mb-4">@Model.Message</p>
+
+        <a asp-page="/Index" class="btn btn-outline-primary mt-3">
+            <i class="fa-solid fa-house"></i> Về trang chủ
+        </a>
+    }
+</div>

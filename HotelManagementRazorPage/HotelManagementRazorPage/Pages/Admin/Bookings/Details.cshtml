@@ -9,7 +9,7 @@
     <h1><i class="fa-solid fa-eye me-2" style="color:var(--primary)"></i>Chi tiết đặt phòng #@Model.Booking?.Id</h1>
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a asp-page="/Admin/Index">Dashboard</a></li>
+            <li class="breadcrumb-item"><a asp-page="/Admin/Index">Tổng quan</a></li>
             <li class="breadcrumb-item"><a asp-page="/Admin/Bookings/Index">Đặt phòng</a></li>
             <li class="breadcrumb-item active">#@Model.Booking?.Id</li>
         </ol>
@@ -201,7 +201,7 @@
                                 <div class="col-12">
                                     <button type="submit" name="newStatus" value="3"
                                             class="btn-admin-primary w-100" style="justify-content:center;background:#16A34A;">
-                                        <i class="fa-solid fa-door-open"></i> Check-In
+                                        <i class="fa-solid fa-door-open"></i> Nhận phòng (Check-in)
                                     </button>
                                 </div>
                             }
@@ -210,7 +210,7 @@
                                 <div class="col-12">
                                     <button type="submit" name="newStatus" value="4"
                                             class="btn-admin-primary w-100" style="justify-content:center;background:#7C3AED;">
-                                        <i class="fa-solid fa-flag-checkered"></i> Hoàn thành (Check-Out)
+                                        <i class="fa-solid fa-flag-checkered"></i> Hoàn thành (Trả phòng)
                                     </button>
                                 </div>
                             }
@@ -229,7 +229,7 @@
                 else
                 {
                     <p style="text-align:center;color:var(--text-sub);font-size:.85rem;">
-                        Booking đã hoàn tất, không thể thay đổi trạng thái.
+                        Đặt phòng đã hoàn tất, không thể thay đổi trạng thái.
                     </p>
                 }
 

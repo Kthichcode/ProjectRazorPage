@@ -1,0 +1,48 @@
+@page "{id:int}"
+@model HotelManagementRazorPage.Pages.Bookings.SuccessModel
+@{
+    ViewData["Title"] = "Đặt phòng thành công";
+}
+
+<div class="container py-5 text-center">
+    <div class="mb-4">
+        <i class="fa-solid fa-circle-check text-success" style="font-size: 5rem;"></i>
+    </div>
+    <h1 class="mb-3">Đặt phòng thành công!</h1>
+    <p class="text-muted fs-5 mb-5">Cảm ơn bạn đã lựa chọn dịch vụ của chúng tôi. Mã đơn đặt phòng của bạn là <strong>#@Model.Booking.Id</strong>.</p>
+
+    <div class="card mx-auto shadow-sm" style="max-width: 600px; text-align: left;">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fa-solid fa-receipt"></i> Chi tiết đặt phòng</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-2">
+                <div class="col-sm-4 text-muted">Ngày Check-in:</div>
+                <div class="col-sm-8 fw-bold">@Model.Booking.CheckInDate.ToString("dd/MM/yyyy")</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-sm-4 text-muted">Ngày Check-out:</div>
+                <div class="col-sm-8 fw-bold">@Model.Booking.CheckOutDate.ToString("dd/MM/yyyy")</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-sm-4 text-muted">Trạng thái:</div>
+                <div class="col-sm-8">
+                    <span class="badge bg-warning text-dark">@Model.Booking.Status</span>
+                </div>
+            </div>
+            <hr />
+            <div class="row">
+                <div class="col-sm-4 text-muted fs-5">Tổng tiền:</div>
+                <div class="col-sm-8 fw-bold text-danger fs-5">@Model.Booking.TotalAmount.ToString("N0")₫</div>
+            </div>
+        </div>
+        <div class="card-footer bg-light text-center">
+            <a asp-page="/Bookings/History" class="btn btn-outline-primary me-2">
+                <i class="fa-solid fa-clock-rotate-left"></i> Xem lịch sử
+            </a>
+            <a asp-page="/Index" class="btn btn-primary">
+                <i class="fa-solid fa-house"></i> Về trang chủ
+            </a>
+        </div>
+    </div>
+</div>

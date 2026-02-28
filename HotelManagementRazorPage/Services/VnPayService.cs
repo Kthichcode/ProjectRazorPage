@@ -36,16 +36,21 @@ namespace Services
             pay.AddRequestData("vnp_Amount", ((long)amount * 100).ToString());
             pay.AddRequestData("vnp_CreateDate", timeNow.ToString("yyyyMMddHHmmss"));
             pay.AddRequestData("vnp_CurrCode", "VND");
-            pay.AddRequestData("vnp_IpAddr", "127.0.0.1"); // Hardcode 127.0.0.1 for Sandbox to avoid IPv6 '::1' issues
+            pay.AddRequestData("vnp_IpAddr", Utils.GetIpAddress(httpContext)); // Get real IP instead of 127.0.0.1
             pay.AddRequestData("vnp_Locale", "vn");
-            pay.AddRequestData("vnp_OrderInfo", $"Booking {booking.Id}");
+            pay.AddRequestData("vnp_OrderInfo", $"Booking_Room_{booking.Id}");
             pay.AddRequestData("vnp_OrderType", "other");
             pay.AddRequestData("vnp_ReturnUrl", (urlCallBack ?? "").Trim());
-            // Use Ticks to ensure unique TxnRef for every attempt to avoid 'Order already exists' in some sandbox cases
             pay.AddRequestData("vnp_TxnRef", $"{booking.Id}_{tick}"); 
 
             var paymentUrl =
                 pay.CreateRequestUrl((_config["VnPay:BaseUrl"] ?? "").Trim(), (_config["VnPay:HashSecret"] ?? "").Trim());
+
+            // DEBUG: In URL ra console để kiểm tra
+            Console.WriteLine("=== VNPAY DEBUG ===");
+            Console.WriteLine("TmnCode: " + (_config["VnPay:TmnCode"] ?? "").Trim());
+            Console.WriteLine("Payment URL: " + paymentUrl);
+            Console.WriteLine("===================");
 
             return paymentUrl;
         }
@@ -62,9 +67,20 @@ namespace Services
     // Helper classes for VNPay (Usually put in a separate file, but included here for completeness)
     public class VnPayLibrary
     {
-        // Use default StringComparer to conform to ASCII sorting rules which VNPay usually expects
-        private SortedList<string, string> _requestData = new SortedList<string, string>(StringComparer.Ordinal);
-        private SortedList<string, string> _responseData = new SortedList<string, string>(StringComparer.Ordinal);
+        public class CompareOrdinal : IComparer<string>
+        {
+            public int Compare(string x, string y)
+            {
+                if (x == y) return 0;
+                if (x == null) return -1;
+                if (y == null) return 1;
+                var Compare = string.CompareOrdinal(x, y);
+                return Compare;
+            }
+        }
+
+        private SortedList<string, string> _requestData = new SortedList<string, string>(new CompareOrdinal());
+        private SortedList<string, string> _responseData = new SortedList<string, string>(new CompareOrdinal());
 
         public void AddRequestData(string key, string value)
         {
@@ -84,18 +100,35 @@ namespace Services
 
         public string CreateRequestUrl(string baseUrl, string vnp_HashSecret)
         {
-            StringBuilder data = new StringBuilder();
+            // Both hashData and queryUrl use the same encoding (URLEncode on value only, raw key)
+            // This matches the official VNPAY Java/C# sample
+            StringBuilder hashData = new StringBuilder();
+            StringBuilder queryData = new StringBuilder();
+
             foreach (KeyValuePair<string, string> kv in _requestData)
             {
-                if (data.Length > 0)
+                if (!string.IsNullOrEmpty(kv.Value))
                 {
-                    data.Append('&');
+                    if (hashData.Length > 0)
+                    {
+                        hashData.Append('&');
+                        queryData.Append('&');
+                    }
+                    // hashData: key=urlEncode(value)   <-- per official VNPAY Java sample
+                    hashData.Append(kv.Key);
+                    hashData.Append('=');
+                    hashData.Append(WebUtility.UrlEncode(kv.Value));
+
+                    // queryString is the same format
+                    queryData.Append(kv.Key);
+                    queryData.Append('=');
+                    queryData.Append(WebUtility.UrlEncode(kv.Value));
                 }
-                data.Append(kv.Key + "=" + WebUtility.UrlEncode(kv.Value));
             }
-            string queryString = data.ToString();
-            string vnp_SecureHash = Utils.HmacSHA512(vnp_HashSecret, queryString);
-            string paymentUrl = baseUrl + "?" + queryString + "&vnp_SecureHash=" + vnp_SecureHash;
+
+            string queryUrl = queryData.ToString();
+            string vnp_SecureHash = Utils.HmacSHA512(vnp_HashSecret, hashData.ToString());
+            string paymentUrl = baseUrl + "?" + queryUrl + "&vnp_SecureHash=" + vnp_SecureHash;
             return paymentUrl;
         }
 
@@ -176,11 +209,12 @@ namespace Services
             }
             foreach (KeyValuePair<string, string> kv in _responseData)
             {
-                if (data.Length > 0)
+                if (!string.IsNullOrEmpty(kv.Value))
                 {
-                    data.Append('&');
+                    if (data.Length > 0) data.Append('&');
+                    // Same format as createRequestUrl: key=urlEncode(value)
+                    data.Append(kv.Key + "=" + WebUtility.UrlEncode(kv.Value));
                 }
-                data.Append(kv.Key + "=" + WebUtility.UrlEncode(kv.Value));
             }
             return data.ToString();
         }
@@ -220,12 +254,12 @@ namespace Services
           
                      if (remoteIpAddress != null) ipAddress = remoteIpAddress.ToString();
           
-                     return ipAddress;
+                     return string.IsNullOrEmpty(ipAddress) ? "127.0.0.1" : ipAddress;
                  }
              }
-             catch (Exception ex)
+             catch (Exception)
              {
-                 return "Invalid IP:" + ex.Message;
+                 return "127.0.0.1";
              }
 
              return "127.0.0.1";
