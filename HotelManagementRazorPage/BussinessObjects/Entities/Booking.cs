@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -33,5 +34,9 @@ namespace BusinessObjects.Entities
         // Cancellation info
         public DateTime? CancellationRequestedAt { get; set; }
         public decimal? RefundAmount { get; set; }
+
+        // Wallet payment info (hybrid wallet+VNPay)
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? WalletAmountPaid { get; set; }
     }
 }

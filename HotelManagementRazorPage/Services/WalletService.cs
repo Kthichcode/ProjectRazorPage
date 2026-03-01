@@ -40,7 +40,7 @@ namespace Services
             return wallet;
         }
 
-        public decimal DeductBalance(string userId, decimal amountNeeded)
+        public decimal DeductBalance(string userId, decimal amountNeeded, string description = "Thanh toán đặt phòng")
         {
             if (amountNeeded < 0) throw new ArgumentException("Amount cannot be negative");
 
@@ -59,6 +59,20 @@ namespace Services
             }
 
             _walletRepo.Update(wallet);
+
+            if (deducted > 0)
+            {
+                var transaction = new WalletTransaction
+                {
+                    WalletId = wallet.Id,
+                    Amount = deducted,
+                    Type = WalletTransactionType.Payment,
+                    Description = description,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _walletRepo.AddTransaction(transaction);
+            }
+
             _walletRepo.Save();
 
             return deducted;

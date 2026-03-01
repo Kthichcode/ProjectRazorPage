@@ -167,6 +167,84 @@ namespace Services
              _paymentRepo.Add(payment);
              _paymentRepo.Save();
         }
+
+        public void ConfirmFullWalletPayment(int bookingId)
+        {
+            var booking = _bookingRepo.GetById(bookingId);
+            if (booking == null) throw new Exception("Không tìm thấy booking.");
+            if (booking.Status == BookingStatus.Cancelled)
+                throw new InvalidOperationException("Không thể xác nhận thanh toán cho đơn đã hủy.");
+
+            _bookingRepo.UpdateStatus(bookingId, BookingStatus.Confirmed);
+
+            var payment = new Payment
+            {
+                BookingId = bookingId,
+                Amount = booking.TotalAmount,
+                Method = "Wallet",
+                Status = PaymentStatus.Paid,
+                ProviderTransactionId = "WALLET",
+                CreatedAt = DateTime.UtcNow,
+                PaidAt = DateTime.UtcNow
+            };
+            _paymentRepo.Add(payment);
+            _paymentRepo.Save();
+            _bookingRepo.Save();
+        }
+
+        public void SaveBookingChanges(int bookingId, Booking updatedBooking)
+        {
+            var booking = _bookingRepo.GetById(bookingId);
+            if (booking == null) throw new Exception("Không tìm thấy booking.");
+            booking.WalletAmountPaid = updatedBooking.WalletAmountPaid;
+            _bookingRepo.Save();
+        }
+
+        public void ConfirmPaymentWithWallet(int bookingId, decimal walletAmountPaid, string vnpayTransactionId)
+        {
+            var booking = _bookingRepo.GetById(bookingId);
+            if (booking == null) throw new Exception("Không tìm thấy booking.");
+            if (booking.Status == BookingStatus.Cancelled)
+                throw new InvalidOperationException("Không thể xác nhận thanh toán cho đơn đã hủy.");
+
+            _bookingRepo.UpdateStatus(bookingId, BookingStatus.Confirmed);
+
+            // Record wallet portion
+            if (walletAmountPaid > 0)
+            {
+                var walletPayment = new Payment
+                {
+                    BookingId = bookingId,
+                    Amount = walletAmountPaid,
+                    Method = "Wallet",
+                    Status = PaymentStatus.Paid,
+                    ProviderTransactionId = "WALLET",
+                    CreatedAt = DateTime.UtcNow,
+                    PaidAt = DateTime.UtcNow
+                };
+                _paymentRepo.Add(walletPayment);
+            }
+
+            // Record VNPay portion
+            decimal vnpayAmount = booking.TotalAmount - walletAmountPaid;
+            if (vnpayAmount > 0)
+            {
+                var vnpayPayment = new Payment
+                {
+                    BookingId = bookingId,
+                    Amount = vnpayAmount,
+                    Method = "VNPay",
+                    Status = PaymentStatus.Paid,
+                    ProviderTransactionId = vnpayTransactionId,
+                    CreatedAt = DateTime.UtcNow,
+                    PaidAt = DateTime.UtcNow
+                };
+                _paymentRepo.Add(vnpayPayment);
+            }
+
+            _paymentRepo.Save();
+            _bookingRepo.Save();
+        }
         public List<Booking> GetFilteredBookings(DateTime? date, BookingStatus? status, string phoneNumber, int? roomId = null)
         {
             var query = _bookingRepo.GetQuery();

@@ -16,6 +16,16 @@ namespace Services.Interfaces
         void ConfirmPayment(int bookingId, string transactionId);
         void RecordPayment(int bookingId, decimal amount, string method, string transactionId);
 
+        /// Wallet-only or hybrid Wallet+VNPay payment confirmation
+        /// walletAmountPaid: amount already deducted from wallet before going to VNPay (0 if pure VNPay)
+        void ConfirmPaymentWithWallet(int bookingId, decimal walletAmountPaid, string vnpayTransactionId);
+
+        /// Confirm full wallet payment (no VNPay needed)
+        void ConfirmFullWalletPayment(int bookingId);
+
+        /// Persist changes made to a booking entity (e.g. WalletAmountPaid)
+        void SaveBookingChanges(int bookingId, Booking booking);
+
         
         List<Booking> GetFilteredBookings(DateTime? date, BookingStatus? status, string phoneNumber, int? roomId = null);
 

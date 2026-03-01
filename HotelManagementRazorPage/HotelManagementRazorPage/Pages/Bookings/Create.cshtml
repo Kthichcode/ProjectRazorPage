@@ -2,6 +2,7 @@
 @model HotelManagementRazorPage.Pages.Bookings.CreateModel
 @{
     ViewData["Title"] = "Đặt phòng";
+    var walletBalance = Model.WalletBalance;
 }
 
 <div class="container py-5">
@@ -52,12 +53,43 @@
                             <h4 id="totalAmountDisplay" class="text-primary fw-bold">0₫</h4>
                         </div>
 
-                        <div class="mb-4">
+                        <!-- Wallet Balance Info -->
+                        <div class="mb-3 p-3 rounded-3 border" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe);">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-wallet text-primary"></i>
+                                <span class="fw-semibold">Số dư ví của bạn:</span>
+                                <span class="text-success fw-bold" id="walletBalanceDisplay">@walletBalance.ToString("N0")₫</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
                             <label class="form-label fw-bold">Phương thức thanh toán</label>
-                            <select asp-for="PaymentMethod" class="form-select">
+                            <select asp-for="PaymentMethod" class="form-select" id="paymentMethodSelect">
                                 <option value="Cash">Thanh toán tại quầy (Tiền mặt)</option>
                                 <option value="VNPay">Thanh toán trực tuyến (VNPay)</option>
+                                @if (walletBalance > 0)
+                                {
+                                    <option value="Wallet">Thanh toán bằng Ví (Số dư: @walletBalance.ToString("N0")₫)</option>
+                                }
+                                else
+                                {
+                                    <option value="Wallet" disabled>Thanh toán bằng Ví (Số dư không đủ)</option>
+                                }
                             </select>
+                        </div>
+
+                        <!-- Wallet split preview (only shown when Wallet is selected) -->
+                        <div id="walletSplitPreview" class="mb-4 d-none">
+                            <div class="alert alert-info py-2 mb-2">
+                                <i class="fa-solid fa-circle-info me-1"></i>
+                                <strong>Thanh toán từ ví:</strong>
+                                <span id="walletPayPart" class="fw-bold text-success">0₫</span>
+                            </div>
+                            <div id="vnpayPartRow" class="alert alert-warning py-2 d-none">
+                                <i class="fa-brands fa-cc-visa me-1"></i>
+                                <strong>Còn lại thanh toán qua VNPay:</strong>
+                                <span id="vnpayPayPart" class="fw-bold text-danger">0₫</span>
+                            </div>
                         </div>
 
                         <div class="d-grid gap-2">
@@ -123,7 +155,7 @@
                     <button type="button" class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2" 
                             id="agreeAndPayBtn" style="border-radius: 12px; background: #1e3a8a; border: none; box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);">
                         <i class="fa-solid fa-credit-card"></i>
-                        Đồng ý & Thanh toán
+                        Đồng ý &amp; Thanh toán
                     </button>
                 </div>
             </div>
@@ -145,27 +177,50 @@
 @section Scripts {
     <script>
         const pricePerNight = @((Model.Room.RoomType?.PricePerNight ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        const walletBalance = @walletBalance.ToString(System.Globalization.CultureInfo.InvariantCulture);
         
         const checkInInput = document.getElementById('checkInDate');
         const checkOutInput = document.getElementById('checkOutDate');
         const amountDisplay = document.getElementById('totalAmountDisplay');
+        const paymentMethodSelect = document.getElementById('paymentMethodSelect');
+        const walletSplitPreview = document.getElementById('walletSplitPreview');
+        const walletPayPart = document.getElementById('walletPayPart');
+        const vnpayPayPart = document.getElementById('vnpayPayPart');
+        const vnpayPartRow = document.getElementById('vnpayPartRow');
 
-        function calculateTotal() {
+        function getNights() {
             const checkIn = new Date(checkInInput.value);
             const checkOut = new Date(checkOutInput.value);
-            
-            if (checkIn && checkOut && checkOut > checkIn) {
-                const diffTime = Math.abs(checkOut - checkIn);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                const total = diffDays * pricePerNight;
-                amountDisplay.innerText = total.toLocaleString('vi-VN') + '₫';
+            if (!checkIn || !checkOut || checkOut <= checkIn) return 0;
+            return Math.ceil(Math.abs(checkOut - checkIn) / (1000 * 60 * 60 * 24));
+        }
+
+        function calculateTotal() {
+            const nights = getNights();
+            const total = nights * pricePerNight;
+            amountDisplay.innerText = total > 0 ? total.toLocaleString('vi-VN') + '₫' : '0₫';
+            updateWalletPreview(total);
+        }
+
+        function updateWalletPreview(total) {
+            const method = paymentMethodSelect.value;
+            if (method === 'Wallet' && total > 0) {
+                walletSplitPreview.classList.remove('d-none');
+                const fromWallet = Math.min(walletBalance, total);
+                const fromVNPay = total - fromWallet;
+                walletPayPart.innerText = fromWallet.toLocaleString('vi-VN') + '₫';
+                if (fromVNPay > 0) {
+                    vnpayPartRow.classList.remove('d-none');
+                    vnpayPayPart.innerText = fromVNPay.toLocaleString('vi-VN') + '₫';
+                } else {
+                    vnpayPartRow.classList.add('d-none');
+                }
             } else {
-                amountDisplay.innerText = '0₫';
+                walletSplitPreview.classList.add('d-none');
             }
         }
 
         checkInInput.addEventListener('change', () => {
-             // Auto advance checkout if checkin changes to be later
              const newCheckIn = new Date(checkInInput.value);
              const currentCheckOut = new Date(checkOutInput.value);
              if (newCheckIn >= currentCheckOut) {
@@ -176,6 +231,10 @@
              calculateTotal();
         });
         checkOutInput.addEventListener('change', calculateTotal);
+        paymentMethodSelect.addEventListener('change', function () {
+            const total = getNights() * pricePerNight;
+            updateWalletPreview(total);
+        });
 
         // Init
         calculateTotal();

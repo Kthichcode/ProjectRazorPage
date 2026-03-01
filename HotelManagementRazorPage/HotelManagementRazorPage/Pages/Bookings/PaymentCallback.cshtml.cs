@@ -10,11 +10,13 @@ namespace HotelManagementRazorPage.Pages.Bookings
     {
         private readonly IVnPayService _vnPayService;
         private readonly IBookingService _bookingService;
+        private readonly IWalletService _walletService;
 
-        public PaymentCallbackModel(IVnPayService vnPayService, IBookingService bookingService)
+        public PaymentCallbackModel(IVnPayService vnPayService, IBookingService bookingService, IWalletService walletService)
         {
             _vnPayService = vnPayService;
             _bookingService = bookingService;
+            _walletService = walletService;
         }
 
         public string Message { get; set; } = "Đang xử lý thanh toán...";
@@ -46,20 +48,27 @@ namespace HotelManagementRazorPage.Pages.Bookings
                     if (int.TryParse(response.OrderId, out int bId))
                     {
                         BookingId = bId;
-                        // Xác nhận thanh toán thành công
-                        // bookingService.ConfirmPayment đã tạo record Payment và update status Booking thành Confirmed
-                        // (Lưu ý: Nếu user click F5 thì có thể văng lỗi Cannot confirm payment for a Cancelled.. 
-                        // -> Nên ktra lại trạng thái trước khi update để tránh lỗi)
-                        
+
                         var booking = _bookingService.GetById(bId);
                         if (booking != null && booking.Status == BookingStatus.Pending)
                         {
-                            _bookingService.ConfirmPayment(bId, response.TransactionId ?? "");
+                            // Đọc WalletAmountPaid từ DB (được lưu trước khi redirect sang VNPay)
+                            decimal walletPaid = booking.WalletAmountPaid ?? 0;
+
+                            if (walletPaid > 0)
+                            {
+                                // Hybrid: ví + VNPay
+                                _bookingService.ConfirmPaymentWithWallet(bId, walletPaid, response.TransactionId ?? "");
+                            }
+                            else
+                            {
+                                // Thuần VNPay
+                                _bookingService.ConfirmPayment(bId, response.TransactionId ?? "");
+                            }
                         }
                     }
 
                     Message = "Thanh toán thành công qua VNPAY.";
-                    // Có thể tự động chuyển sang trang Success
                     if (BookingId.HasValue)
                     {
                         return RedirectToPage("Success", new { id = BookingId.Value });
@@ -67,7 +76,29 @@ namespace HotelManagementRazorPage.Pages.Bookings
                 }
                 else
                 {
-                    Message = $"Giao dịch thất bại: Lỗi {response.VnPayResponseCode}";
+                    // VNPay thất bại → hoàn tiền ví nếu có hybrid payment
+                    if (int.TryParse(response?.OrderId, out int failedBId))
+                    {
+                        var booking = _bookingService.GetById(failedBId);
+                        if (booking != null)
+                        {
+                            decimal walletPaid = booking.WalletAmountPaid ?? 0;
+                            if (walletPaid > 0)
+                            {
+                                // Hoàn lại tiền ví vì VNPay thất bại
+                                _walletService.AddBalance(
+                                    booking.CustomerId,
+                                    walletPaid,
+                                    $"Hoàn tiền ví do VNPay thất bại - booking #{failedBId}"
+                                );
+                                // Reset WalletAmountPaid
+                                booking.WalletAmountPaid = null;
+                                _bookingService.SaveBookingChanges(failedBId, booking);
+                            }
+                        }
+                    }
+
+                    Message = $"Giao dịch thất bại: Lỗi {response?.VnPayResponseCode}";
                     IsSuccess = false;
                 }
             }
