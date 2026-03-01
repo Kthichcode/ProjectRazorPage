@@ -46,6 +46,16 @@ namespace Services
             return result;
         }
 
+        public async Task<IList<string>> GetUserRolesAsync(string username)
+        {
+            var user = await _userManager.FindByNameAsync(username);
+            if (user != null)
+            {
+                return await _userManager.GetRolesAsync(user);
+            }
+            return new List<string>();
+        }
+
         public async Task LogoutAsync()
         {
             await _signInManager.SignOutAsync();

@@ -1,0 +1,118 @@
+@page
+@model HotelManagementRazorPage.Pages.Staff.RoomDashboardModel
+@{
+    ViewData["Title"] = "Sơ đồ phòng (Real-time)";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Sơ đồ phòng (Live)</h2>
+        <div>
+            <span class="badge bg-success">Trống</span>
+            <span class="badge bg-danger">Đang ở</span>
+            <span class="badge bg-secondary">Bảo trì</span>
+        </div>
+    </div>
+
+    <div class="row g-3" id="room-grid">
+        @foreach (var room in Model.Rooms)
+        {
+            var rStatusStr = "Trống";
+            var statusClass = "bg-success";
+
+            // Tìm Booking đang thực sự ở tại phòng này (Nếu status là Occupied)
+            // Cần lọc thêm theo ngày để tránh hiện khách cũ hoặc khách tương lai sai chỗ
+            var today = DateTime.Today;
+            var activeBooking = room.BookingRooms
+                .Where(br => br.RoomId == room.Id && br.Booking != null 
+                             && br.Booking.Status == BusinessObjects.Enums.BookingStatus.CheckedIn
+                             && br.Booking.CheckInDate.Date <= today
+                             && br.Booking.CheckOutDate.Date >= today)
+                .Select(br => br.Booking!)
+                .FirstOrDefault();
+
+            if (room.Status == BusinessObjects.Enums.RoomStatus.Occupied)
+            {
+                rStatusStr = "Đang ở";
+                statusClass = "bg-danger";
+            }
+            else if (room.Status == BusinessObjects.Enums.RoomStatus.Maintenance)
+            {
+                rStatusStr = "Bảo trì";
+                statusClass = "bg-secondary text-white";
+            }
+            else 
+            {
+                rStatusStr = "Trống";
+                statusClass = "bg-success";
+            }
+
+            <div class="col-md-3 col-sm-6">
+                <div class="card text-center h-100 room-card shadow-sm" id="room-card-@room.Id" data-room-id="@room.Id">
+                    <div class="card-body @statusClass text-white rounded">
+                        <h3 class="card-title">@room.RoomNumber</h3>
+                        <p class="card-text status-text fw-bold">@rStatusStr</p>
+                        
+                        @if (activeBooking != null)
+                        {
+                            <p class="mb-0">Khách: @(activeBooking.Customer?.FullName ?? "N/A")</p>
+                            <small class="d-block mb-2">(Mã đơn: #@activeBooking.Id)</small>
+                            <form method="post" asp-page-handler="CheckOut" class="d-inline">
+                                <input type="hidden" name="bookingId" value="@activeBooking.Id" />
+                                <input type="hidden" name="roomId" value="@room.Id" />
+                                <button type="submit" class="btn btn-sm btn-light fw-bold text-danger w-100">Trả Phòng (Check-Out)</button>
+                            </form>
+                        }
+                        else if (room.Status == BusinessObjects.Enums.RoomStatus.Available)
+                        {
+                            <p class="mb-2">Phòng sẵn sàng</p>
+                            <a asp-page="/Staff/Bookings" asp-route-roomId="@room.Id" class="btn btn-sm btn-light fw-bold text-success w-100">Check-In Khách</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <!-- SignalR CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hotelHub")
+            .build();
+
+        connection.on("ReceiveRoomUpdate", function (roomId, status) {
+            console.log("Room Update Received: " + roomId + " - " + status);
+            const card = document.getElementById("room-card-" + roomId);
+            if(card) {
+                const body = card.querySelector('.card-body');
+                const text = card.querySelector('.status-text');
+                
+                // Clear old classes
+                body.classList.remove('bg-success', 'bg-danger', 'bg-secondary', 'text-white');
+                body.classList.add('text-white');
+
+                if(status === "Occupied" || status === "CheckedIn") {
+                    body.classList.add('bg-danger');
+                    text.innerText = "Đang ở";
+                    setTimeout(() => window.location.reload(), 1500);
+                } 
+                else if (status === "Available") {
+                    body.classList.add('bg-success');
+                    text.innerText = "Trống";
+                    setTimeout(() => window.location.reload(), 1500);
+                }
+                else if (status === "Maintenance") {
+                    body.classList.add('bg-secondary');
+                    text.innerText = "Bảo trì";
+                }
+            }
+        });
+
+        connection.start().catch(function (err) {
+            return console.error(err.toString());
+        });
+    </script>
+}

@@ -1,5 +1,6 @@
 using BusinessObjects;
 using BusinessObjects.Entities;
+using HotelManagementRazorPage.Hubs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Repositories;
@@ -38,6 +39,8 @@ builder.Services.AddScoped<Services.Interfaces.IDashboardService, Services.Dashb
 builder.Services.AddScoped<IAiChatService, AiChatService>();
 
 builder.Services.AddRazorPages();
+builder.Services.AddSignalR();
+
 
 var app = builder.Build();
 
@@ -56,14 +59,61 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
+app.MapHub<HotelHub>("/hotelHub");
 
 // ── SEED ADMIN ACCOUNT ──────────────────────────────────────────────
+
 await SeedAdminAsync(app);
+await SeedStaffAsync(app);
 
 app.Run();
 
 // ─────────────────────────────────────────────────────────────────────
+static async Task SeedStaffAsync(WebApplication app)
+{
+    using var scope = app.Services.CreateScope();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+    const string staffRole = "Staff";
+
+    // 1. Tạo role "Staff" nếu chưa có
+    if (!await roleManager.RoleExistsAsync(staffRole))
+        await roleManager.CreateAsync(new IdentityRole(staffRole));
+
+    // 2. Tạo danh sách các user Staff
+    var staffUsers = new List<(string UserName, string Email, string FullName, string Password)>
+    {
+        ("staff", "staff@muongthanh.com", "Nhân viên 1", "Staff123@"),
+        ("staff1", "staff1@muongthanh.com", "Nhân viên 2", "Staff123@"),
+        ("staff2", "staff2@muongthanh.com", "Nhân viên 3", "Staff123@")
+    };
+
+    foreach (var s in staffUsers)
+    {
+        var user = await userManager.FindByNameAsync(s.UserName);
+        if (user == null)
+        {
+            user = new ApplicationUser
+            {
+                UserName = s.UserName,
+                Email = s.Email,
+                EmailConfirmed = true,
+                FullName = s.FullName
+            };
+            var result = await userManager.CreateAsync(user, s.Password);
+            if (!result.Succeeded) continue;
+        }
+
+        // 3. Gán role Staff nếu chưa có
+        if (!await userManager.IsInRoleAsync(user, staffRole))
+            await userManager.AddToRoleAsync(user, staffRole);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────
 static async Task SeedAdminAsync(WebApplication app)
+
 {
     using var scope = app.Services.CreateScope();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();

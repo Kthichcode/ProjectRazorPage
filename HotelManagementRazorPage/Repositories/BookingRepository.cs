@@ -67,6 +67,8 @@ namespace Repositories
         {
             return _context.Bookings
                 .Include(b => b.Customer)
+                .Include(b => b.BookingRooms)
+                    .ThenInclude(br => br.Room)
                 .Where(b => b.Customer.PhoneNumber == phoneNumber)
                 .OrderByDescending(b => b.CreatedAt)
                 .ToList();

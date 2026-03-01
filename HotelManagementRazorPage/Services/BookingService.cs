@@ -28,16 +28,16 @@ namespace Services
         public int CreateBooking(string userId, int roomId, DateTime checkIn, DateTime checkOut)
         {
             // 1. Validate info
-            if (checkIn >= checkOut) throw new Exception("Check-out date must be after check-in date.");
-            if (checkIn.Date < DateTime.Today) throw new Exception("Cannot book in the past.");
+            if (checkIn >= checkOut) throw new Exception("Ngày trả phòng phải sau ngày nhận phòng.");
+            if (checkIn.Date < DateTime.Today) throw new Exception("Không thể đặt phòng cho ngày ở quá khứ.");
 
             // 2. Double-check availability logic
             // (Re-using logic from RoomService/Repository logic or checking directly)
             // Lấy lại danh sách phòng trống để chắc chắn phòng này chưa bị ai đặt trong lúc user đang suy nghĩ
             // Tuy nhiên để tối ưu, ta nên query trực tiếp vào DB check overlap cho RoomId cụ thể
             var room = _roomRepo.GetById(roomId);
-            if (room == null) throw new Exception("Room not found.");
-            if (room.Status != RoomStatus.Available) throw new Exception("Room is not available.");
+            if (room == null) throw new Exception("Không tìm thấy phòng.");
+            if (room.Status == RoomStatus.Maintenance) throw new Exception("Phòng đang trong quá trình bảo trì.");
 
             // Check overlap
             // Logic: Existing booking (CheckIn < newCheckout && CheckOut > newCheckIn)
@@ -63,7 +63,7 @@ namespace Services
                 
                 if (checkIn < b.CheckOutDate && checkOut > b.CheckInDate)
                 {
-                    throw new Exception("This room is already booked for the selected dates.");
+                    throw new Exception("Phòng này đã được đặt trong thời gian bạn chọn.");
                 }
             }
 
@@ -114,18 +114,18 @@ namespace Services
             if (booking == null) throw new Exception("Booking not found.");
 
             // Security check
-            if (booking.CustomerId != userId) throw new Exception("You are not authorized to cancel this booking.");
+            if (booking.CustomerId != userId) throw new Exception("Bạn không có quyền hủy đơn đặt phòng này.");
 
             // Logic check
-            if (booking.Status == BookingStatus.Cancelled) throw new Exception("Booking is already cancelled.");
-            if (booking.Status == BookingStatus.Completed) throw new Exception("Cannot cancel completed booking.");
+            if (booking.Status == BookingStatus.Cancelled) throw new Exception("Đơn đặt phòng này đã được hủy trước đó.");
+            if (booking.Status == BookingStatus.Completed) throw new Exception("Không thể hủy đơn đặt phòng đã hoàn thành.");
             
             // Rule: Cancel before check-in
             // Rule: Cancel before check-in date
             // Relaxed rule: Allow cancellation even on the check-in day as long as they haven't checked in (Status check handles that)
             // Stricter rule would be: if (booking.CheckInDate < DateTime.Today)
             
-            if (booking.CheckInDate < DateTime.Today) throw new Exception("Cannot cancel past bookings.");
+            if (booking.CheckInDate < DateTime.Today) throw new Exception("Không thể hủy đơn đặt phòng trong quá khứ.");
 
             _bookingRepo.UpdateStatus(bookingId, BookingStatus.Cancelled);
             _bookingRepo.Save();
@@ -138,7 +138,7 @@ namespace Services
                 // Prevent resurrecting Cancelled bookings
                 if (booking.Status == BookingStatus.Cancelled)
                 {
-                     throw new InvalidOperationException("Cannot confirm payment for a Cancelled booking. Please contact support for refund.");
+                     throw new InvalidOperationException("Không thể xác nhận thanh toán cho đơn đã hủy. Vui lòng liên hệ bộ phận hỗ trợ.");
                 }
 
                 // If already confirmed/paid, we might still want to record the transaction if it's new?
@@ -181,7 +181,7 @@ namespace Services
              _paymentRepo.Add(payment);
              _paymentRepo.Save();
         }
-        public List<Booking> GetFilteredBookings(DateTime? date, BookingStatus? status, string phoneNumber)
+        public List<Booking> GetFilteredBookings(DateTime? date, BookingStatus? status, string phoneNumber, int? roomId = null)
         {
             var query = _bookingRepo.GetQuery();
 
@@ -201,6 +201,11 @@ namespace Services
                 query = query.Where(b => b.Customer.PhoneNumber.Contains(phoneNumber));
             }
 
+            if (roomId.HasValue)
+            {
+                query = query.Where(b => b.BookingRooms.Any(br => br.RoomId == roomId.Value));
+            }
+
             return query.OrderByDescending(b => b.CreatedAt).ToList();
         }
 
@@ -215,26 +220,48 @@ namespace Services
 
             if (booking.Status == BookingStatus.Cancelled || booking.Status == BookingStatus.Completed)
             {
-                throw new Exception($"Cannot change status of a {booking.Status} booking.");
+                throw new Exception($"Không thể thay đổi trạng thái của đơn đặt phòng đang ở trạng thái {booking.Status}.");
             }
 
             if (newStatus == BookingStatus.Confirmed)
             {
-                if (booking.Status != BookingStatus.Pending) throw new Exception("Only Pending bookings can be Confirmed.");
+                if (booking.Status != BookingStatus.Pending) throw new Exception("Chỉ có thể xác nhận các đơn đặt phòng đang chờ xử lý.");
             }
             else if (newStatus == BookingStatus.CheckedIn)
             {
-                if (booking.Status != BookingStatus.Confirmed) throw new Exception("Only Confirmed bookings can be Checked In.");
+                if (booking.Status != BookingStatus.Confirmed) throw new Exception("Chỉ có thể Check-in cho các đơn đã xác nhận.");
+                
+                // Update room status to Occupied
+                if (!booking.BookingRooms.Any()) throw new Exception("Đơn đặt phòng này không có phòng nào được liên kết.");
+                foreach (var br in booking.BookingRooms)
+                {
+                    if (br.Room != null) 
+                    {
+                        br.Room.Status = RoomStatus.Occupied;
+                        _roomRepo.Update(br.Room);
+                    }
+                }
             }
             else if (newStatus == BookingStatus.Completed)
             {
-                if (booking.Status != BookingStatus.CheckedIn) throw new Exception("Only Checked In bookings can be Completed.");
+                if (booking.Status != BookingStatus.CheckedIn) throw new Exception("Chỉ có thể hoàn thành các đơn đã Check-in.");
+
+                // Update room status to Available
+                if (!booking.BookingRooms.Any()) throw new Exception("Đơn đặt phòng này không có phòng nào được liên kết.");
+                foreach (var br in booking.BookingRooms)
+                {
+                    if (br.Room != null) 
+                    {
+                        br.Room.Status = RoomStatus.Available;
+                        _roomRepo.Update(br.Room);
+                    }
+                }
             }
             else if (newStatus == BookingStatus.Cancelled)
             {
                 // Can cancel Pending or Confirmed
                 if (booking.Status == BookingStatus.CheckedIn || booking.Status == BookingStatus.Completed)
-                    throw new Exception("Cannot cancel after checking in.");
+                    throw new Exception("Không thể hủy sau khi đã Check-in.");
             }
 
             _bookingRepo.UpdateStatus(bookingId, newStatus);

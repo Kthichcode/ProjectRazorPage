@@ -38,7 +38,7 @@ namespace Services
         public int CreateReview(int bookingId, int rating, string? comment)
         {
             var booking = _bookingRepo.GetById(bookingId);
-            if (booking == null) throw new Exception("Booking not found.");
+            if (booking == null) throw new Exception("Không tìm thấy đơn đặt phòng.");
             
             // Kiểm tra booking đã Completed chưa
             if (booking.Status != BookingStatus.Completed)

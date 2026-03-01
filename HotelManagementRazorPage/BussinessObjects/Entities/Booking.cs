@@ -13,7 +13,7 @@ namespace BusinessObjects.Entities
         public int Id { get; set; }
 
         // Identity user id là string
-        [Required] public string CustomerId { get; set; } = "";
+        [Required(ErrorMessage = "Vui lòng chọn khách hàng.")] public string CustomerId { get; set; } = "";
         public ApplicationUser? Customer { get; set; }
 
         public DateTime CheckInDate { get; set; }

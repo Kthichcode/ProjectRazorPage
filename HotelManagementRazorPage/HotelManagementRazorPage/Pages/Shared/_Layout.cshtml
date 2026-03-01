@@ -195,7 +195,18 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link btn-nav-register" asp-page="/Admin/Index">
-                                    <i class="fa-solid fa-gear me-1"></i>Admin
+                                    <i class="fa-solid fa-gear me-1"></i>Quản trị viên
+                                </a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Staff"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-page="/Staff/RoomDashboard"
+                                   style="background:#0D9488;color:#fff!important;border-radius:8px;padding:.38rem 1rem;font-size:.875rem;font-weight:600;border:1.5px solid #0D9488;transition:all .2s;"
+                                   onmouseover="this.style.background='#0F766E';this.style.borderColor='#0F766E';"
+                                   onmouseout="this.style.background='#0D9488';this.style.borderColor='#0D9488';">
+                                    <i class="fa-solid fa-user-tie me-1"></i>Nhân viên
                                 </a>
                             </li>
                         }
@@ -206,7 +217,7 @@
                                    style="background:#0D7055;color:#fff!important;border-radius:8px;padding:.38rem 1rem;font-size:.875rem;font-weight:600;border:1.5px solid #0D7055;transition:all .2s;"
                                    onmouseover="this.style.background='#085C44';this.style.borderColor='#085C44';"
                                    onmouseout="this.style.background='#0D7055';this.style.borderColor='#0D7055';">
-                                    <i class="fa-solid fa-user-tie me-1"></i>Manager
+                                    <i class="fa-solid fa-user-tie me-1"></i>Quản lý
                                 </a>
                             </li>
                         }

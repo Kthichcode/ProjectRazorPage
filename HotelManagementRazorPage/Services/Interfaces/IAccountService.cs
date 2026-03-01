@@ -7,6 +7,7 @@ namespace Services.Interfaces
     {
         Task<SignInResult> LoginAsync(string username, string password);
         Task<IdentityResult> RegisterAsync(ApplicationUser user, string password);
+        Task<IList<string>> GetUserRolesAsync(string username);
         Task LogoutAsync();
     }
 }

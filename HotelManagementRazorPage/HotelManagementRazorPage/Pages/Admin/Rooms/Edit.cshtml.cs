@@ -44,7 +44,7 @@ namespace HotelManagementRazorPage.Pages.Admin.Rooms
             [Required(ErrorMessage = "Vui lòng chọn loại phòng.")]
             public int RoomTypeId { get; set; }
 
-            [Required]
+            [Required(ErrorMessage = "Vui lòng nhập sức chứa.")]
             [Range(1, 20, ErrorMessage = "Sức chứa từ 1 đến 20 khách.")]
             public int MaxOccupancy { get; set; }
 

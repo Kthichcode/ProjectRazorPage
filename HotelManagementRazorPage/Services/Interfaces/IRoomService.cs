@@ -12,6 +12,7 @@ namespace Services.Interfaces
         List<Room> GetAvailableRooms(DateTime checkIn, DateTime checkOut, int? roomTypeId = null);
 
         List<Room> GetAll();
+        List<Room> GetAllWithBookings();
         Room? GetById(int id);
         void Create(Room room);
         void Update(Room room);
