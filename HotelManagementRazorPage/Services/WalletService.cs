@@ -2,6 +2,7 @@ using BusinessObjects.Entities;
 using Repositories.Interfaces;
 using Services.Interfaces;
 using System;
+using System.Collections.Generic;
 
 namespace Services
 {
@@ -34,7 +35,7 @@ namespace Services
             if (wallet == null)
             {
                 CreateWallet(userId);
-                wallet = _walletRepo.GetByUserId(userId);
+                wallet = _walletRepo.GetByUserId(userId)!;
             }
             return wallet;
         }
@@ -44,7 +45,7 @@ namespace Services
             if (amountNeeded < 0) throw new ArgumentException("Amount cannot be negative");
 
             var wallet = GetUserWallet(userId);
-            
+
             decimal deducted = 0;
             if (wallet.Balance >= amountNeeded)
             {
@@ -59,18 +60,34 @@ namespace Services
 
             _walletRepo.Update(wallet);
             _walletRepo.Save();
-            
+
             return deducted;
         }
 
-        public void AddBalance(string userId, decimal amount)
+        public void AddBalance(string userId, decimal amount, string description = "Nạp tiền")
         {
             if (amount < 0) throw new ArgumentException("Amount cannot be negative");
-            
+
             var wallet = GetUserWallet(userId);
             wallet.Balance += amount;
             _walletRepo.Update(wallet);
+
+            // Log transaction
+            var transaction = new WalletTransaction
+            {
+                WalletId = wallet.Id,
+                Amount = amount,
+                Type = WalletTransactionType.Refund,
+                Description = description,
+                CreatedAt = DateTime.UtcNow
+            };
+            _walletRepo.AddTransaction(transaction);
             _walletRepo.Save();
+        }
+
+        public List<WalletTransaction> GetTransactions(string userId)
+        {
+            return _walletRepo.GetTransactionsByUserId(userId);
         }
     }
 }

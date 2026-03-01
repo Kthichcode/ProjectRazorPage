@@ -13,5 +13,8 @@ namespace Repositories.Interfaces
         void Add(Wallet wallet);
         void Update(Wallet wallet);
         void Save();
+
+        void AddTransaction(WalletTransaction transaction);
+        List<WalletTransaction> GetTransactionsByUserId(string userId);
     }
 }

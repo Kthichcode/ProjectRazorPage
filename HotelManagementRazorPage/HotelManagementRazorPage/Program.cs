@@ -29,7 +29,9 @@ builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
 // Admin services
 builder.Services.AddScoped<Repositories.Interfaces.IBookingRepository, Repositories.BookingRepository>();
 builder.Services.AddScoped<Repositories.Interfaces.IPaymentRepository, Repositories.PaymentRepository>();
+builder.Services.AddScoped<Repositories.Interfaces.IWalletRepository, Repositories.WalletRepository>();
 builder.Services.AddScoped<Services.Interfaces.IBookingService, Services.BookingService>();
+builder.Services.AddScoped<Services.Interfaces.IWalletService, Services.WalletService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<Services.Interfaces.IDashboardService, Services.DashboardService>();
 

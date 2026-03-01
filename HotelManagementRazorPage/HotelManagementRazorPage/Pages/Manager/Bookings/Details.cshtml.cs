@@ -50,5 +50,19 @@ namespace HotelManagementRazorPage.Pages.Manager.Bookings
 
             return RedirectToPage(new { id = bookingId });
         }
+
+        public IActionResult OnPostApproveCancel(int bookingId)
+        {
+            try
+            {
+                _bookingService.ApproveCancel(bookingId);
+                TempData["Success"] = "Đã duyệt hủy và hoàn tiền vào ví khách hàng thành công.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+            return RedirectToPage(new { id = bookingId });
+        }
     }
 }
