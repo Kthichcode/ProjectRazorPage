@@ -17,6 +17,7 @@ namespace Repositories
         public DbSet<Payment> Payments => Set<Payment>();
         public DbSet<Review> Reviews => Set<Review>();
         public DbSet<Wallet> Wallets => Set<Wallet>();
+        public DbSet<WalletTransaction> WalletTransactions => Set<WalletTransaction>();
 
         public DbSet<RoomImage> RoomImages => Set<RoomImage>();
 
@@ -70,7 +71,9 @@ namespace Repositories
             // money precision
             modelBuilder.Entity<RoomType>().Property(x => x.PricePerNight).HasPrecision(18, 2);
             modelBuilder.Entity<Booking>().Property(x => x.TotalAmount).HasPrecision(18, 2);
+            modelBuilder.Entity<Booking>().Property(x => x.RefundAmount).HasPrecision(18, 2);
             modelBuilder.Entity<Payment>().Property(x => x.Amount).HasPrecision(18, 2);
+            modelBuilder.Entity<WalletTransaction>().Property(x => x.Amount).HasPrecision(18, 2);
 
             // TxnRef unique (để sau xử lý IPN không trùng)
             modelBuilder.Entity<Payment>()

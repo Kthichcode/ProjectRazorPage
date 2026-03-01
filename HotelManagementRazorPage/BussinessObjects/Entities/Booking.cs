@@ -29,5 +29,9 @@ namespace BusinessObjects.Entities
         public ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
         public Review? Review { get; set; }
+
+        // Cancellation info
+        public DateTime? CancellationRequestedAt { get; set; }
+        public decimal? RefundAmount { get; set; }
     }
 }

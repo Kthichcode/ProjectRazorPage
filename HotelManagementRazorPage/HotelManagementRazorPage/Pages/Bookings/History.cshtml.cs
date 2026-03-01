@@ -13,14 +13,17 @@ namespace HotelManagementRazorPage.Pages.Bookings
     {
         private readonly IBookingService _bookingService;
         private readonly IVnPayService _vnPayService;
+        private readonly IWalletService _walletService;
 
-        public HistoryModel(IBookingService bookingService, IVnPayService vnPayService)
+        public HistoryModel(IBookingService bookingService, IVnPayService vnPayService, IWalletService walletService)
         {
             _bookingService = bookingService;
             _vnPayService = vnPayService;
+            _walletService = walletService;
         }
 
         public List<Booking> Bookings { get; set; } = new();
+        public decimal WalletBalance { get; set; }
 
         [BindProperty(SupportsGet = true)]
         public BookingStatus? FilterStatus { get; set; }
@@ -38,8 +41,9 @@ namespace HotelManagementRazorPage.Pages.Bookings
             {
                 Bookings = allBookings;
             }
-            
+
             Bookings = Bookings.OrderByDescending(b => b.CreatedAt).ToList();
+            WalletBalance = _walletService.GetUserWallet(userId!).Balance;
         }
 
         public IActionResult OnPostCancel(int id)
@@ -47,8 +51,8 @@ namespace HotelManagementRazorPage.Pages.Bookings
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                _bookingService.CancelBooking(id, userId);
-                TempData["SuccessMessage"] = "Hủy đặt phòng thành công.";
+                _bookingService.RequestCancellation(id, userId!);
+                TempData["SuccessMessage"] = "Đã gửi yêu cầu hủy. Vui lòng chờ manager duyệt để được hoàn tiền vào ví.";
             }
             catch (Exception ex)
             {
@@ -73,4 +77,3 @@ namespace HotelManagementRazorPage.Pages.Bookings
         }
     }
 }
-

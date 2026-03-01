@@ -15,12 +15,14 @@ namespace Services
         private readonly IBookingRepository _bookingRepo;
         private readonly IRoomRepository _roomRepo;
         private readonly IPaymentRepository _paymentRepo;
+        private readonly IWalletService _walletService;
 
-        public BookingService(IBookingRepository bookingRepo, IRoomRepository roomRepo, IPaymentRepository paymentRepo)
+        public BookingService(IBookingRepository bookingRepo, IRoomRepository roomRepo, IPaymentRepository paymentRepo, IWalletService walletService)
         {
             _bookingRepo = bookingRepo;
             _roomRepo = roomRepo;
             _paymentRepo = paymentRepo;
+            _walletService = walletService;
         }
 
         public int CreateBooking(string userId, int roomId, DateTime checkIn, DateTime checkOut)
@@ -242,6 +244,64 @@ namespace Services
         public List<Booking> SearchBookingsByPhoneNumber(string phoneNumber)
         {
             return _bookingRepo.GetByCustomerPhoneNumber(phoneNumber);
+        }
+
+        // ── Cancellation with Refund Flow ──────────────────────────────────────────
+
+        public void RequestCancellation(int bookingId, string userId)
+        {
+            var booking = _bookingRepo.GetById(bookingId);
+            if (booking == null) throw new Exception("Không tìm thấy booking.");
+
+            if (booking.CustomerId != userId)
+                throw new Exception("Bạn không có quyền thực hiện thao tác này.");
+
+            if (booking.Status == BookingStatus.Cancelled)
+                throw new Exception("Booking này đã bị hủy rồi.");
+
+            if (booking.Status == BookingStatus.CancellationPending)
+                throw new Exception("Yêu cầu hủy đã được gửi, đang chờ manager duyệt.");
+
+            if (booking.Status == BookingStatus.Completed || booking.Status == BookingStatus.CheckedIn)
+                throw new Exception("Không thể hủy booking đã check-in hoặc hoàn thành.");
+
+            if (booking.CheckInDate.Date < DateTime.Today)
+                throw new Exception("Không thể hủy booking trong quá khứ.");
+
+            booking.CancellationRequestedAt = DateTime.UtcNow;
+            booking.Status = BookingStatus.CancellationPending;
+            _bookingRepo.Save();
+        }
+
+        public void ApproveCancel(int bookingId)
+        {
+            var booking = _bookingRepo.GetById(bookingId);
+            if (booking == null) throw new Exception("Không tìm thấy booking.");
+
+            if (booking.Status != BookingStatus.CancellationPending)
+                throw new Exception("Booking này không ở trạng thái chờ duyệt hủy.");
+
+            // Tính % hoàn tiền dựa trên thời gian yêu cầu hủy
+            var requestedAt = booking.CancellationRequestedAt ?? booking.CreatedAt;
+            var hoursElapsed = (DateTime.UtcNow - requestedAt).TotalHours;
+            // Dùng CreatedAt làm mốc: nếu hủy trong 24h kể từ lúc đặt thì 100%, ngược lại 70%
+            var hoursSinceBooking = (requestedAt - booking.CreatedAt).TotalHours;
+
+            decimal refundPercent = hoursSinceBooking <= 24 ? 1.0m : 0.7m;
+            decimal refundAmount = Math.Round(booking.TotalAmount * refundPercent, 0);
+
+            booking.RefundAmount = refundAmount;
+            booking.Status = BookingStatus.Cancelled;
+            _bookingRepo.Save();
+
+            // Cộng tiền vào ví khách
+            if (refundAmount > 0)
+            {
+                string desc = hoursSinceBooking <= 24
+                    ? $"Hoàn 100% tiền booking #{bookingId}"
+                    : $"Hoàn 70% tiền booking #{bookingId}";
+                _walletService.AddBalance(booking.CustomerId, refundAmount, desc);
+            }
         }
 
     }

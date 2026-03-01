@@ -1,10 +1,9 @@
 using BusinessObjects.Entities;
+using Microsoft.EntityFrameworkCore;
 using Repositories.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Repositories
 {
@@ -35,6 +34,20 @@ namespace Repositories
         public void Save()
         {
             _context.SaveChanges();
+        }
+
+        public void AddTransaction(WalletTransaction transaction)
+        {
+            _context.WalletTransactions.Add(transaction);
+        }
+
+        public List<WalletTransaction> GetTransactionsByUserId(string userId)
+        {
+            return _context.WalletTransactions
+                .Include(t => t.Wallet)
+                .Where(t => t.Wallet != null && t.Wallet.UserId == userId)
+                .OrderByDescending(t => t.CreatedAt)
+                .ToList();
         }
     }
 }
