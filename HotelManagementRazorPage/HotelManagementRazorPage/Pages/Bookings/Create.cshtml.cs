@@ -15,13 +15,15 @@ namespace HotelManagementRazorPage.Pages.Bookings
         private readonly IBookingService _bookingService;
         private readonly IVnPayService _vnPayService;
         private readonly IWalletService _walletService;
+        private readonly ISignalRService _signalRService;
 
-        public CreateModel(IRoomService roomService, IBookingService bookingService, IVnPayService vnPayService, IWalletService walletService)
+        public CreateModel(IRoomService roomService, IBookingService bookingService, IVnPayService vnPayService, IWalletService walletService, ISignalRService signalRService)
         {
             _roomService = roomService;
             _bookingService = bookingService;
             _vnPayService = vnPayService;
             _walletService = walletService;
+            _signalRService = signalRService;
         }
 
         public Room Room { get; set; }
@@ -123,7 +125,8 @@ namespace HotelManagementRazorPage.Pages.Bookings
                     }
                 }
 
-                // Tiền mặt thì sang Success luôn
+                // Tiền mặt: xác nhận booking và broadcast qua SignalR
+                _bookingService.ConfirmPayment(bookingId, "CASH");
                 return RedirectToPage("Success", new { id = bookingId });
             }
             catch (Exception ex)

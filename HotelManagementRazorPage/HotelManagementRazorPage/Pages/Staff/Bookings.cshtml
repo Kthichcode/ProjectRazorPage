@@ -207,5 +207,124 @@
         .btn-checkin { background: #D1FAE5; color: #0D7055; } .btn-checkin:hover { background: #0D7055; color: #fff; }
         .btn-checkout { background: #FEF3C7; color: #92400E; } .btn-checkout:hover { background: #B45309; color: #fff; }
         .btn-detail { background: #F1F5F9; color: #64748B; } .btn-detail:hover { background: #E2E8F0; color: #1E293B; }
+
+        /* ── SignalR: New booking row animation ── */
+        @@keyframes newRowSlide {
+            from { background: #D1FAE5; transform: translateX(-8px); opacity: 0.5; }
+            to   { background: transparent; transform: translateX(0); opacity: 1; }
+        }
+        .new-booking-row { animation: newRowSlide 1.2s ease-out forwards; }
+
+        /* ── SignalR: Toast notification ── */
+        #bookingToastContainer {
+            position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999;
+            display: flex; flex-direction: column; gap: 0.75rem; pointer-events: none;
+        }
+        .booking-toast {
+            pointer-events: all;
+            background: #fff; border-radius: 14px; padding: 1rem 1.2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12); border-left: 4px solid #0D7055;
+            min-width: 300px; max-width: 360px;
+            animation: toastIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+        }
+        @@keyframes toastIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to   { transform: translateX(0);    opacity: 1; }
+        }
+        @@keyframes toastOut {
+            from { transform: translateX(0);    opacity: 1; }
+            to   { transform: translateX(120%); opacity: 0; }
+        }
+        .booking-toast.hiding { animation: toastOut 0.3s ease-in forwards; }
     </style>
 }
+
+<!-- Toast container -->
+<div id="bookingToastContainer"></div>
+
+@section Scripts {
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/roomHub")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("ReceiveNewBooking", function (bookingId, customerName, phoneNumber, roomNumbers, totalAmount, checkIn, checkOut, createdAt) {
+            const data = { bookingId, customerName, phoneNumber, roomNumbers, totalAmount, checkIn, checkOut, createdAt };
+            showBookingToast(data);
+            prependBookingRow(data);
+        });
+
+        connection.start().catch(err => console.error("SignalR error:", err));
+
+        function formatCurrency(n) {
+            return Number(n).toLocaleString('vi-VN') + '₫';
+        }
+
+        function showBookingToast(data) {
+            const container = document.getElementById('bookingToastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'booking-toast';
+            toast.innerHTML = `
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="fa-solid fa-bell text-success"></i>
+                    <span style="font-weight:800;font-size:.85rem;color:#0D7055;">ĐƠN ĐẶT PHÒNG MỚI</span>
+                    <span style="margin-left:auto;font-size:.7rem;color:#94A3B8;">${data.createdAt}</span>
+                </div>
+                <div style="font-weight:700;font-size:.9rem;color:#1E293B;">${data.customerName}</div>
+                <div style="font-size:.78rem;color:#64748B;">
+                    Phòng <strong>${data.roomNumbers}</strong> &nbsp;·&nbsp;
+                    ${data.checkIn} → ${data.checkOut}
+                </div>
+                <div style="font-size:.78rem;color:#0D7055;font-weight:800;margin-top:.3rem;">${formatCurrency(data.totalAmount)}</div>
+            `;
+            container.prepend(toast);
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => toast.remove(), 350);
+            }, 5000);
+        }
+
+        function prependBookingRow(data) {
+            const tbody = document.querySelector('.premium-table tbody');
+            if (!tbody) return;
+
+            // Remove "no data" row if present
+            const emptyRow = tbody.querySelector('td[colspan="7"]');
+            if (emptyRow) emptyRow.closest('tr').remove();
+
+            const initials = data.customerName ? data.customerName.charAt(0).toUpperCase() : '?';
+            const tr = document.createElement('tr');
+            tr.className = 'new-booking-row';
+            tr.innerHTML = `
+                <td class="ps-4"><span class="booking-id">#${data.bookingId}</span></td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-sm me-3">${initials}</div>
+                        <div>
+                            <div class="table-cust-name">${data.customerName}</div>
+                            <div class="table-cust-phone text-muted small"><i class="fa-solid fa-phone-flip me-1"></i>${data.phoneNumber || '—'}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="room-pill">P.${data.roomNumbers}</span></td>
+                <td>
+                    <div class="stay-date">
+                        <span class="d-block fw-bold" style="font-size:.85rem;">${data.checkIn}</span>
+                        <span class="d-block text-muted" style="font-size:.75rem;">Đến ${data.checkOut}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="amount-cell">
+                        <span class="d-block fw-bold text-dark">${formatCurrency(data.totalAmount)}</span>
+                        <span class="badge bg-light text-success border border-success-subtle py-1 px-2" style="font-size:.6rem;">Đã thanh toán</span>
+                    </div>
+                </td>
+                <td><span class="status-indicator st-confirmed">CHỜ NHẬN</span></td>
+                <td class="text-end pe-4"></td>
+            `;
+            tbody.prepend(tr);
+        }
+    </script>
+}
+

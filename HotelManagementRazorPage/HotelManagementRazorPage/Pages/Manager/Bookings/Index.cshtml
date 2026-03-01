@@ -37,6 +37,7 @@
                         <option value="3" selected="@(Model.FilterStatus == BusinessObjects.Enums.BookingStatus.CheckedIn)">Đang ở</option>
                         <option value="4" selected="@(Model.FilterStatus == BusinessObjects.Enums.BookingStatus.Completed)">Hoàn thành</option>
                         <option value="5" selected="@(Model.FilterStatus == BusinessObjects.Enums.BookingStatus.Cancelled)">Đã hủy</option>
+                        <option value="6" selected="@(Model.FilterStatus == BusinessObjects.Enums.BookingStatus.CancellationPending)">Chờ duyệt hủy</option>
                     </select>
                 </div>
                 <div class="col-sm-6 col-lg-3">
@@ -132,6 +133,11 @@
                                         break;
                                     case BusinessObjects.Enums.BookingStatus.Cancelled:
                                         <span class="status-badge badge-cancelled">Đã hủy</span>
+                                        break;
+                                    case BusinessObjects.Enums.BookingStatus.CancellationPending:
+                                        <span class="status-badge" style="background:#FEF3C7;color:#92400E;border:1px solid #F59E0B;">
+                                            <i class="fa-solid fa-clock me-1"></i>Chờ duyệt hủy
+                                        </span>
                                         break;
                                 }
                             </td>

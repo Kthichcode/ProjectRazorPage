@@ -18,5 +18,8 @@ namespace Repositories.Interfaces
         void Save();
 
         public List<Booking> GetByCustomerPhoneNumber(string phoneNumber);
+
+        /// Returns true if the given room already has an active (non-cancelled, non-completed) booking that overlaps [checkIn, checkOut)
+        bool HasOverlapBooking(int roomId, DateTime checkIn, DateTime checkOut, int? excludeBookingId = null);
     }
 }

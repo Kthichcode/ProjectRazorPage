@@ -17,5 +17,20 @@ namespace HotelManagementRazorPage.Services
         {
             await _hubContext.Clients.All.SendAsync("ReceiveStatusUpdate", message);
         }
+
+        public async Task SendNewBooking(int bookingId, string customerName, string phoneNumber, string roomNumbers, decimal totalAmount, DateTime checkIn, DateTime checkOut)
+        {
+            await _hubContext.Clients.All.SendAsync(
+                "ReceiveNewBooking",
+                bookingId,
+                customerName,
+                phoneNumber,
+                roomNumbers,
+                (long)totalAmount,
+                checkIn.ToString("dd/MM/yyyy"),
+                checkOut.ToString("dd/MM/yyyy"),
+                DateTime.Now.ToString("HH:mm dd/MM")
+            );
+        }
     }
 }

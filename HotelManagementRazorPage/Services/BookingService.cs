@@ -41,16 +41,10 @@ namespace Services
             var room = _roomRepo.GetById(roomId);
             if (room == null) throw new Exception("Không tìm thấy phòng.");
 
-            foreach (var br in room.BookingRooms)
+            // 2. Check for conflicting bookings via direct DB query (navigation property is not loaded here)
+            if (_bookingRepo.HasOverlapBooking(roomId, checkIn, checkOut))
             {
-                var b = br.Booking;
-                if (b == null) continue;
-                if (b.Status == BookingStatus.Cancelled || b.Status == BookingStatus.Completed) continue;
-                
-                if (checkIn < b.CheckOutDate && checkOut > b.CheckInDate)
-                {
-                    throw new Exception("Phòng này đã được đặt trong thời gian bạn chọn.");
-                }
+                throw new Exception("Phòng này đã được đặt trong thời gian bạn chọn.");
             }
 
             // 3. Calculate Total Amount
@@ -148,8 +142,9 @@ namespace Services
 
                 _paymentRepo.Add(payment);
                 _paymentRepo.Save();
-                
                  _bookingRepo.Save();
+
+                BroadcastConfirmedBooking(bookingId);
             }
         }
         public void RecordPayment(int bookingId, decimal amount, string method, string transactionId)
@@ -190,6 +185,8 @@ namespace Services
             _paymentRepo.Add(payment);
             _paymentRepo.Save();
             _bookingRepo.Save();
+
+            BroadcastConfirmedBooking(bookingId);
         }
 
         public void SaveBookingChanges(int bookingId, Booking updatedBooking)
@@ -244,8 +241,29 @@ namespace Services
 
             _paymentRepo.Save();
             _bookingRepo.Save();
+
+            BroadcastConfirmedBooking(bookingId);
         }
-        public List<Booking> GetFilteredBookings(DateTime? date, BookingStatus? status, string phoneNumber, int? roomId = null)
+
+        private void BroadcastConfirmedBooking(int bookingId)
+        {
+            try
+            {
+                var b = _bookingRepo.GetById(bookingId);
+                if (b == null) return;
+                string customerName = b.Customer?.FullName ?? b.Customer?.UserName ?? "Khách hàng";
+                string phoneNumber  = b.Customer?.PhoneNumber ?? "";
+                string roomNums = b.BookingRooms.Any()
+                    ? string.Join(", ", b.BookingRooms.Select(br => br.Room?.RoomNumber ?? "?"))
+                    : "?";
+                _signalRService.SendNewBooking(
+                    b.Id, customerName, phoneNumber, roomNums, b.TotalAmount, b.CheckInDate, b.CheckOutDate
+                ).Wait();
+            }
+            catch { /* never break main flow */ }
+        }
+
+ public List<Booking> GetFilteredBookings(DateTime? date, BookingStatus? status, string phoneNumber, int? roomId = null)
         {
             var query = _bookingRepo.GetQuery();
 

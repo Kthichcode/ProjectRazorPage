@@ -73,6 +73,15 @@ namespace Repositories
         }
 
 
+        public bool HasOverlapBooking(int roomId, DateTime checkIn, DateTime checkOut, int? excludeBookingId = null)
+        {
+            return _context.Bookings
+                .Where(b => b.BookingRooms.Any(br => br.RoomId == roomId))
+                .Where(b => b.Status != BookingStatus.Cancelled && b.Status != BookingStatus.Completed)
+                .Where(b => excludeBookingId == null || b.Id != excludeBookingId.Value)
+                .Any(b => checkIn < b.CheckOutDate && checkOut > b.CheckInDate);
+        }
+
         public void Save()
         {
             _context.SaveChanges();
