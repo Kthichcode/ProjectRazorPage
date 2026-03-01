@@ -240,29 +240,20 @@
 
                 <hr class="divider" />
 
-                @if (avail)
+                @if (User.Identity?.IsAuthenticated == true)
                 {
-                    @if (User.Identity?.IsAuthenticated == true)
-                    {
-                        <a asp-page="/Bookings/Create" asp-route-roomId="@Model.Room?.Id" class="btn-book-big">
-                            <i class="fa-solid fa-calendar-check"></i> Đặt phòng ngay
-                        </a>
-                    }
-                    else
-                    {
-                        <a asp-page="/Account/Login" class="btn-book-big">
-                            <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập để đặt phòng
-                        </a>
-                        <p style="text-align:center;font-size:.78rem;color:var(--text-sub);margin-top:.6rem;">
-                            Chưa có tài khoản? <a asp-page="/Account/Register" style="color:var(--primary);font-weight:600;">Đăng ký miễn phí</a>
-                        </p>
-                    }
+                    <a asp-page="/Bookings/Create" asp-route-roomId="@Model.Room?.Id" class="btn-book-big">
+                        <i class="fa-solid fa-calendar-check"></i> Đặt phòng ngay
+                    </a>
                 }
                 else
                 {
-                    <button disabled class="btn-book-big" style="background:#94A3B8;cursor:not-allowed;">
-                        <i class="fa-solid fa-ban"></i> Phòng không trống
-                    </button>
+                    <a asp-page="/Account/Login" class="btn-book-big">
+                        <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập để đặt phòng
+                    </a>
+                    <p style="text-align:center;font-size:.78rem;color:var(--text-sub);margin-top:.6rem;">
+                        Chưa có tài khoản? <a asp-page="/Account/Register" style="color:var(--primary);font-weight:600;">Đăng ký miễn phí</a>
+                    </p>
                 }
 
                 <hr class="divider" />

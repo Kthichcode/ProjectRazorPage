@@ -25,6 +25,6 @@ namespace Services.Interfaces
         bool IsRoomNumberExists(string roomNumber);
         bool IsRoomNumberExistsExceptId(string roomNumber, int roomId);
 
-
+        List<Room> GetAllWithBookings();
     }
 }

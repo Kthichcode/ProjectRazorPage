@@ -36,11 +36,6 @@ namespace Services
             {
                 Room r = rooms[i];
 
-                if (r.Status != RoomStatus.Available)
-                {
-                    continue;
-                }
-
                 if (roomTypeId.HasValue && r.RoomTypeId != roomTypeId.Value)
                 {
                     continue;
@@ -50,15 +45,14 @@ namespace Services
 
                 for (int j = 0; j < r.BookingRooms.Count; j++)
                 {
-                    Booking booking = r.BookingRooms.ElementAt(j).Booking!;
+                    var b = r.BookingRooms.ElementAt(j).Booking!;
 
-                    if (booking.Status != BookingStatus.Confirmed && booking.Status != BookingStatus.CheckedIn)
+                    if (b.Status == BookingStatus.Cancelled || b.Status == BookingStatus.Completed)
                     {
                         continue;
                     }
 
-                    // overlap condition
-                    if (checkIn < booking.CheckOutDate && checkOut > booking.CheckInDate)
+                    if (checkIn < b.CheckOutDate && checkOut > b.CheckInDate)
                     {
                         isOverlap = true;
                         break;
@@ -89,14 +83,14 @@ namespace Services
         {
             if (room.RoomNumber == null)
             {
-                throw new Exception("Room number is required");
+                throw new Exception("Số phòng là bắt buộc.");
             }
 
             room.RoomNumber = room.RoomNumber.Trim();
 
             if (_roomRepo.ExistsRoomNumber(room.RoomNumber))
             {
-                throw new Exception("Room number already exists");
+                throw new Exception("Số phòng này đã tồn tại.");
             }
 
             _roomRepo.Add(room);
@@ -107,14 +101,14 @@ namespace Services
         {
             if (room.RoomNumber == null)
             {
-                throw new Exception("Room number is required");
+                throw new Exception("Số phòng là bắt buộc.");
             }
 
             room.RoomNumber = room.RoomNumber.Trim();
 
             if (_roomRepo.ExistsRoomNumberExceptId(room.RoomNumber, room.Id))
             {
-                throw new Exception("Room number already exists");
+                throw new Exception("Số phòng này đã tồn tại.");
             }
 
             _roomRepo.Update(room);
@@ -199,6 +193,11 @@ namespace Services
         {
             if (roomNumber == null) return false;
             return _roomRepo.ExistsRoomNumberExceptId(roomNumber.Trim(), roomId);
+        }
+
+        public List<Room> GetAllWithBookings()
+        {
+            return _roomRepo.GetAllWithBookings();
         }
     }
 }

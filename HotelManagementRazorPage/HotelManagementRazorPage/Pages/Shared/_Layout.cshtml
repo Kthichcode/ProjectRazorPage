@@ -206,7 +206,16 @@
                                    style="background:#0D7055;color:#fff!important;border-radius:8px;padding:.38rem 1rem;font-size:.875rem;font-weight:600;border:1.5px solid #0D7055;transition:all .2s;"
                                    onmouseover="this.style.background='#085C44';this.style.borderColor='#085C44';"
                                    onmouseout="this.style.background='#0D7055';this.style.borderColor='#0D7055';">
-                                    <i class="fa-solid fa-user-tie me-1"></i>Manager
+                                    <i class="fa-solid fa-user-tie me-1"></i>Quản lý
+                                </a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Staff"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-page="/Staff/RoomDashboard"
+                                   style="background:var(--primary);color:#fff!important;border-radius:8px;padding:.38rem 1rem;font-size:.875rem;font-weight:600;border:1.5px solid var(--primary);transition:all .2s;">
+                                    <i class="fa-solid fa-user-gear me-1"></i>Nhân viên
                                 </a>
                             </li>
                         }

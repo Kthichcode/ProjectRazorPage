@@ -36,8 +36,10 @@ builder.Services.AddScoped<Services.Interfaces.IDashboardService, Services.Dashb
 
 // AI Chat Service
 builder.Services.AddScoped<IAiChatService, AiChatService>();
+builder.Services.AddScoped<ISignalRService, HotelManagementRazorPage.Services.SignalRService>();
 
 builder.Services.AddRazorPages();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -56,6 +58,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
+app.MapHub<HotelManagementRazorPage.Hubs.RoomHub>("/roomHub");
 
 // ── SEED ADMIN ACCOUNT ──────────────────────────────────────────────
 await SeedAdminAsync(app);
@@ -118,4 +121,33 @@ static async Task SeedAdminAsync(WebApplication app)
     }
     if (!await userManager.IsInRoleAsync(managerUser, managerRole))
         await userManager.AddToRoleAsync(managerUser, managerRole);
+
+    // ── Seed Staff ──
+    const string staffRole = "Staff";
+    if (!await roleManager.RoleExistsAsync(staffRole))
+        await roleManager.CreateAsync(new IdentityRole(staffRole));
+
+    for (int i = 1; i <= 3; i++)
+    {
+        string staffName = $"Staff{i}";
+        var staffUser = await userManager.FindByNameAsync(staffName);
+        if (staffUser == null)
+        {
+            staffUser = new ApplicationUser
+            {
+                UserName = staffName,
+                Email = $"staff{i}@muongthanh.com",
+                EmailConfirmed = true,
+                FullName = $"Nhân viên {i}"
+            };
+            var result = await userManager.CreateAsync(staffUser, "Staff123@");
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new Exception($"Không thể tạo tài khoản {staffName}: {errors}");
+            }
+        }
+        if (!await userManager.IsInRoleAsync(staffUser, staffRole))
+            await userManager.AddToRoleAsync(staffUser, staffRole);
+    }
 }

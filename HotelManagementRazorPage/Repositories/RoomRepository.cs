@@ -66,6 +66,7 @@ namespace Repositories
         {
             return _context.Rooms
                  .Include(r => r.RoomType)
+                 .Include(r => r.RoomImages)
                  .Include(r => r.BookingRooms)
                      .ThenInclude(br => br.Booking)
                  .ToList();

@@ -33,7 +33,7 @@
 
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <form method="post">
+                    <form method="post" id="bookingForm">
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Ngày nhận phòng</label>
@@ -76,46 +76,71 @@
 <!-- Cancellation Policy Modal -->
 <div class="modal fade" id="cancellationPolicyModal" tabindex="-1" aria-labelledby="policyModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius:16px;overflow:hidden;border:none;">
-            <div class="modal-header" style="background:linear-gradient(135deg,#1D4ED8,#2563EB);color:#fff;border:none;">
-                <h5 class="modal-title fw-bold" id="policyModalLabel">
-                    <i class="fa-solid fa-file-contract me-2"></i>Chính sách hủy phòng
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+            <div class="modal-header border-0 p-4" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6);">
+                <div class="d-flex align-items-center">
+                    <div class="bg-white bg-opacity-25 rounded-circle p-2 me-3">
+                        <i class="fa-solid fa-shield-halved text-white" style="font-size: 1.25rem;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold text-white mb-0" id="policyModalLabel">Xác nhận chính sách</h5>
+                        <p class="text-white text-opacity-75 mb-0" style="font-size: 0.8rem;">Vui lòng kiểm tra kỹ thông tin trước khi thanh toán</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4">
-                <p class="text-muted mb-3">Vui lòng đọc kỹ chính sách hoàn tiền trước khi xác nhận:</p>
-                <div class="d-flex gap-3 mb-3 align-items-start p-3" style="background:#D1FAE5;border-radius:10px;">
-                    <div style="font-size:1.8rem;">&#x2705;</div>
-                    <div>
-                        <div class="fw-bold text-success">Hủy trong vòng 24h kể từ khi đặt</div>
-                        <div class="text-muted" style="font-size:.9rem;">Bạn được hoàn <strong>100%</strong> số tiền vào ví, sau khi manager duyệt.</div>
+            <div class="modal-body p-4 bg-light">
+                <div class="policy-section mb-3 bg-white p-3 rounded-4 border-start border-4 border-success shadow-sm">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fa-solid fa-circle-check text-success me-2"></i>
+                        <span class="fw-bold text-success">Đối với yêu cầu hủy trong 24h</span>
                     </div>
+                    <p class="text-muted mb-0 small">Bạn được <strong>hoàn tiền 100%</strong> vào ví thành viên sau khi yêu cầu được Manager phê duyệt.</p>
                 </div>
-                <div class="d-flex gap-3 mb-3 align-items-start p-3" style="background:#FEF3C7;border-radius:10px;">
-                    <div style="font-size:1.8rem;">&#x26A0;&#xFE0F;</div>
-                    <div>
-                        <div class="fw-bold" style="color:#92400E;">Hủy sau 24h kể từ khi đặt</div>
-                        <div class="text-muted" style="font-size:.9rem;">Bạn chỉ được hoàn <strong>70%</strong> số tiền vào ví, sau khi manager duyệt.</div>
+
+                <div class="policy-section mb-3 bg-white p-3 rounded-4 border-start border-4 border-warning shadow-sm">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fa-solid fa-circle-exclamation text-warning me-2"></i>
+                        <span class="fw-bold text-warning">Đối với yêu cầu hủy sau 24h</span>
                     </div>
+                    <p class="text-muted mb-0 small">Phí hủy phòng là 30%. Bạn sẽ được <strong>hoàn tiền 70%</strong> vào ví thành viên.</p>
                 </div>
-                <div class="d-flex gap-3 align-items-start p-3" style="background:#F3F4F6;border-radius:10px;">
-                    <div style="font-size:1.8rem;">&#x1F4CB;</div>
-                    <div>
-                        <div class="fw-bold">Quy trình hủy</div>
-                        <div class="text-muted" style="font-size:.9rem;">Việc hủy cần được manager phê duyệt. Tiền sẽ được hoàn vào <strong>ví điện tử</strong> trong hệ thống (không hoàn về thẻ/ngân hàng).</div>
+
+                <div class="policy-section bg-white p-3 rounded-4 border-start border-4 border-primary shadow-sm">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fa-solid fa-circle-info text-primary me-2"></i>
+                        <span class="fw-bold text-primary">Thông tin quan trọng</span>
                     </div>
+                    <ul class="text-muted mb-0 small ps-3">
+                        <li>Tiền hoàn chỉ áp dụng cho ví trong hệ thống.</li>
+                        <li>Yêu cầu hủy cần được quản lý kiểm tra và duyệt.</li>
+                    </ul>
                 </div>
             </div>
-            <div class="modal-footer border-0 px-4 pb-4 pt-0">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Xem lại</button>
-                <button type="button" class="btn btn-primary btn-lg px-4" id="agreeAndPayBtn">
-                    <i class="fa-solid fa-lock me-1"></i>Đồng ý &amp; Thanh toán
-                </button>
+            <div class="modal-footer border-0 p-4 pt-0 bg-light">
+                <div class="d-flex w-100 gap-2">
+                    <button type="button" class="btn btn-outline-secondary w-100 py-2 fw-semibold" style="border-radius: 12px;" data-bs-dismiss="modal">Xem lại</button>
+                    <button type="button" class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2" 
+                            id="agreeAndPayBtn" style="border-radius: 12px; background: #1e3a8a; border: none; box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);">
+                        <i class="fa-solid fa-credit-card"></i>
+                        Đồng ý & Thanh toán
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .rounded-4 { border-radius: 12px !important; }
+    #cancellationPolicyModal .modal-content {
+        animation: modalSlideUp 0.3s ease-out;
+    }
+    @@keyframes modalSlideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
 
 @section Scripts {
     <script>
@@ -157,7 +182,7 @@
 
         // Wire modal "Agree and Pay" button to submit the form
         document.getElementById('agreeAndPayBtn').addEventListener('click', function () {
-            document.querySelector('form').submit();
+            document.getElementById('bookingForm').submit();
         });
     </script>
 }

@@ -473,8 +473,8 @@
                                     bool avail = room.Status == BusinessObjects.Enums.RoomStatus.Available;
                                 }
                                 <span class="badge-avail @(avail ? "yes" : "no")">
-                                    <i class="fa-solid @(avail ? "fa-circle-check" : "fa-circle-xmark") me-1"></i>
-                                    @(avail ? "Còn phòng" : "Đã đặt")
+                                    <i class="fa-solid @(avail ? "fa-circle-check" : "fa-clock") me-1"></i>
+                                    @(avail ? "Còn phòng" : "Đặt ngay")
                                 </span>
                             </div>
                             <div class="room-body">
