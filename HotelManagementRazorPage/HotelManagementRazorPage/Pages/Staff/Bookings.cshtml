@@ -1,0 +1,83 @@
+@page
+@model HotelManagementRazorPage.Pages.Staff.BookingsModel
+@{
+    ViewData["Title"] = "Quản lý Đặt phòng";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Danh sách Đặt phòng chờ Check-In</h2>
+        <a href="/Staff/RoomDashboard" class="btn btn-outline-primary">Xem Sơ đồ phòng</a>
+    </div>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Message"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã Booking</th>
+                            <th>Khách hàng</th>
+                            <th>Số phòng</th>
+                            <th>Ngày Check-In</th>
+                            <th>Ngày Check-Out</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Bookings.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-3">Không có booking nào đang chờ Check-In hôm nay.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var b in Model.Bookings)
+                            {
+                                <tr>
+                                    <td>#@b.Id</td>
+                                    <td>@(b.Customer?.FullName ?? b.CustomerId)</td>
+                                    <td>
+                                        @foreach(var br in b.BookingRooms) {
+                                            <span class="badge bg-info text-dark">@br.Room?.RoomNumber</span>
+                                        }
+                                    </td>
+                                    <td>@b.CheckInDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@b.CheckOutDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="text-danger fw-bold">@b.TotalAmount.ToString("#,##0") đ</td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark">@b.Status</span>
+                                    </td>
+                                    <td>
+                                        <form method="post" asp-page-handler="CheckIn" class="d-inline">
+                                            <input type="hidden" name="bookingId" value="@b.Id" />
+                                            <!-- Mặc định chọn phòng đầu tiên trong booking. Cần custom nếu 1 booking nhiều phòng -->
+                                            @{
+                                                var firstRoomId = b.BookingRooms.FirstOrDefault()?.RoomId ?? 0;
+                                            }
+                                            <input type="hidden" name="roomId" value="@firstRoomId" />
+                                            <button type="submit" class="btn btn-sm btn-success" disabled="@(firstRoomId == 0)">
+                                                Check-In
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -12,7 +12,7 @@ namespace BusinessObjects.Entities
     {
         public int Id { get; set; }
 
-        [Required] public string RoomNumber { get; set; } = "";
+        [Required(ErrorMessage = "Số phòng không được để trống.")] public string RoomNumber { get; set; } = "";
 
         public RoomStatus Status { get; set; } = RoomStatus.Available;
 

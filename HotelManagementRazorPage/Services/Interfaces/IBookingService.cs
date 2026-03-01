@@ -19,7 +19,7 @@ namespace Services.Interfaces
         void ConfirmPayment(int bookingId, string transactionId);
         void RecordPayment(int bookingId, decimal amount, string method, string transactionId);
         
-        List<Booking> GetFilteredBookings(DateTime? date, BookingStatus? status, string phoneNumber);
+        List<Booking> GetFilteredBookings(DateTime? date, BookingStatus? status, string phoneNumber, int? roomId = null);
         void UpdateStatus(int bookingId, BookingStatus newStatus);
 
         public List<Booking> SearchBookingsByPhoneNumber(string phoneNumber);

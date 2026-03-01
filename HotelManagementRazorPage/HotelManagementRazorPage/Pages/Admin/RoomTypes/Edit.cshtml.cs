@@ -30,7 +30,7 @@ namespace HotelManagementRazorPage.Pages.Admin.RoomTypes
 
             public string? Description { get; set; }
 
-            [Required]
+            [Required(ErrorMessage = "Vui lòng nhập giá phòng.")]
             [Range(0, 999999999, ErrorMessage = "Giá không hợp lệ.")]
             [Display(Name = "Giá / đêm")]
             public decimal PricePerNight { get; set; }

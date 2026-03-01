@@ -9,6 +9,7 @@ namespace BusinessObjects.Enums
     public enum RoomStatus
     {
         Available = 1,
-        Maintenance = 2
+        Maintenance = 2,
+        Occupied = 3
     }
 }

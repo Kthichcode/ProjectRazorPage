@@ -29,6 +29,8 @@ namespace Repositories
         {
             return _context.Rooms
                 .Include(r => r.RoomType)
+                .Include(r => r.BookingRooms)
+                    .ThenInclude(br => br.Booking)
                 .FirstOrDefault(r => r.Id == id);
         }
 
@@ -68,6 +70,7 @@ namespace Repositories
                  .Include(r => r.RoomType)
                  .Include(r => r.BookingRooms)
                      .ThenInclude(br => br.Booking)
+                        .ThenInclude(b => b.Customer)
                  .ToList();
         }
 

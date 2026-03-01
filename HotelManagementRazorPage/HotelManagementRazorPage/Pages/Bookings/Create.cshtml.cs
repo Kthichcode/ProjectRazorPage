@@ -38,7 +38,7 @@ namespace HotelManagementRazorPage.Pages.Bookings
         public IActionResult OnGet(int roomId)
         {
             Room = _roomService.GetById(roomId);
-            if (Room == null || Room.Status != RoomStatus.Available)
+            if (Room == null || Room.Status == RoomStatus.Maintenance)
             {
                 return RedirectToPage("/Rooms/Index");
             }
@@ -79,7 +79,12 @@ namespace HotelManagementRazorPage.Pages.Bookings
                     return Redirect(paymentUrl);
                 }
 
-                // Tiền mặt thì sang Success luôn
+                if (PaymentMethod == "Cash")
+                {
+                    _bookingService.UpdateStatus(bookingId, BookingStatus.Confirmed);
+                }
+
+                // Tiền mặt hoặc đã qua xử lý khác thì sang Success luôn
                 return RedirectToPage("Success", new { id = bookingId });
             }
             catch (Exception ex)

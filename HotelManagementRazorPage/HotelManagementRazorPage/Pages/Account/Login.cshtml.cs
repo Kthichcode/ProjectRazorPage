@@ -53,6 +53,21 @@ namespace HotelManagementRazorPage.Pages.Account
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User {UserName} logged in.", Input.UserName);
+
+                    // Nếu không có ReturnUrl hoặc ReturnUrl là trang chủ, điều hướng theo Role
+                    if (string.IsNullOrEmpty(returnUrl) || returnUrl == Url.Content("~/"))
+                    {
+                        var roles = await _accountService.GetUserRolesAsync(Input.UserName);
+                        if (roles.Contains("Admin"))
+                        {
+                            return RedirectToPage("/Admin/Index");
+                        }
+                        if (roles.Contains("Staff"))
+                        {
+                            return RedirectToPage("/Staff/RoomDashboard");
+                        }
+                    }
+
                     return LocalRedirect(ReturnUrl);
                 }
 
