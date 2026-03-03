@@ -231,3 +231,19 @@
         }
     </div>
 </section>
+
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script>
+        const roomConn = new signalR.HubConnectionBuilder()
+            .withUrl("/roomHub")
+            .withAutomaticReconnect()
+            .build();
+
+        roomConn.on("ReceiveRoomUpdate", function (action, roomNumber) {
+            window.location.reload();
+        });
+
+        roomConn.start().catch(err => console.error("SignalR room error:", err));
+    </script>
+}

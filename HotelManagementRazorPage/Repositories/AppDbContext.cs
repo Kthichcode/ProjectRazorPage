@@ -55,6 +55,13 @@ namespace Repositories
                 .WithOne(r => r.Booking)
                 .HasForeignKey<Review>(r => r.BookingId);
 
+            // Review - Room (many-to-one)
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Room)
+                .WithMany()
+                .HasForeignKey(r => r.RoomId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Booking - Customer (Many-to-One)
             modelBuilder.Entity<Booking>()
                 .HasOne(b => b.Customer)

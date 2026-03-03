@@ -358,6 +358,10 @@
                asp-page="/Manager/Rooms/Index">
                 <i class="fa-solid fa-bed"></i> Quản lý phòng
             </a>
+            <a class="sidebar-link @(ViewContext.RouteData.Values["page"]?.ToString() == "/Manager/Reviews" ? "active" : "")"
+               asp-page="/Manager/Reviews">
+                <i class="fa-solid fa-star"></i> Duyệt bình luận
+            </a>
 
             <div class="sidebar-section-label">Hệ thống</div>
             <a class="sidebar-link" asp-page="/Index">

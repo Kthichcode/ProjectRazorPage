@@ -1,20 +1,28 @@
 using BusinessObjects.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Services.Interfaces
 {
     public interface IReviewService
     {
-        int CreateReview(int bookingId, int rating, string? comment);
-        Review? GetById(int id);
-        Review? GetByBookingId(int bookingId);
-        List<Review> GetByRoomId(int roomId);
+        /// Submit a review for a booking (only if booking is Completed and no review exists yet)
+        void SubmitReview(int bookingId, int roomId, int rating, string? comment);
+
+        /// Manager: approve or reject a review
+        void SetApproval(int reviewId, bool approved);
+
+        /// Get all approved reviews for a room (public)
+        List<Review> GetApprovedByRoom(int roomId);
+
+        /// Get all pending reviews (manager)
+        List<Review> GetPending();
+
+        /// Get all reviews (manager)
         List<Review> GetAll();
-        bool CanReview(int bookingId, string userId);
+
+        /// Get review by booking id
+        Review? GetByBookingId(int bookingId);
+
+        /// Check if user can review a specific room 
+        bool CanUserReview(string userId, int roomId, out int eligibleBookingId);
     }
 }
-

@@ -10,10 +10,12 @@ namespace HotelManagementRazorPage.Pages.Manager.Rooms
     public class DeleteModel : PageModel
     {
         private readonly IRoomService _roomService;
+        private readonly ISignalRService _signalRService;
 
-        public DeleteModel(IRoomService roomService)
+        public DeleteModel(IRoomService roomService, ISignalRService signalRService)
         {
             _roomService = roomService;
+            _signalRService = signalRService;
         }
 
         public Room? Room { get; set; }
@@ -38,6 +40,7 @@ namespace HotelManagementRazorPage.Pages.Manager.Rooms
                 {
                     _roomService.Delete(RoomId);
                     TempData["Success"] = $"Phòng {room.RoomNumber} đã được xóa thành công.";
+                    try { _signalRService.SendRoomUpdate("deleted", room.RoomNumber).Wait(); } catch { }
                 }
                 catch (Exception ex)
                 {

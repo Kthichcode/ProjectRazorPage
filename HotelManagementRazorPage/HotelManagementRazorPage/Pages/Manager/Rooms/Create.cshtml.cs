@@ -15,12 +15,14 @@ namespace HotelManagementRazorPage.Pages.Manager.Rooms
         private readonly IRoomService _roomService;
         private readonly IRoomTypeService _roomTypeService;
         private readonly IWebHostEnvironment _env;
+        private readonly ISignalRService _signalRService;
 
-        public CreateModel(IRoomService roomService, IRoomTypeService roomTypeService, IWebHostEnvironment env)
+        public CreateModel(IRoomService roomService, IRoomTypeService roomTypeService, IWebHostEnvironment env, ISignalRService signalRService)
         {
             _roomService = roomService;
             _roomTypeService = roomTypeService;
             _env = env;
+            _signalRService = signalRService;
         }
 
         [BindProperty]
@@ -94,6 +96,7 @@ namespace HotelManagementRazorPage.Pages.Manager.Rooms
 
             TempData["Success"] = $"Phòng {room.RoomNumber} đã được thêm thành công" +
                                   (savedUrls.Count > 0 ? $" với {savedUrls.Count} ảnh." : ".");
+            try { await _signalRService.SendRoomUpdate("created", room.RoomNumber); } catch { }
             return RedirectToPage("/Manager/Rooms/Index");
         }
 

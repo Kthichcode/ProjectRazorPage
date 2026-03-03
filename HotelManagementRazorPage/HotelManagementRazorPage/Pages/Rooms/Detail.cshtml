@@ -270,6 +270,134 @@
 </div>
 
 <!-- Lightbox -->
+<div class="container pb-5">
+    <hr style="border-color:#E2EAF4;margin-bottom:2.5rem;" />
+
+    @if (Model.SuccessMessage != null)
+    {
+        <div class="alert alert-success alert-dismissible d-flex align-items-center gap-2 mb-4">
+            <i class="fa-solid fa-circle-check"></i><div>@Model.SuccessMessage</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (Model.ErrorMessage != null)
+    {
+        <div class="alert alert-danger alert-dismissible d-flex align-items-center gap-2 mb-4">
+            <i class="fa-solid fa-circle-exclamation"></i><div>@Model.ErrorMessage</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Reviews list -->
+        <div class="col-lg-7">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold mb-0" style="color:#1E293B;">
+                    <i class="fa-solid fa-star me-2" style="color:#F59E0B;"></i>Đánh giá từ khách hàng
+                    <span class="badge bg-primary ms-2" style="font-size:.7rem;">@Model.ApprovedReviews.Count</span>
+                </h5>
+                @if (Model.ApprovedReviews.Any())
+                {
+                    <span style="font-weight:700;font-size:1rem;color:#1565C0;">
+                        @Model.ApprovedReviews.Average(r => r.Rating).ToString("0.0")/5 ⭐
+                    </span>
+                }
+            </div>
+
+            @if (!Model.ApprovedReviews.Any())
+            {
+                <div class="text-center py-4" style="background:#F8FAFF;border-radius:12px;border:1px dashed #CBD5E1;">
+                    <i class="fa-regular fa-comment-dots fa-2x mb-2" style="color:#94A3B8;display:block;"></i>
+                    <p class="text-muted mb-0" style="font-size:.9rem;">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var review in Model.ApprovedReviews)
+                {
+                    var reviewer = review.Booking?.Customer?.FullName ?? review.Booking?.Customer?.UserName ?? "Khách";
+                    var initials = reviewer.Length > 0 ? reviewer[0].ToString().ToUpper() : "K";
+                    <div class="review-card mb-3">
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <div class="review-avatar">@initials</div>
+                            <div>
+                                <div style="font-weight:700;font-size:.9rem;color:#1E293B;">@reviewer</div>
+                                <div style="font-size:.75rem;color:#94A3B8;">@review.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</div>
+                            </div>
+                            <div class="ms-auto" style="font-size:.85rem;display:flex;gap:.15rem;">
+                                @for (int s = 1; s <= 5; s++) { <i class="fa-solid fa-star @(s <= review.Rating ? "text-warning" : "text-muted opacity-25")"></i> }
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(review.Comment)) {
+                            <p class="mb-0" style="font-size:.88rem;color:#475569;line-height:1.6;">@review.Comment</p>
+                        }
+                    </div>
+                }
+            }
+        </div>
+
+        <!-- Review form -->
+        <div class="col-lg-5">
+            @if (User.Identity?.IsAuthenticated == true && Model.CanReview)
+            {
+                <div class="review-form-card">
+                    <h6 class="fw-bold mb-3" style="color:#1565C0;"><i class="fa-solid fa-pen-to-square me-2"></i>Viết đánh giá</h6>
+                    <form method="post" asp-page-handler="Review" asp-route-id="@Model.Room!.Id">
+                        <input type="hidden" name="ReviewBookingId" value="@Model.EligibleBookingId" />
+                        <input type="hidden" name="ReviewRoomId" value="@Model.Room!.Id" />
+                        <div class="mb-3">
+                            <label style="font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748B;display:block;margin-bottom:.4rem;">Đánh giá</label>
+                            <div class="star-picker" id="starPicker">
+                                @for (int s = 1; s <= 5; s++) { <i class="fa-solid fa-star star-pick active" data-val="@s"></i> }
+                            </div>
+                            <input type="hidden" name="ReviewRating" id="ratingInput" value="5" />
+                        </div>
+                        <div class="mb-3">
+                            <label style="font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748B;display:block;margin-bottom:.4rem;">Nhận xét</label>
+                            <textarea name="ReviewComment" rows="4" maxlength="1000" required
+                                placeholder="Chia sẻ trải nghiệm của bạn..."
+                                style="width:100%;border:1.5px solid #CBD5E1;border-radius:10px;padding:.65rem .9rem;font-size:.88rem;resize:none;font-family:inherit;outline:none;transition:border-color .2s;"
+                                onfocus="this.style.borderColor='#1565C0'" onblur="this.style.borderColor='#CBD5E1'"></textarea>
+                        </div>
+                        <button type="submit" style="background:#1565C0;color:#fff;border:none;border-radius:10px;padding:.65rem;width:100%;font-weight:700;font-size:.9rem;cursor:pointer;transition:background .2s;"
+                            onmouseover="this.style.background='#0D47A1'" onmouseout="this.style.background='#1565C0'">
+                            <i class="fa-solid fa-paper-plane me-2"></i>Gửi đánh giá
+                        </button>
+                        <p class="text-muted mt-2 mb-0 text-center" style="font-size:.75rem;">
+                            <i class="fa-solid fa-clock me-1"></i>Chờ quản lý duyệt trước khi hiển thị
+                        </p>
+                    </form>
+                </div>
+            }
+            else if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="review-form-card text-center" style="background:#F8FAFF;">
+                    <i class="fa-solid fa-lock fa-2x mb-3" style="color:#94A3B8;display:block;"></i>
+                    <p class="mb-0" style="font-size:.88rem;color:#64748B;">Chỉ khách đã <strong>trả phòng</strong> mới có thể để lại đánh giá.</p>
+                </div>
+            }
+            else
+            {
+                <div class="review-form-card text-center" style="background:#F8FAFF;">
+                    <i class="fa-solid fa-right-to-bracket fa-2x mb-3" style="color:#1565C0;display:block;"></i>
+                    <p class="mb-2" style="font-size:.88rem;color:#64748B;">Đăng nhập để viết đánh giá</p>
+                    <a asp-page="/Account/Login" class="btn btn-primary btn-sm fw-bold px-4">Đăng nhập</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .review-card { background:#fff;border:1px solid #E2EAF4;border-radius:12px;padding:1.1rem 1.2rem;box-shadow:0 2px 8px rgba(21,101,192,.04); }
+    .review-avatar { width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#1565C0,#42A5F5);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0; }
+    .review-form-card { background:#fff;border:1px solid #E2EAF4;border-radius:14px;padding:1.5rem;box-shadow:0 4px 16px rgba(21,101,192,.07); }
+    .star-picker { display:flex;gap:.4rem;font-size:1.6rem;cursor:pointer;margin-bottom:.5rem; }
+    .star-pick { color:#CBD5E1;transition:color .15s; }
+    .star-pick.active { color:#F59E0B; }
+</style>
+
+<!-- Lightbox -->
 <div id="lightbox">
     <span class="lb-close" onclick="closeLightbox()">&times;</span>
     <img id="lbImg" src="" alt="Ảnh phòng" />
@@ -294,5 +422,25 @@
         if (e.target === this) closeLightbox();
     });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+    // ── Star picker ──
+    const stars = document.querySelectorAll('.star-pick');
+    if (stars.length) {
+        stars.forEach(star => {
+            star.addEventListener('click', function () {
+                const val = parseInt(this.dataset.val);
+                document.getElementById('ratingInput').value = val;
+                stars.forEach((s, i) => s.classList.toggle('active', i < val));
+            });
+            star.addEventListener('mouseenter', function () {
+                const val = parseInt(this.dataset.val);
+                stars.forEach((s, i) => s.style.color = i < val ? '#F59E0B' : '#CBD5E1');
+            });
+        });
+        document.getElementById('starPicker')?.addEventListener('mouseleave', function () {
+            const val = parseInt(document.getElementById('ratingInput').value);
+            stars.forEach((s, i) => { s.style.color = ''; s.classList.toggle('active', i < val); });
+        });
+    }
 </script>
 }

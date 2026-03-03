@@ -2,11 +2,6 @@ using BusinessObjects.Entities;
 using BusinessObjects.Enums;
 using Repositories.Interfaces;
 using Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Services
 {
@@ -21,71 +16,72 @@ namespace Services
             _bookingRepo = bookingRepo;
         }
 
-        public bool CanReview(int bookingId, string userId)
+        public void SubmitReview(int bookingId, int roomId, int rating, string? comment)
         {
-            var booking = _bookingRepo.GetById(bookingId);
-            if (booking == null) return false;
-            
-            // Chỉ cho phép review khi booking đã Completed và thuộc về user này
-            if (booking.Status != BookingStatus.Completed) return false;
-            if (booking.CustomerId != userId) return false;
-            
-            // Kiểm tra xem đã có review chưa
-            var existingReview = _reviewRepo.GetByBookingId(bookingId);
-            return existingReview == null;
-        }
+            var booking = _bookingRepo.GetById(bookingId)
+                ?? throw new Exception("Không tìm thấy đơn đặt phòng.");
 
-        public int CreateReview(int bookingId, int rating, string? comment)
-        {
-            var booking = _bookingRepo.GetById(bookingId);
-            if (booking == null) throw new Exception("Không tìm thấy đơn đặt phòng.");
-            
-            // Kiểm tra booking đã Completed chưa
             if (booking.Status != BookingStatus.Completed)
-                throw new Exception("Chỉ có thể đánh giá các đặt phòng đã hoàn thành.");
-            
-            // Kiểm tra đã có review chưa
-            var existingReview = _reviewRepo.GetByBookingId(bookingId);
-            if (existingReview != null)
-                throw new Exception("Bạn đã đánh giá đặt phòng này rồi.");
-            
-            // Validate rating
-            if (rating < 1 || rating > 5)
-                throw new Exception("Đánh giá phải từ 1 đến 5 sao.");
-            
+                throw new Exception("Chỉ có thể bình luận sau khi đã trả phòng.");
+
+            if (_reviewRepo.GetByBookingId(bookingId) != null)
+                throw new Exception("Bạn đã bình luận cho đơn đặt phòng này rồi.");
+
             var review = new Review
             {
                 BookingId = bookingId,
+                RoomId = roomId,
                 Rating = rating,
                 Comment = comment,
+                IsApproved = null, // Pending manager approval
                 CreatedAt = DateTime.UtcNow
             };
-            
             _reviewRepo.Add(review);
             _reviewRepo.Save();
-            
-            return review.Id;
         }
 
-        public Review? GetById(int id)
+        public void SetApproval(int reviewId, bool approved)
         {
-            return _reviewRepo.GetById(id);
+            var review = _reviewRepo.GetById(reviewId)
+                ?? throw new Exception("Không tìm thấy bình luận.");
+            review.IsApproved = approved;
+            review.ReviewedAt = DateTime.UtcNow;
+            _reviewRepo.Update(review);
+            _reviewRepo.Save();
         }
 
-        public Review? GetByBookingId(int bookingId)
-        {
-            return _reviewRepo.GetByBookingId(bookingId);
-        }
+        public List<Review> GetApprovedByRoom(int roomId)
+            => _reviewRepo.GetApprovedByRoomId(roomId);
 
-        public List<Review> GetByRoomId(int roomId)
-        {
-            return _reviewRepo.GetByRoomId(roomId);
-        }
+        public List<Review> GetPending()
+            => _reviewRepo.GetPending();
 
         public List<Review> GetAll()
+            => _reviewRepo.GetAll();
+
+        public Review? GetByBookingId(int bookingId)
+            => _reviewRepo.GetByBookingId(bookingId);
+
+        public bool CanUserReview(string userId, int roomId, out int eligibleBookingId)
         {
-            return _reviewRepo.GetAll();
+            eligibleBookingId = 0;
+
+            // Find completed bookings for this room by this user
+            var completedBookings = _bookingRepo.GetByCustomer(userId)
+                .Where(b => b.Status == BookingStatus.Completed
+                         && b.BookingRooms.Any(br => br.RoomId == roomId))
+                .ToList();
+
+            foreach (var booking in completedBookings)
+            {
+                // Check if this booking already has a review
+                if (_reviewRepo.GetByBookingId(booking.Id) == null)
+                {
+                    eligibleBookingId = booking.Id;
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }
-

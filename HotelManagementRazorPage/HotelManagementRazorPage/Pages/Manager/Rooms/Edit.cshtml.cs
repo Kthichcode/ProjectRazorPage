@@ -15,12 +15,14 @@ namespace HotelManagementRazorPage.Pages.Manager.Rooms
         private readonly IRoomService _roomService;
         private readonly IRoomTypeService _roomTypeService;
         private readonly IWebHostEnvironment _env;
+        private readonly ISignalRService _signalRService;
 
-        public EditModel(IRoomService roomService, IRoomTypeService roomTypeService, IWebHostEnvironment env)
+        public EditModel(IRoomService roomService, IRoomTypeService roomTypeService, IWebHostEnvironment env, ISignalRService signalRService)
         {
             _roomService = roomService;
             _roomTypeService = roomTypeService;
             _env = env;
+            _signalRService = signalRService;
         }
 
         [BindProperty]
@@ -114,6 +116,7 @@ namespace HotelManagementRazorPage.Pages.Manager.Rooms
             room.Description = Input.Description;
 
             _roomService.Update(room);
+            try { await _signalRService.SendRoomUpdate("updated", room.RoomNumber); } catch { }
             return RedirectToPage("/Manager/Rooms/Index");
         }
 

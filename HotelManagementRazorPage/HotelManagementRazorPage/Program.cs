@@ -36,7 +36,9 @@ builder.Services.AddScoped<Services.Interfaces.IDashboardService, Services.Dashb
 
 // AI Chat Service
 builder.Services.AddScoped<IAiChatService, AiChatService>();
-builder.Services.AddScoped<ISignalRService, HotelManagementRazorPage.Services.SignalRService>();
+builder.Services.AddScoped<ISignalRService, HotelManagementRazorPage.SignalR.SignalRService>();
+builder.Services.AddScoped<Repositories.Interfaces.IReviewRepository, Repositories.ReviewRepository>();
+builder.Services.AddScoped<Services.Interfaces.IReviewService, Services.ReviewService>();
 
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();

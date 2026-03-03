@@ -2,7 +2,7 @@ using HotelManagementRazorPage.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Services.Interfaces;
 
-namespace HotelManagementRazorPage.Services
+namespace HotelManagementRazorPage.SignalR
 {
     public class SignalRService : ISignalRService
     {
@@ -31,6 +31,10 @@ namespace HotelManagementRazorPage.Services
                 checkOut.ToString("dd/MM/yyyy"),
                 DateTime.Now.ToString("HH:mm dd/MM")
             );
+        }
+        public async Task SendRoomUpdate(string action, string roomNumber)
+        {
+            await _hubContext.Clients.All.SendAsync("ReceiveRoomUpdate", action, roomNumber);
         }
     }
 }
