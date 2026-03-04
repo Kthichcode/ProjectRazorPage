@@ -2,45 +2,195 @@
 @model HotelManagementRazorPage.Pages.Bookings.SuccessModel
 @{
     ViewData["Title"] = "Đặt phòng thành công";
+    var b       = Model.Booking;
+    var nights  = (b.CheckOutDate - b.CheckInDate).Days;
+    var room    = b.BookingRooms.FirstOrDefault()?.Room;
 }
 
-<div class="container py-5 text-center">
-    <div class="mb-4">
-        <i class="fa-solid fa-circle-check text-success" style="font-size: 5rem;"></i>
-    </div>
-    <h1 class="mb-3">Đặt phòng thành công!</h1>
-    <p class="text-muted fs-5 mb-5">Cảm ơn bạn đã lựa chọn dịch vụ của chúng tôi. Mã đơn đặt phòng của bạn là <strong>#@Model.Booking.Id</strong>.</p>
+<style>
+    :root {
+        --blue:     #0066CC; --blue-dark:#004FA3;
+        --blue-dim: #E8F0FE; --divider:  #D2D2D7;
+        --bg:       #FFFFFF; --bg-alt:   #F5F5F7;
+        --text:     #1D1D1F; --text-sub: #6E6E73;
+    }
+    .success-wrap { max-width: 640px; margin: 0 auto; padding: 3.5rem 1rem 5rem; }
 
-    <div class="card mx-auto shadow-sm" style="max-width: 600px; text-align: left;">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="fa-solid fa-receipt"></i> Chi tiết đặt phòng</h5>
+    /* ── ICON BADGE ── */
+    .check-circle {
+        width: 80px; height: 80px; border-radius: 50%;
+        background: #DCFCE7; display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1.4rem;
+        animation: popIn .5s cubic-bezier(.34,1.56,.64,1);
+    }
+    .check-circle i { font-size: 2.4rem; color: #16A34A; }
+    @@keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .success-title { font-size: 1.7rem; font-weight: 800; color: var(--text); text-align: center; letter-spacing: -.4px; }
+    .success-sub   { font-size: .9rem; color: var(--text-sub); text-align: center; margin-top: .4rem; margin-bottom: 2rem; }
+    .booking-num   { color: var(--blue); font-weight: 800; }
+
+    /* ── RECEIPT CARD ── */
+    .receipt-card {
+        background: var(--bg);
+        border: 1px solid var(--divider);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0,0,0,.07);
+    }
+    .receipt-header {
+        background: var(--blue);
+        padding: 1.3rem 1.6rem;
+        display: flex; align-items: center; gap: .75rem;
+    }
+    .receipt-header i { color: rgba(255,255,255,.8); font-size: 1.1rem; }
+    .receipt-header-title { font-size: 1rem; font-weight: 700; color: #fff; }
+    .receipt-header-sub   { font-size: .78rem; color: rgba(255,255,255,.7); }
+
+    .receipt-body { padding: 1.6rem; }
+
+    .info-row {
+        display: flex; align-items: flex-start; justify-content: space-between;
+        padding: .75rem 0;
+        border-bottom: 1px solid var(--bg-alt);
+        gap: 1rem;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-sub); }
+    .info-value { font-size: .9rem; font-weight: 600; color: var(--text); text-align: right; }
+
+    .divider-dashed {
+        border: none; border-top: 2px dashed var(--divider);
+        margin: .8rem 0;
+    }
+
+    .total-row {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 1rem 0 0;
+    }
+    .total-label { font-size: .9rem; font-weight: 700; color: var(--text); }
+    .total-value { font-size: 1.45rem; font-weight: 900; color: var(--blue); letter-spacing: -.5px; }
+
+    .receipt-footer {
+        background: var(--bg-alt);
+        padding: 1.2rem 1.6rem;
+        border-top: 1px solid var(--divider);
+        display: flex; gap: .75rem; flex-wrap: wrap;
+    }
+    .btn-suc {
+        flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+        padding: .65rem 1rem; border-radius: 10px;
+        font-size: .845rem; font-weight: 700;
+        text-decoration: none; transition: all .2s;
+        border: none; cursor: pointer;
+    }
+    .btn-suc-primary { background: var(--blue); color: #fff; }
+    .btn-suc-primary:hover { background: var(--blue-dark); color: #fff; }
+    .btn-suc-outline { background: var(--bg); border: 1px solid var(--divider); color: var(--text); }
+    .btn-suc-outline:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-dim); }
+
+    /* date boxes */
+    .date-pair { display: flex; gap: .6rem; }
+    .date-box { flex:1; background:var(--bg-alt); border-radius:10px; padding:.8rem 1rem; }
+    .date-box-lbl { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-sub); }
+    .date-box-val { font-size:1rem; font-weight:800; color:var(--text); margin-top:.2rem; }
+    .date-box-sub { font-size:.72rem; color:var(--text-sub); }
+</style>
+
+<div class="success-wrap">
+    <!-- Icon -->
+    <div class="check-circle"><i class="fa-solid fa-check"></i></div>
+    <div class="success-title">Đặt phòng thành công!</div>
+    <div class="success-sub">
+        Cảm ơn bạn đã chọn Mường Thanh Hotel.
+        Mã đơn của bạn: <span class="booking-num">#@b.Id</span>
+    </div>
+
+    <!-- Receipt -->
+    <div class="receipt-card">
+        <!-- Header -->
+        <div class="receipt-header">
+            <i class="fa-solid fa-receipt"></i>
+            <div>
+                <div class="receipt-header-title">Xác nhận đặt phòng</div>
+                <div class="receipt-header-sub">Đã thanh toán · @b.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+            </div>
         </div>
-        <div class="card-body">
-            <div class="row mb-2">
-                <div class="col-sm-4 text-muted">Ngày Check-in:</div>
-                <div class="col-sm-8 fw-bold">@Model.Booking.CheckInDate.ToString("dd/MM/yyyy")</div>
+
+        <!-- Body -->
+        <div class="receipt-body">
+
+            <!-- Customer -->
+            <div class="info-row">
+                <div class="info-label">Khách hàng</div>
+                <div class="info-value">@(b.Customer?.FullName ?? b.Customer?.UserName ?? "—")</div>
             </div>
-            <div class="row mb-2">
-                <div class="col-sm-4 text-muted">Ngày Check-out:</div>
-                <div class="col-sm-8 fw-bold">@Model.Booking.CheckOutDate.ToString("dd/MM/yyyy")</div>
+            <div class="info-row">
+                <div class="info-label">Số điện thoại</div>
+                <div class="info-value">@(b.Customer?.PhoneNumber ?? "—")</div>
             </div>
-            <div class="row mb-2">
-                <div class="col-sm-4 text-muted">Trạng thái:</div>
-                <div class="col-sm-8">
-                    <span class="badge bg-warning text-dark">@Model.Booking.Status</span>
+            <div class="info-row">
+                <div class="info-label">Email</div>
+                <div class="info-value" style="font-size:.82rem;">@(b.Customer?.Email ?? "—")</div>
+            </div>
+
+            <hr class="divider-dashed" />
+
+            <!-- Room -->
+            <div class="info-row">
+                <div class="info-label">Phòng</div>
+                <div class="info-value">
+                    @foreach (var br in b.BookingRooms)
+                    {
+                        <span>Phòng @br.Room?.RoomNumber</span>
+                        if (br != b.BookingRooms.Last()) { <span class="text-muted">, </span> }
+                    }
                 </div>
             </div>
-            <hr />
-            <div class="row">
-                <div class="col-sm-4 text-muted fs-5">Tổng tiền:</div>
-                <div class="col-sm-8 fw-bold text-danger fs-5">@Model.Booking.TotalAmount.ToString("N0")₫</div>
+            <div class="info-row">
+                <div class="info-label">Loại phòng</div>
+                <div class="info-value">@(room?.RoomType?.Name ?? "—")</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Số khách</div>
+                <div class="info-value">@(room?.MaxOccupancy ?? 0) khách tối đa</div>
+            </div>
+
+            <hr class="divider-dashed" />
+
+            <!-- Dates -->
+            <div class="mb-3">
+                <div class="info-label mb-2">Lịch lưu trú</div>
+                <div class="date-pair">
+                    <div class="date-box">
+                        <div class="date-box-lbl">Nhận phòng</div>
+                        <div class="date-box-val">@b.CheckInDate.ToString("dd/MM")</div>
+                        <div class="date-box-sub">@b.CheckInDate.ToString("yyyy · dddd")</div>
+                    </div>
+                    <div class="date-box">
+                        <div class="date-box-lbl">Trả phòng</div>
+                        <div class="date-box-val">@b.CheckOutDate.ToString("dd/MM")</div>
+                        <div class="date-box-sub">@b.CheckOutDate.ToString("yyyy · dddd")</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total -->
+            <div class="total-row">
+                <span class="total-label">
+                    <i class="fa-solid fa-moon me-1" style="color:var(--blue);"></i>
+                    @nights đêm
+                </span>
+                <span class="total-value">@b.TotalAmount.ToString("N0")₫</span>
             </div>
         </div>
-        <div class="card-footer bg-light text-center">
-            <a asp-page="/Bookings/History" class="btn btn-outline-primary me-2">
-                <i class="fa-solid fa-clock-rotate-left"></i> Xem lịch sử
+
+        <!-- Footer actions -->
+        <div class="receipt-footer">
+            <a asp-page="/Bookings/History" class="btn-suc btn-suc-outline">
+                <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử đặt phòng
             </a>
-            <a asp-page="/Index" class="btn btn-primary">
+            <a asp-page="/Index" class="btn-suc btn-suc-primary">
                 <i class="fa-solid fa-house"></i> Về trang chủ
             </a>
         </div>

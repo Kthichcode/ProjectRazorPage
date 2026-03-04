@@ -156,12 +156,14 @@
         .st-cancelled { background:#FEE2E2; color:#991B1B; } .st-cancelled::before { background:#DC2626; }
         .st-pending   { background:var(--bg-alt); color:var(--text-sub); } .st-pending::before { background:#86868B; }
 
-        /* action buttons */
         .action-btn {
-            width: 30px; height: 30px;
+            height: 32px;
+            padding: 0 .75rem;
             border-radius: 7px; border: none;
-            display: flex; align-items: center; justify-content: center;
-            font-size: .78rem; cursor: pointer; transition: all .2s;
+            display: inline-flex; align-items: center; gap: .35rem;
+            font-size: .78rem; font-weight: 600;
+            cursor: pointer; transition: all .2s;
+            white-space: nowrap;
         }
         .btn-do-checkin  { background:var(--blue-dim); color:var(--blue); }
         .btn-do-checkin:hover  { background:var(--blue); color:#fff; }
@@ -328,8 +330,8 @@
                                     <form method="post" asp-page-handler="UpdateStatus">
                                         <input type="hidden" name="id" value="@b.Id" />
                                         <input type="hidden" name="newStatus" value="@BookingStatus.CheckedIn" />
-                                        <button type="submit" class="action-btn btn-do-checkin" title="Nhận phòng">
-                                            <i class="fa-solid fa-key"></i>
+                                        <button type="submit" class="action-btn btn-do-checkin">
+                                            <i class="fa-solid fa-key"></i> Nhận phòng
                                         </button>
                                     </form>
                                 }
@@ -338,8 +340,8 @@
                                     <form method="post" asp-page-handler="UpdateStatus">
                                         <input type="hidden" name="id" value="@b.Id" />
                                         <input type="hidden" name="newStatus" value="@BookingStatus.Completed" />
-                                        <button type="submit" class="action-btn btn-do-checkout" title="Trả phòng">
-                                            <i class="fa-solid fa-person-walking-luggage"></i>
+                                        <button type="submit" class="action-btn btn-do-checkout">
+                                            <i class="fa-solid fa-person-walking-luggage"></i> Trả phòng
                                         </button>
                                     </form>
                                 }
@@ -398,6 +400,24 @@
             const emptyRow = tbody.querySelector('.empty-row');
             if (emptyRow) emptyRow.remove();
             const initials = data.customerName ? data.customerName.charAt(0).toUpperCase() : '?';
+
+            // Check if check-in date is today or earlier -> show check-in button immediately
+            const today = new Date(); today.setHours(0,0,0,0);
+            const checkInParts = data.checkIn.split('/'); // expects dd/MM/yyyy
+            const checkInDate = new Date(checkInParts[2], checkInParts[1]-1, checkInParts[0]);
+            const canCheckIn = checkInDate <= today;
+
+            const antiForgery = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+            const actionCell = canCheckIn ? `
+                <form method="post" action="?handler=UpdateStatus">
+                    <input type="hidden" name="__RequestVerificationToken" value="${antiForgery}" />
+                    <input type="hidden" name="id" value="${data.bookingId}" />
+                    <input type="hidden" name="newStatus" value="CheckedIn" />
+                    <button type="submit" class="action-btn btn-do-checkin">
+                        <i class="fa-solid fa-key"></i> Nhận phòng
+                    </button>
+                </form>` : '';
+
             const tr = document.createElement('tr');
             tr.className = 'new-booking-row';
             tr.innerHTML = `
@@ -418,7 +438,7 @@
                 </td>
                 <td><div class="amount-val">${fmt(data.totalAmount)}</div></td>
                 <td><span class="status-badge st-confirmed">Chờ nhận</span></td>
-                <td></td>`;
+                <td><div class="d-flex justify-content-end">${actionCell}</div></td>`;
             tbody.prepend(tr);
         }
     </script>
