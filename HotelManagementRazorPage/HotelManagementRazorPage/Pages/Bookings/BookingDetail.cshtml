@@ -3,271 +3,519 @@
 @using BusinessObjects.Enums
 @{
     ViewData["Title"] = $"Chi tiết đơn #{Model.Booking.Id}";
-    var b      = Model.Booking;
-    var nights = (b.CheckOutDate - b.CheckInDate).Days;
-    var room   = b.BookingRooms.FirstOrDefault()?.Room;
+
+    var b        = Model.Booking;
+    var room     = b.BookingRooms.FirstOrDefault()?.Room;
+    var roomName = room != null ? $"Phòng {room.RoomNumber}" : "N/A";
+    var roomType = room?.RoomType?.Name ?? "";
+    var nights   = (b.CheckOutDate - b.CheckInDate).Days;
+    var fallback = "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80";
+    var roomImg  = room != null && !string.IsNullOrEmpty(room.ImageUrl) ? room.ImageUrl : fallback;
+
+    string statusText = b.Status switch {
+        BookingStatus.Pending             => "Chờ thanh toán",
+        BookingStatus.Confirmed           => "Đã xác nhận",
+        BookingStatus.CheckedIn           => "Đang ở",
+        BookingStatus.Completed           => "Hoàn thành",
+        BookingStatus.Cancelled           => "Đã hủy",
+        BookingStatus.CancellationPending => "Chờ duyệt hủy",
+        _                                 => b.Status.ToString()
+    };
+    string statusCls = b.Status switch {
+        BookingStatus.Pending             => "st-pending",
+        BookingStatus.Confirmed           => "st-confirmed",
+        BookingStatus.CheckedIn           => "st-checkedin",
+        BookingStatus.Completed           => "st-completed",
+        BookingStatus.Cancelled           => "st-cancelled",
+        BookingStatus.CancellationPending => "st-cancelpending",
+        _                                 => "st-pending"
+    };
+    string stripCls = b.Status switch {
+        BookingStatus.Confirmed           => "strip-confirmed",
+        BookingStatus.CheckedIn           => "strip-checkedin",
+        BookingStatus.Completed           => "strip-completed",
+        BookingStatus.Cancelled           => "strip-cancelled",
+        BookingStatus.CancellationPending => "strip-cancelpending",
+        _                                 => "strip-pending"
+    };
 }
 
 <style>
     :root {
-        --blue:     #0066CC; --blue-dark:#004FA3;
-        --blue-dim: #E8F0FE; --divider:  #D2D2D7;
-        --bg:       #FFFFFF; --bg-alt:   #F5F5F7;
-        --text:     #1D1D1F; --text-sub: #6E6E73;
+        --primary:   #1565C0;
+        --primary-d: #0D47A1;
+        --primary-l: #1976D2;
+        --accent:    #42A5F5;
+        --white:     #FFFFFF;
+        --gray-50:   #F8FAFF;
+        --gray-100:  #EFF4FF;
+        --text:      #1E293B;
+        --text-sub:  #64748B;
+        --divider:   #E2EAF4;
     }
-    .detail-wrap { max-width: 760px; margin: 0 auto; padding: 2.5rem 1rem 5rem; }
 
-    /* breadcrumb */
-    .breadcrumb-row { display:flex; align-items:center; gap:.5rem; font-size:.8rem; color:var(--text-sub); margin-bottom:1.6rem; }
-    .breadcrumb-row a { color:var(--blue); text-decoration:none; }
-    .breadcrumb-row a:hover { text-decoration:underline; }
-    .breadcrumb-row .sep { color:var(--divider); }
-
-    /* status hero banner */
-    .status-banner {
-        border-radius: 16px; padding: 1.4rem 1.6rem;
-        display: flex; align-items: center; gap: 1rem;
-        margin-bottom: 1.6rem;
+    .detail-hero {
+        background: linear-gradient(135deg, var(--primary-d) 0%, var(--primary) 60%, var(--primary-l) 100%);
+        padding: 2.5rem 0 4.5rem;
     }
-    .status-banner-icon { font-size: 1.8rem; flex-shrink: 0; }
-    .status-banner-title { font-size: 1.1rem; font-weight: 800; }
-    .status-banner-sub   { font-size: .8rem; margin-top: .15rem; }
-    .ban-confirmed   { background: var(--blue-dim);  }
-    .ban-confirmed   .status-banner-icon, .ban-confirmed   .status-banner-title { color: var(--blue-dark); }
-    .ban-checkedin   { background: #DCFCE7; }
-    .ban-checkedin   .status-banner-icon, .ban-checkedin   .status-banner-title { color: #166534; }
-    .ban-completed   { background: #DCFCE7; }
-    .ban-completed   .status-banner-icon, .ban-completed   .status-banner-title { color: #166534; }
-    .ban-cancelled   { background: #FEE2E2; }
-    .ban-cancelled   .status-banner-icon, .ban-cancelled   .status-banner-title { color: #991B1B; }
-    .ban-pending     { background: #FEF3C7; }
-    .ban-pending     .status-banner-icon, .ban-pending     .status-banner-title { color: #92400E; }
-    .ban-cancelpend  { background: #FEF3C7; border: 1px solid #FDE68A; }
-    .ban-cancelpend  .status-banner-icon, .ban-cancelpend  .status-banner-title { color: #92400E; }
+    .detail-hero h1 {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(1.4rem, 3vw, 2rem);
+        color: #fff; font-weight: 700;
+    }
+    .detail-hero p { color: rgba(255,255,255,.75); font-size: .9rem; }
 
-    /* section card */
-    .det-card {
-        background: var(--bg); border: 1px solid var(--divider);
-        border-radius: 16px; overflow: hidden;
+    .btn-back-hero {
+        display: inline-flex; align-items: center; gap: .4rem;
+        color: rgba(255,255,255,.8); font-size: .88rem;
+        text-decoration: none; transition: color .2s;
         margin-bottom: 1rem;
     }
-    .det-card-head {
-        padding: .9rem 1.4rem;
-        border-bottom: 1px solid var(--divider);
-        display: flex; align-items: center; gap: .5rem;
-        background: var(--bg-alt);
+    .btn-back-hero:hover { color: #fff; }
+
+    /* ── Main card ── */
+    .bd-card {
+        background: var(--white);
+        border-radius: 16px;
+        border: 1px solid var(--divider);
+        box-shadow: 0 8px 32px rgba(21,101,192,.08);
+        margin-top: -50px;
+        position: relative;
+        z-index: 10;
+        overflow: hidden;
     }
-    .det-card-head-title { font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-sub); }
-    .det-card-body { padding: 1.2rem 1.4rem; }
+    .bd-strip { height: 4px; width: 100%; }
+    .strip-confirmed      { background: var(--primary); }
+    .strip-checkedin      { background: #16A34A; }
+    .strip-completed      { background: #16A34A; }
+    .strip-cancelled      { background: #DC2626; }
+    .strip-pending        { background: #D97706; }
+    .strip-cancelpending  { background: #F59E0B; }
 
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    @@media (max-width: 480px) { .info-grid { grid-template-columns: 1fr; } }
+    .bd-inner { padding: 2rem; }
 
-    .info-item-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-sub); margin-bottom: .25rem; }
-    .info-item-value { font-size: .92rem; font-weight: 600; color: var(--text); }
+    /* Status badge */
+    .st-badge {
+        display: inline-flex; align-items: center; gap: .3rem;
+        padding: .3rem .85rem; border-radius: 980px;
+        font-size: .75rem; font-weight: 700; letter-spacing: .3px;
+    }
+    .st-pending   { background: #FEF3C7; color: #92400E; }
+    .st-confirmed { background: #E8F0FE; color: #0D47A1; }
+    .st-checkedin { background: #DCFCE7; color: #166534; }
+    .st-completed { background: #DCFCE7; color: #166534; }
+    .st-cancelled { background: #FEE2E2; color: #991B1B; }
+    .st-cancelpending { background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; }
 
-    /* date pair */
-    .date-pair { display: flex; gap: .75rem; }
-    .date-box { flex:1; background:var(--bg-alt); border-radius:10px; padding:.9rem 1.1rem; }
-    .date-box-lbl { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-sub); }
-    .date-box-val { font-size:1.05rem; font-weight:800; color:var(--text); margin-top:.25rem; }
-    .date-box-sub { font-size:.72rem; color:var(--text-sub); }
+    /* Section title */
+    .bd-section-title {
+        font-size: .7rem; font-weight: 700;
+        letter-spacing: 2px; text-transform: uppercase;
+        color: var(--primary); margin-bottom: .8rem;
+    }
 
-    /* room pills */
-    .room-pill { display:inline-block; padding:.2rem .65rem; border-radius:6px; background:var(--blue-dim); color:var(--blue); font-size:.72rem; font-weight:700; margin:.15rem; }
+    .bd-divider { border: none; border-top: 1px solid var(--divider); margin: 1.5rem 0; }
 
-    /* payment row */
-    .pay-row { display:flex; justify-content:space-between; align-items:center; padding:.65rem 0; border-bottom:1px solid var(--bg-alt); font-size:.875rem; }
-    .pay-row:last-child { border-bottom: none; }
-    .pay-lbl { color: var(--text-sub); }
-    .pay-val { font-weight: 700; color: var(--text); }
-    .pay-total { font-size: 1.2rem; font-weight: 900; color: var(--blue); }
+    /* Info rows */
+    .info-row {
+        display: flex; justify-content: space-between;
+        align-items: center; padding: .55rem 0;
+    }
+    .info-label { font-size: .85rem; color: var(--text-sub); display: flex; align-items: center; gap: .4rem; }
+    .info-label i { color: var(--primary); font-size: .8rem; }
+    .info-value { font-size: .85rem; font-weight: 600; color: var(--text); }
+    .info-value.highlight { color: var(--primary); font-size: 1rem; font-weight: 800; }
+    .info-value.refund { color: #16A34A; }
 
-    /* refund badge */
-    .refund-badge { display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .9rem; border-radius:8px; background:#DCFCE7; color:#166534; font-size:.825rem; font-weight:700; margin-top:.75rem; }
+    /* Date boxes */
+    .date-boxes { display: flex; gap: .75rem; margin-bottom: .5rem; }
+    .date-box {
+        flex: 1;
+        background: var(--gray-50);
+        border: 1px solid var(--divider);
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+    }
+    .date-box-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-sub); margin-bottom: .3rem; }
+    .date-box-value { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+    .date-box-day   { font-size: .75rem; color: var(--text-sub); margin-top: .15rem; }
 
-    /* actions */
-    .det-actions { display:flex; gap:.75rem; flex-wrap:wrap; margin-top:1.4rem; }
-    .btn-det { display:inline-flex; align-items:center; gap:.4rem; padding:.6rem 1.3rem; border-radius:10px; font-size:.845rem; font-weight:700; text-decoration:none; cursor:pointer; border:none; transition:all .2s; }
-    .btn-det-back    { background:var(--bg-alt); color:var(--text); border:1px solid var(--divider); }
-    .btn-det-back:hover    { border-color:var(--blue); color:var(--blue); background:var(--blue-dim); }
-    .btn-det-primary { background:var(--blue); color:#fff; }
-    .btn-det-primary:hover { background:var(--blue-dark); color:#fff; }
-    .btn-det-cancel  { background:none; color:#DC2626; border:1px solid #FCA5A5; }
-    .btn-det-cancel:hover  { background:#FEF2F2; border-color:#DC2626; }
+    /* Night badge */
+    .night-badge {
+        display: flex; align-items: center; justify-content: center;
+        gap: .4rem; padding: .5rem;
+        background: var(--gray-100); border-radius: 10px;
+        font-size: .82rem; font-weight: 700; color: var(--primary);
+        margin-bottom: .5rem;
+    }
+
+    /* Room preview */
+    .room-preview {
+        display: flex; gap: 1.2rem; align-items: flex-start;
+    }
+    .room-preview-img {
+        width: 140px; height: 100px;
+        border-radius: 12px; overflow: hidden;
+        flex-shrink: 0;
+    }
+    .room-preview-img img { width: 100%; height: 100%; object-fit: cover; }
+    .room-preview-info { flex: 1; }
+    .room-preview-type {
+        font-size: .68rem; font-weight: 700; letter-spacing: 2px;
+        text-transform: uppercase; color: var(--accent); margin-bottom: .2rem;
+    }
+    .room-preview-name {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.15rem; font-weight: 700;
+        color: var(--text); margin-bottom: .5rem;
+    }
+    .room-chip {
+        display: inline-flex; align-items: center; gap: .3rem;
+        background: var(--gray-100); color: var(--text-sub);
+        font-size: .75rem; font-weight: 600;
+        padding: .25rem .65rem; border-radius: 20px;
+    }
+    .room-chip i { color: var(--primary); }
+
+    /* Payment rows */
+    .pay-row { display: flex; align-items: center; gap: .6rem; padding: .45rem 0; font-size: .85rem; }
+    .pay-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: .85rem; flex-shrink: 0; }
+    .pay-icon.vnpay   { background: #EEF2FF; color: #4F46E5; }
+    .pay-icon.wallet  { background: #ECFDF5; color: #059669; }
+    .pay-icon.default { background: var(--gray-100); color: var(--text-sub); }
+    .pay-label { flex: 1; color: var(--text-sub); }
+    .pay-amount { font-weight: 700; color: var(--text); }
+
+    /* Action buttons */
+    .bd-actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1.5rem; }
+    .btn-bd {
+        display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+        padding: .65rem 1.4rem; border-radius: 10px;
+        font-size: .85rem; font-weight: 700; cursor: pointer;
+        text-decoration: none; transition: all .25s;
+        border: none;
+    }
+    .btn-bd-primary { background: var(--primary); color: #fff !important; }
+    .btn-bd-primary:hover { background: var(--primary-d); transform: translateY(-1px); }
+    .btn-bd-outline {
+        background: var(--white); color: var(--primary) !important;
+        border: 1.5px solid var(--primary);
+    }
+    .btn-bd-outline:hover { background: var(--primary); color: #fff !important; }
+    .btn-bd-warn { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+    .btn-bd-warn:hover { background: #F59E0B; color: #fff; border-color: #F59E0B; }
+    .btn-bd-danger {
+        background: var(--white); color: #DC2626 !important;
+        border: 1.5px solid #FCA5A5;
+    }
+    .btn-bd-danger:hover { background: #DC2626; color: #fff !important; border-color: #DC2626; }
+    .btn-bd-disabled { background: var(--gray-100); color: var(--text-sub); pointer-events: none; }
+
+    /* Timeline */
+    .timeline { position: relative; padding-left: 24px; }
+    .timeline::before { content: ''; position: absolute; left: 7px; top: 4px; bottom: 4px; width: 2px; background: var(--divider); }
+    .tl-item { position: relative; padding-bottom: 1rem; }
+    .tl-item:last-child { padding-bottom: 0; }
+    .tl-dot {
+        position: absolute; left: -24px; top: 2px;
+        width: 16px; height: 16px; border-radius: 50%;
+        background: var(--divider); border: 2px solid var(--white);
+        z-index: 1;
+    }
+    .tl-dot.active { background: var(--primary); }
+    .tl-dot.success { background: #16A34A; }
+    .tl-dot.warning { background: #D97706; }
+    .tl-dot.danger  { background: #DC2626; }
+    .tl-text { font-size: .82rem; color: var(--text); font-weight: 600; }
+    .tl-time { font-size: .73rem; color: var(--text-sub); margin-top: .1rem; }
+
+    @@media (max-width: 767px) {
+        .room-preview { flex-direction: column; }
+        .room-preview-img { width: 100%; height: 180px; }
+    }
 </style>
 
-<div class="detail-wrap">
-    <!-- Breadcrumb -->
-    <div class="breadcrumb-row">
-        <a asp-page="/Index"><i class="fa-solid fa-house"></i></a>
-        <span class="sep">/</span>
-        <a asp-page="/Bookings/History">Lịch sử đặt phòng</a>
-        <span class="sep">/</span>
-        <span>Đơn #@b.Id</span>
+<!-- ═══ HERO ═══ -->
+<section class="detail-hero">
+    <div class="container">
+        <a asp-page="/Bookings/History" class="btn-back-hero">
+            <i class="fa-solid fa-arrow-left"></i> Quay lại lịch sử đặt phòng
+        </a>
+        <h1><i class="fa-solid fa-receipt me-2"></i>Chi tiết đơn đặt phòng</h1>
+        <p>Mã đơn: <strong>#@b.Id</strong> · Đặt ngày @b.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
     </div>
+</section>
 
-    <!-- Status banner -->
-    @{
-        string banCls = b.Status switch {
-            BookingStatus.Confirmed          => "ban-confirmed",
-            BookingStatus.CheckedIn          => "ban-checkedin",
-            BookingStatus.Completed          => "ban-completed",
-            BookingStatus.Cancelled          => "ban-cancelled",
-            BookingStatus.CancellationPending => "ban-cancelpend",
-            _                               => "ban-pending"
-        };
-        string banIcon = b.Status switch {
-            BookingStatus.Confirmed          => "fa-circle-check",
-            BookingStatus.CheckedIn          => "fa-bed",
-            BookingStatus.Completed          => "fa-flag-checkered",
-            BookingStatus.Cancelled          => "fa-circle-xmark",
-            BookingStatus.CancellationPending => "fa-hourglass-half",
-            _                               => "fa-clock"
-        };
-        string banTitle = b.Status switch {
-            BookingStatus.Confirmed          => "Đã xác nhận",
-            BookingStatus.CheckedIn          => "Đang lưu trú",
-            BookingStatus.Completed          => "Hoàn thành",
-            BookingStatus.Cancelled          => "Đã hủy",
-            BookingStatus.CancellationPending => "Chờ duyệt hủy",
-            _                               => "Chờ xác nhận"
-        };
-        string banSub = b.Status switch {
-            BookingStatus.Confirmed          => "Đặt phòng đã được xác nhận. Vui lòng đến đúng ngày nhận phòng.",
-            BookingStatus.CheckedIn          => "Bạn đang lưu trú tại khách sạn.",
-            BookingStatus.Completed          => "Cảm ơn bạn đã lưu trú. Hẹn gặp lại!",
-            BookingStatus.Cancelled          => "Đặt phòng đã bị hủy.",
-            BookingStatus.CancellationPending => "Yêu cầu hủy đang chờ quản lý duyệt.",
-            _                               => "Đặt phòng của bạn đang chờ xác nhận."
-        };
-    }
-    <div class="status-banner @banCls">
-        <div class="status-banner-icon"><i class="fa-solid @banIcon"></i></div>
-        <div>
-            <div class="status-banner-title">@banTitle</div>
-            <div class="status-banner-sub" style="color:var(--text-sub);">@banSub</div>
-        </div>
-        <div class="ms-auto" style="font-size:.78rem;color:var(--text-sub);text-align:right;">
-            Mã đơn<br><strong style="font-size:1rem;color:var(--text);">#@b.Id</strong>
-        </div>
-    </div>
+<!-- ═══ CONTENT ═══ -->
+<section class="pb-5" style="background: var(--gray-50);">
+    <div class="container">
+        <div class="bd-card">
+            <div class="bd-strip @stripCls"></div>
+            <div class="bd-inner">
+                <div class="row g-4">
+                    <!-- LEFT COLUMN -->
+                    <div class="col-lg-7">
+                        <!-- Status & ID header -->
+                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                            <div>
+                                <span style="font-size:.82rem;color:var(--text-sub);">Mã đơn</span>
+                                <span style="font-size:1.1rem;font-weight:800;color:var(--primary);margin-left:.3rem;">#@b.Id</span>
+                            </div>
+                            <span class="st-badge @statusCls">@statusText</span>
+                        </div>
 
-    <!-- Customer info -->
-    <div class="det-card">
-        <div class="det-card-head">
-            <i class="fa-solid fa-user" style="color:var(--blue);font-size:.85rem;"></i>
-            <span class="det-card-head-title">Thông tin khách hàng</span>
-        </div>
-        <div class="det-card-body">
-            <div class="info-grid">
-                <div>
-                    <div class="info-item-label">Họ tên</div>
-                    <div class="info-item-value">@(b.Customer?.FullName ?? b.Customer?.UserName ?? "—")</div>
-                </div>
-                <div>
-                    <div class="info-item-label">Số điện thoại</div>
-                    <div class="info-item-value">@(b.Customer?.PhoneNumber ?? "—")</div>
-                </div>
-                <div>
-                    <div class="info-item-label">Email</div>
-                    <div class="info-item-value" style="font-size:.85rem;">@(b.Customer?.Email ?? "—")</div>
-                </div>
-                <div>
-                    <div class="info-item-label">Ngày đặt</div>
-                    <div class="info-item-value">@b.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
-                </div>
-            </div>
-        </div>
-    </div>
+                        <!-- Room preview -->
+                        <p class="bd-section-title"><i class="fa-solid fa-bed me-1"></i>Thông tin phòng</p>
+                        <div class="room-preview">
+                            <div class="room-preview-img">
+                                <img src="@roomImg" alt="@roomName" onerror="this.src='@fallback'" />
+                            </div>
+                            <div class="room-preview-info">
+                                @if (!string.IsNullOrEmpty(roomType))
+                                {
+                                    <div class="room-preview-type">@roomType</div>
+                                }
+                                <div class="room-preview-name">@roomName</div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    @if (room != null)
+                                    {
+                                        <span class="room-chip"><i class="fa-solid fa-users"></i>@room.MaxOccupancy khách</span>
+                                        @if (room.RoomType != null)
+                                        {
+                                            <span class="room-chip"><i class="fa-solid fa-layer-group"></i>@room.RoomType.Name</span>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
 
-    <!-- Room info -->
-    <div class="det-card">
-        <div class="det-card-head">
-            <i class="fa-solid fa-bed" style="color:var(--blue);font-size:.85rem;"></i>
-            <span class="det-card-head-title">Thông tin phòng</span>
-        </div>
-        <div class="det-card-body">
-            <div class="info-grid mb-3">
-                <div>
-                    <div class="info-item-label">Phòng đặt</div>
-                    <div class="info-item-value">
-                        @foreach (var br in b.BookingRooms)
-                        {
-                            <span class="room-pill">P.@br.Room?.RoomNumber</span>
-                        }
+                        <hr class="bd-divider" />
+
+                        <!-- Dates -->
+                        <p class="bd-section-title"><i class="fa-solid fa-calendar-days me-1"></i>Thời gian lưu trú</p>
+                        <div class="date-boxes">
+                            <div class="date-box">
+                                <div class="date-box-label">Nhận phòng</div>
+                                <div class="date-box-value">@b.CheckInDate.ToString("dd/MM/yyyy")</div>
+                                <div class="date-box-day">@b.CheckInDate.ToString("dddd")</div>
+                            </div>
+                            <div class="date-box">
+                                <div class="date-box-label">Trả phòng</div>
+                                <div class="date-box-value">@b.CheckOutDate.ToString("dd/MM/yyyy")</div>
+                                <div class="date-box-day">@b.CheckOutDate.ToString("dddd")</div>
+                            </div>
+                        </div>
+                        <div class="night-badge">
+                            <i class="fa-solid fa-moon"></i> @nights đêm lưu trú
+                        </div>
+
+                        <hr class="bd-divider" />
+
+                        <!-- Timeline -->
+                        <p class="bd-section-title"><i class="fa-solid fa-timeline me-1"></i>Trạng thái đơn</p>
+                        <div class="timeline">
+                            <div class="tl-item">
+                                <div class="tl-dot success"></div>
+                                <div class="tl-text">Đã tạo đơn</div>
+                                <div class="tl-time">@b.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                            </div>
+
+                            @if (b.Status >= BookingStatus.Confirmed && b.Status != BookingStatus.Cancelled && b.Status != BookingStatus.CancellationPending)
+                            {
+                                <div class="tl-item">
+                                    <div class="tl-dot success"></div>
+                                    <div class="tl-text">Đã thanh toán & Xác nhận</div>
+                                    @if (b.Payments.Any())
+                                    {
+                                        <div class="tl-time">@b.Payments.OrderBy(p => p.CreatedAt).First().CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                    }
+                                </div>
+                            }
+
+                            @if (b.Status >= BookingStatus.CheckedIn && b.Status != BookingStatus.Cancelled)
+                            {
+                                <div class="tl-item">
+                                    <div class="tl-dot active"></div>
+                                    <div class="tl-text">Đã nhận phòng (Check-in)</div>
+                                    <div class="tl-time">@b.CheckInDate.ToString("dd/MM/yyyy")</div>
+                                </div>
+                            }
+
+                            @if (b.Status == BookingStatus.Completed)
+                            {
+                                <div class="tl-item">
+                                    <div class="tl-dot success"></div>
+                                    <div class="tl-text">Hoàn thành (Check-out)</div>
+                                    <div class="tl-time">@b.CheckOutDate.ToString("dd/MM/yyyy")</div>
+                                </div>
+                            }
+
+                            @if (b.Status == BookingStatus.CancellationPending)
+                            {
+                                <div class="tl-item">
+                                    <div class="tl-dot warning"></div>
+                                    <div class="tl-text">Yêu cầu hủy — Chờ duyệt</div>
+                                    @if (b.CancellationRequestedAt.HasValue)
+                                    {
+                                        <div class="tl-time">@b.CancellationRequestedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                    }
+                                </div>
+                            }
+
+                            @if (b.Status == BookingStatus.Cancelled)
+                            {
+                                <div class="tl-item">
+                                    <div class="tl-dot danger"></div>
+                                    <div class="tl-text">Đã hủy</div>
+                                    @if (b.CancellationRequestedAt.HasValue)
+                                    {
+                                        <div class="tl-time">@b.CancellationRequestedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                    }
+                                </div>
+                            }
+
+                            @if (b.Status == BookingStatus.Pending)
+                            {
+                                <div class="tl-item">
+                                    <div class="tl-dot warning"></div>
+                                    <div class="tl-text">Chờ thanh toán</div>
+                                    <div class="tl-time">Vui lòng thanh toán để xác nhận đơn</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN -->
+                    <div class="col-lg-5">
+                        <div style="background:var(--gray-50);border:1px solid var(--divider);border-radius:14px;padding:1.5rem;">
+                            <!-- Payment summary -->
+                            <p class="bd-section-title"><i class="fa-solid fa-receipt me-1"></i>Chi tiết thanh toán</p>
+
+                            <div class="info-row">
+                                <span class="info-label"><i class="fa-solid fa-bed"></i>Giá phòng / đêm</span>
+                                <span class="info-value">@((room?.RoomType?.PricePerNight ?? 0).ToString("N0"))₫</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label"><i class="fa-solid fa-moon"></i>Số đêm</span>
+                                <span class="info-value">@nights đêm</span>
+                            </div>
+                            <hr class="bd-divider" style="margin:.8rem 0;" />
+                            <div class="info-row">
+                                <span class="info-label" style="font-weight:700;color:var(--text);font-size:.9rem;">
+                                    <i class="fa-solid fa-money-bill-wave"></i>Tổng tiền
+                                </span>
+                                <span class="info-value highlight">@b.TotalAmount.ToString("N0")₫</span>
+                            </div>
+
+                            @if (b.Payments.Any())
+                            {
+                                <hr class="bd-divider" style="margin:.8rem 0;" />
+                                <p class="bd-section-title" style="margin-top:.5rem;"><i class="fa-solid fa-credit-card me-1"></i>Phương thức thanh toán</p>
+
+                                @foreach (var payment in b.Payments.OrderBy(p => p.CreatedAt))
+                                {
+                                    var iconCls = payment.Method switch {
+                                        "VNPay"  => "vnpay",
+                                        "Wallet" => "wallet",
+                                        _        => "default"
+                                    };
+                                    var iconName = payment.Method switch {
+                                        "VNPay"  => "fa-solid fa-credit-card",
+                                        "Wallet" => "fa-solid fa-wallet",
+                                        _        => "fa-solid fa-money-bill"
+                                    };
+                                    <div class="pay-row">
+                                        <div class="pay-icon @iconCls"><i class="@iconName"></i></div>
+                                        <span class="pay-label">@payment.Method</span>
+                                        <span class="pay-amount">@payment.Amount.ToString("N0")₫</span>
+                                    </div>
+                                }
+                            }
+
+                            @if (b.WalletAmountPaid.HasValue && b.WalletAmountPaid > 0)
+                            {
+                                <div class="info-row" style="margin-top:.4rem;">
+                                    <span class="info-label"><i class="fa-solid fa-wallet"></i>Đã trừ ví</span>
+                                    <span class="info-value" style="color:#059669;">@b.WalletAmountPaid.Value.ToString("N0")₫</span>
+                                </div>
+                            }
+
+                            @if (b.Status == BookingStatus.Cancelled && b.RefundAmount.HasValue)
+                            {
+                                <hr class="bd-divider" style="margin:.8rem 0;" />
+                                <div class="info-row">
+                                    <span class="info-label" style="color:#16A34A;font-weight:600;">
+                                        <i class="fa-solid fa-rotate-left" style="color:#16A34A;"></i>Đã hoàn vào ví
+                                    </span>
+                                    <span class="info-value refund">+@b.RefundAmount.Value.ToString("N0")₫</span>
+                                </div>
+                            }
+
+                            <!-- Action buttons -->
+                            <div class="bd-actions">
+                                @if (b.Status == BookingStatus.Pending)
+                                {
+                                    <form method="post" asp-page="/Bookings/History" asp-page-handler="RetryPayment" asp-route-id="@b.Id" style="display:contents;">
+                                        <button type="submit" class="btn-bd btn-bd-warn" style="flex:1;">
+                                            <i class="fa-solid fa-credit-card"></i> Thanh toán ngay
+                                        </button>
+                                    </form>
+                                }
+
+                                @if ((b.Status == BookingStatus.Pending || b.Status == BookingStatus.Confirmed)
+                                     && b.CheckInDate >= DateTime.Today)
+                                {
+                                    <form method="post" asp-page="/Bookings/History" asp-page-handler="Cancel" asp-route-id="@b.Id" style="display:contents;">
+                                        <button type="submit" class="btn-bd btn-bd-danger"
+                                                onclick="return confirm('Gửi yêu cầu hủy? Tiền sẽ hoàn vào ví sau khi manager duyệt.')">
+                                            <i class="fa-solid fa-xmark"></i> Hủy đặt phòng
+                                        </button>
+                                    </form>
+                                }
+
+                                @if (b.Status == BookingStatus.CancellationPending)
+                                {
+                                    <span class="btn-bd btn-bd-disabled">
+                                        <i class="fa-solid fa-hourglass-half"></i> Đang chờ duyệt hủy
+                                    </span>
+                                }
+
+                                @if (Model.CanReview)
+                                {
+                                    <a asp-page="/Rooms/Detail" asp-route-id="@Model.ReviewableRoomId" class="btn-bd btn-bd-primary" style="flex:1;">
+                                        <i class="fa-solid fa-star"></i> Đánh giá phòng
+                                    </a>
+                                }
+
+                                @if (room != null)
+                                {
+                                    <a asp-page="/Rooms/Detail" asp-route-id="@room.Id" class="btn-bd btn-bd-outline">
+                                        <i class="fa-solid fa-eye"></i> Xem phòng
+                                    </a>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Customer info -->
+                        <div style="background:var(--white);border:1px solid var(--divider);border-radius:14px;padding:1.5rem;margin-top:1rem;">
+                            <p class="bd-section-title"><i class="fa-solid fa-user me-1"></i>Thông tin khách hàng</p>
+                            <div class="info-row">
+                                <span class="info-label"><i class="fa-solid fa-user"></i>Tên</span>
+                                <span class="info-value">@(b.Customer?.FullName ?? b.Customer?.UserName ?? "—")</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label"><i class="fa-solid fa-envelope"></i>Email</span>
+                                <span class="info-value">@(b.Customer?.Email ?? "—")</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label"><i class="fa-solid fa-phone"></i>Điện thoại</span>
+                                <span class="info-value">@(b.Customer?.PhoneNumber ?? "—")</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <div class="info-item-label">Loại phòng</div>
-                    <div class="info-item-value">@(room?.RoomType?.Name ?? "—")</div>
-                </div>
-                <div>
-                    <div class="info-item-label">Sức chứa</div>
-                    <div class="info-item-value">@(room?.MaxOccupancy ?? 0) khách</div>
-                </div>
-                <div>
-                    <div class="info-item-label">Giá mỗi đêm</div>
-                    <div class="info-item-value">@((room?.RoomType?.PricePerNight ?? 0).ToString("N0"))₫</div>
-                </div>
-            </div>
-            <div class="date-pair">
-                <div class="date-box">
-                    <div class="date-box-lbl">Nhận phòng</div>
-                    <div class="date-box-val">@b.CheckInDate.ToString("dd/MM/yyyy")</div>
-                    <div class="date-box-sub">@b.CheckInDate.ToString("dddd")</div>
-                </div>
-                <div class="date-box">
-                    <div class="date-box-lbl">Trả phòng</div>
-                    <div class="date-box-val">@b.CheckOutDate.ToString("dd/MM/yyyy")</div>
-                    <div class="date-box-sub">@b.CheckOutDate.ToString("dddd")</div>
-                </div>
             </div>
         </div>
     </div>
-
-    <!-- Payment info -->
-    <div class="det-card">
-        <div class="det-card-head">
-            <i class="fa-solid fa-credit-card" style="color:var(--blue);font-size:.85rem;"></i>
-            <span class="det-card-head-title">Thanh toán</span>
-        </div>
-        <div class="det-card-body">
-            <div class="pay-row">
-                <span class="pay-lbl">Giá phòng (@nights đêm)</span>
-                <span class="pay-val">@b.TotalAmount.ToString("N0")₫</span>
-            </div>
-            @if (b.Payments.Any())
-            {
-                foreach (var p in b.Payments)
-                {
-                    <div class="pay-row">
-                        <span class="pay-lbl">Phương thức: @p.Method</span>
-                        <span class="pay-val" style="color:#16A34A;">✓ @p.Amount.ToString("N0")₫</span>
-                    </div>
-                }
-            }
-            <div class="pay-row" style="border-top:2px solid var(--divider);margin-top:.4rem;padding-top:.9rem;">
-                <span class="pay-lbl" style="font-weight:700;color:var(--text);">Tổng cộng</span>
-                <span class="pay-total">@b.TotalAmount.ToString("N0")₫</span>
-            </div>
-            @if (b.Status == BookingStatus.Cancelled && b.RefundAmount.HasValue)
-            {
-                <div class="refund-badge">
-                    <i class="fa-solid fa-rotate-left"></i>
-                    Đã hoàn ví: <strong>+@b.RefundAmount.Value.ToString("N0")₫</strong>
-                </div>
-            }
-        </div>
-    </div>
-
-    <!-- Actions -->
-    <div class="det-actions">
-        <a asp-page="/Bookings/History" class="btn-det btn-det-back">
-            <i class="fa-solid fa-arrow-left"></i> Quay lại
-        </a>
-        <a asp-page="/Rooms/Detail" asp-route-id="@(room?.Id ?? 0)" class="btn-det btn-det-primary">
-            <i class="fa-solid fa-eye"></i> Xem phòng
-        </a>
-    </div>
-</div>
+</section>
