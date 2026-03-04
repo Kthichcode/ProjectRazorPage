@@ -1,0 +1,520 @@
+@page "{id:int}"
+@model HotelManagementRazorPage.Pages.Bookings.BookingDetailModel
+@using BusinessObjects.Enums
+@{
+    ViewData["Title"] = $"Chi tiết đơn #{Model.Booking.Id}";
+
+    var room     = Model.Booking.BookingRooms.FirstOrDefault()?.Room;
+    var roomName = room != null ? $"Phòng {room.RoomNumber}" : "N/A";
+    var roomType = room?.RoomType?.Name ?? "";
+    var nights   = (Model.Booking.CheckOutDate - Model.Booking.CheckInDate).Days;
+    var fallback = "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80";
+    var roomImg  = room != null && !string.IsNullOrEmpty(room.ImageUrl) ? room.ImageUrl : fallback;
+
+    string statusText = Model.Booking.Status switch {
+        BookingStatus.Pending             => "Chờ thanh toán",
+        BookingStatus.Confirmed           => "Đã xác nhận",
+        BookingStatus.CheckedIn           => "Đang ở",
+        BookingStatus.Completed           => "Hoàn thành",
+        BookingStatus.Cancelled           => "Đã hủy",
+        BookingStatus.CancellationPending => "Chờ duyệt hủy",
+        _                                 => Model.Booking.Status.ToString()
+    };
+    string statusCls = Model.Booking.Status switch {
+        BookingStatus.Pending             => "st-pending",
+        BookingStatus.Confirmed           => "st-confirmed",
+        BookingStatus.CheckedIn           => "st-checkedin",
+        BookingStatus.Completed           => "st-completed",
+        BookingStatus.Cancelled           => "st-cancelled",
+        BookingStatus.CancellationPending => "st-cancelpending",
+        _                                 => "st-pending"
+    };
+    string stripCls = Model.Booking.Status switch {
+        BookingStatus.Confirmed           => "strip-confirmed",
+        BookingStatus.CheckedIn           => "strip-checkedin",
+        BookingStatus.Completed           => "strip-completed",
+        BookingStatus.Cancelled           => "strip-cancelled",
+        BookingStatus.CancellationPending => "strip-cancelpending",
+        _                                 => "strip-pending"
+    };
+}
+
+<style>
+    :root {
+        --primary:   #1565C0;
+        --primary-d: #0D47A1;
+        --primary-l: #1976D2;
+        --accent:    #42A5F5;
+        --white:     #FFFFFF;
+        --gray-50:   #F8FAFF;
+        --gray-100:  #EFF4FF;
+        --text:      #1E293B;
+        --text-sub:  #64748B;
+        --divider:   #E2EAF4;
+    }
+
+    .detail-hero {
+        background: linear-gradient(135deg, var(--primary-d) 0%, var(--primary) 60%, var(--primary-l) 100%);
+        padding: 2.5rem 0 4.5rem;
+    }
+    .detail-hero h1 {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(1.4rem, 3vw, 2rem);
+        color: #fff; font-weight: 700;
+    }
+    .detail-hero p { color: rgba(255,255,255,.75); font-size: .9rem; }
+
+    .btn-back-hero {
+        display: inline-flex; align-items: center; gap: .4rem;
+        color: rgba(255,255,255,.8); font-size: .88rem;
+        text-decoration: none; transition: color .2s;
+        margin-bottom: 1rem;
+    }
+    .btn-back-hero:hover { color: #fff; }
+
+    /* ── Main card ── */
+    .bd-card {
+        background: var(--white);
+        border-radius: 16px;
+        border: 1px solid var(--divider);
+        box-shadow: 0 8px 32px rgba(21,101,192,.08);
+        margin-top: -50px;
+        position: relative;
+        z-index: 10;
+        overflow: hidden;
+    }
+    .bd-strip { height: 4px; width: 100%; }
+    .strip-confirmed      { background: var(--primary); }
+    .strip-checkedin      { background: #16A34A; }
+    .strip-completed      { background: #16A34A; }
+    .strip-cancelled      { background: #DC2626; }
+    .strip-pending        { background: #D97706; }
+    .strip-cancelpending  { background: #F59E0B; }
+
+    .bd-inner { padding: 2rem; }
+
+    /* Status badge */
+    .st-badge {
+        display: inline-flex; align-items: center; gap: .3rem;
+        padding: .3rem .85rem; border-radius: 980px;
+        font-size: .75rem; font-weight: 700; letter-spacing: .3px;
+    }
+    .st-pending   { background: #FEF3C7; color: #92400E; }
+    .st-confirmed { background: #E8F0FE; color: #0D47A1; }
+    .st-checkedin { background: #DCFCE7; color: #166534; }
+    .st-completed { background: #DCFCE7; color: #166534; }
+    .st-cancelled { background: #FEE2E2; color: #991B1B; }
+    .st-cancelpending { background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; }
+
+    /* Section title */
+    .bd-section-title {
+        font-size: .7rem; font-weight: 700;
+        letter-spacing: 2px; text-transform: uppercase;
+        color: var(--primary); margin-bottom: .8rem;
+    }
+
+    .bd-divider { border: none; border-top: 1px solid var(--divider); margin: 1.5rem 0; }
+
+    /* Info rows */
+    .info-row {
+        display: flex; justify-content: space-between;
+        align-items: center; padding: .55rem 0;
+    }
+    .info-label { font-size: .85rem; color: var(--text-sub); display: flex; align-items: center; gap: .4rem; }
+    .info-label i { color: var(--primary); font-size: .8rem; }
+    .info-value { font-size: .85rem; font-weight: 600; color: var(--text); }
+    .info-value.highlight { color: var(--primary); font-size: 1rem; font-weight: 800; }
+    .info-value.refund { color: #16A34A; }
+
+    /* Date boxes */
+    .date-boxes { display: flex; gap: .75rem; margin-bottom: .5rem; }
+    .date-box {
+        flex: 1;
+        background: var(--gray-50);
+        border: 1px solid var(--divider);
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+    }
+    .date-box-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-sub); margin-bottom: .3rem; }
+    .date-box-value { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+    .date-box-day   { font-size: .75rem; color: var(--text-sub); margin-top: .15rem; }
+
+    /* Night badge */
+    .night-badge {
+        display: flex; align-items: center; justify-content: center;
+        gap: .4rem; padding: .5rem;
+        background: var(--gray-100); border-radius: 10px;
+        font-size: .82rem; font-weight: 700; color: var(--primary);
+        margin-bottom: .5rem;
+    }
+
+    /* Room preview */
+    .room-preview {
+        display: flex; gap: 1.2rem; align-items: flex-start;
+    }
+    .room-preview-img {
+        width: 140px; height: 100px;
+        border-radius: 12px; overflow: hidden;
+        flex-shrink: 0;
+    }
+    .room-preview-img img { width: 100%; height: 100%; object-fit: cover; }
+    .room-preview-info { flex: 1; }
+    .room-preview-type {
+        font-size: .68rem; font-weight: 700; letter-spacing: 2px;
+        text-transform: uppercase; color: var(--accent); margin-bottom: .2rem;
+    }
+    .room-preview-name {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.15rem; font-weight: 700;
+        color: var(--text); margin-bottom: .5rem;
+    }
+    .room-chip {
+        display: inline-flex; align-items: center; gap: .3rem;
+        background: var(--gray-100); color: var(--text-sub);
+        font-size: .75rem; font-weight: 600;
+        padding: .25rem .65rem; border-radius: 20px;
+    }
+    .room-chip i { color: var(--primary); }
+
+    /* Payment rows */
+    .pay-row { display: flex; align-items: center; gap: .6rem; padding: .45rem 0; font-size: .85rem; }
+    .pay-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: .85rem; flex-shrink: 0; }
+    .pay-icon.vnpay   { background: #EEF2FF; color: #4F46E5; }
+    .pay-icon.wallet  { background: #ECFDF5; color: #059669; }
+    .pay-icon.default { background: var(--gray-100); color: var(--text-sub); }
+    .pay-label { flex: 1; color: var(--text-sub); }
+    .pay-amount { font-weight: 700; color: var(--text); }
+
+    /* Action buttons */
+    .bd-actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1.5rem; }
+    .btn-bd {
+        display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+        padding: .65rem 1.4rem; border-radius: 10px;
+        font-size: .85rem; font-weight: 700; cursor: pointer;
+        text-decoration: none; transition: all .25s;
+        border: none;
+    }
+    .btn-bd-primary { background: var(--primary); color: #fff !important; }
+    .btn-bd-primary:hover { background: var(--primary-d); transform: translateY(-1px); }
+    .btn-bd-outline {
+        background: var(--white); color: var(--primary) !important;
+        border: 1.5px solid var(--primary);
+    }
+    .btn-bd-outline:hover { background: var(--primary); color: #fff !important; }
+    .btn-bd-warn { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+    .btn-bd-warn:hover { background: #F59E0B; color: #fff; border-color: #F59E0B; }
+    .btn-bd-danger {
+        background: var(--white); color: #DC2626 !important;
+        border: 1.5px solid #FCA5A5;
+    }
+    .btn-bd-danger:hover { background: #DC2626; color: #fff !important; border-color: #DC2626; }
+    .btn-bd-disabled { background: var(--gray-100); color: var(--text-sub); pointer-events: none; }
+
+    /* Timeline */
+    .timeline { position: relative; padding-left: 24px; }
+    .timeline::before { content: ''; position: absolute; left: 7px; top: 4px; bottom: 4px; width: 2px; background: var(--divider); }
+    .tl-item { position: relative; padding-bottom: 1rem; }
+    .tl-item:last-child { padding-bottom: 0; }
+    .tl-dot {
+        position: absolute; left: -24px; top: 2px;
+        width: 16px; height: 16px; border-radius: 50%;
+        background: var(--divider); border: 2px solid var(--white);
+        z-index: 1;
+    }
+    .tl-dot.active { background: var(--primary); }
+    .tl-dot.success { background: #16A34A; }
+    .tl-dot.warning { background: #D97706; }
+    .tl-dot.danger  { background: #DC2626; }
+    .tl-text { font-size: .82rem; color: var(--text); font-weight: 600; }
+    .tl-time { font-size: .73rem; color: var(--text-sub); margin-top: .1rem; }
+
+    @@media (max-width: 767px) {
+        .room-preview { flex-direction: column; }
+        .room-preview-img { width: 100%; height: 180px; }
+    }
+</style>
+
+<!-- ═══ HERO ═══ -->
+<section class="detail-hero">
+    <div class="container">
+        <a asp-page="/Bookings/History" class="btn-back-hero">
+            <i class="fa-solid fa-arrow-left"></i> Quay lại lịch sử đặt phòng
+        </a>
+        <h1><i class="fa-solid fa-receipt me-2"></i>Chi tiết đơn đặt phòng</h1>
+        <p>Mã đơn: <strong>#@Model.Booking.Id</strong> · Đặt ngày @Model.Booking.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+    </div>
+</section>
+
+<!-- ═══ CONTENT ═══ -->
+<section class="pb-5" style="background: var(--gray-50);">
+    <div class="container">
+        <div class="bd-card">
+            <div class="bd-strip @stripCls"></div>
+            <div class="bd-inner">
+                <div class="row g-4">
+                    <!-- LEFT COLUMN -->
+                    <div class="col-lg-7">
+                        <!-- Status & ID header -->
+                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                            <div>
+                                <span style="font-size:.82rem;color:var(--text-sub);">Mã đơn</span>
+                                <span style="font-size:1.1rem;font-weight:800;color:var(--primary);margin-left:.3rem;">#@Model.Booking.Id</span>
+                            </div>
+                            <span class="st-badge @statusCls">@statusText</span>
+                        </div>
+
+                        <!-- Room preview -->
+                        <p class="bd-section-title"><i class="fa-solid fa-bed me-1"></i>Thông tin phòng</p>
+                        <div class="room-preview">
+                            <div class="room-preview-img">
+                                <img src="@roomImg" alt="@roomName" onerror="this.src='@fallback'" />
+                            </div>
+                            <div class="room-preview-info">
+                                @if (!string.IsNullOrEmpty(roomType))
+                                {
+                                    <div class="room-preview-type">@roomType</div>
+                                }
+                                <div class="room-preview-name">@roomName</div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    @if (room != null)
+                                    {
+                                        <span class="room-chip"><i class="fa-solid fa-users"></i>@room.MaxOccupancy khách</span>
+                                        @if (room.RoomType != null)
+                                        {
+                                            <span class="room-chip"><i class="fa-solid fa-layer-group"></i>@room.RoomType.Name</span>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="bd-divider" />
+
+                        <!-- Dates -->
+                        <p class="bd-section-title"><i class="fa-solid fa-calendar-days me-1"></i>Thời gian lưu trú</p>
+                        <div class="date-boxes">
+                            <div class="date-box">
+                                <div class="date-box-label">Nhận phòng</div>
+                                <div class="date-box-value">@Model.Booking.CheckInDate.ToString("dd/MM/yyyy")</div>
+                                <div class="date-box-day">@Model.Booking.CheckInDate.ToString("dddd")</div>
+                            </div>
+                            <div class="date-box">
+                                <div class="date-box-label">Trả phòng</div>
+                                <div class="date-box-value">@Model.Booking.CheckOutDate.ToString("dd/MM/yyyy")</div>
+                                <div class="date-box-day">@Model.Booking.CheckOutDate.ToString("dddd")</div>
+                            </div>
+                        </div>
+                        <div class="night-badge">
+                            <i class="fa-solid fa-moon"></i> @nights đêm lưu trú
+                        </div>
+
+                        <hr class="bd-divider" />
+
+                        <!-- Timeline -->
+                        <p class="bd-section-title"><i class="fa-solid fa-timeline me-1"></i>Trạng thái đơn</p>
+                        <div class="timeline">
+                            <div class="tl-item">
+                                <div class="tl-dot success"></div>
+                                <div class="tl-text">Đã tạo đơn</div>
+                                <div class="tl-time">@Model.Booking.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                            </div>
+
+                            @if (Model.Booking.Status >= BookingStatus.Confirmed && Model.Booking.Status != BookingStatus.Cancelled && Model.Booking.Status != BookingStatus.CancellationPending)
+                            {
+                                <div class="tl-item">
+                                    <div class="tl-dot success"></div>
+                                    <div class="tl-text">Đã thanh toán & Xác nhận</div>
+                                    @if (Model.Booking.Payments.Any())
+                                    {
+                                        <div class="tl-time">@Model.Booking.Payments.OrderBy(p => p.CreatedAt).First().CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                    }
+                                </div>
+                            }
+
+                            @if (Model.Booking.Status >= BookingStatus.CheckedIn && Model.Booking.Status != BookingStatus.Cancelled)
+                            {
+                                <div class="tl-item">
+                                    <div class="tl-dot active"></div>
+                                    <div class="tl-text">Đã nhận phòng (Check-in)</div>
+                                    <div class="tl-time">@Model.Booking.CheckInDate.ToString("dd/MM/yyyy")</div>
+                                </div>
+                            }
+
+                            @if (Model.Booking.Status == BookingStatus.Completed)
+                            {
+                                <div class="tl-item">
+                                    <div class="tl-dot success"></div>
+                                    <div class="tl-text">Hoàn thành (Check-out)</div>
+                                    <div class="tl-time">@Model.Booking.CheckOutDate.ToString("dd/MM/yyyy")</div>
+                                </div>
+                            }
+
+                            @if (Model.Booking.Status == BookingStatus.CancellationPending)
+                            {
+                                <div class="tl-item">
+                                    <div class="tl-dot warning"></div>
+                                    <div class="tl-text">Yêu cầu hủy — Chờ duyệt</div>
+                                    @if (Model.Booking.CancellationRequestedAt.HasValue)
+                                    {
+                                        <div class="tl-time">@Model.Booking.CancellationRequestedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                    }
+                                </div>
+                            }
+
+                            @if (Model.Booking.Status == BookingStatus.Cancelled)
+                            {
+                                <div class="tl-item">
+                                    <div class="tl-dot danger"></div>
+                                    <div class="tl-text">Đã hủy</div>
+                                    @if (Model.Booking.CancellationRequestedAt.HasValue)
+                                    {
+                                        <div class="tl-time">@Model.Booking.CancellationRequestedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                    }
+                                </div>
+                            }
+
+                            @if (Model.Booking.Status == BookingStatus.Pending)
+                            {
+                                <div class="tl-item">
+                                    <div class="tl-dot warning"></div>
+                                    <div class="tl-text">Chờ thanh toán</div>
+                                    <div class="tl-time">Vui lòng thanh toán để xác nhận đơn</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN -->
+                    <div class="col-lg-5">
+                        <div style="background:var(--gray-50);border:1px solid var(--divider);border-radius:14px;padding:1.5rem;">
+                            <!-- Payment summary -->
+                            <p class="bd-section-title"><i class="fa-solid fa-receipt me-1"></i>Chi tiết thanh toán</p>
+
+                            <div class="info-row">
+                                <span class="info-label"><i class="fa-solid fa-bed"></i>Giá phòng / đêm</span>
+                                <span class="info-value">@((room?.RoomType?.PricePerNight ?? 0).ToString("N0"))₫</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label"><i class="fa-solid fa-moon"></i>Số đêm</span>
+                                <span class="info-value">@nights đêm</span>
+                            </div>
+                            <hr class="bd-divider" style="margin:.8rem 0;" />
+                            <div class="info-row">
+                                <span class="info-label" style="font-weight:700;color:var(--text);font-size:.9rem;">
+                                    <i class="fa-solid fa-money-bill-wave"></i>Tổng tiền
+                                </span>
+                                <span class="info-value highlight">@Model.Booking.TotalAmount.ToString("N0")₫</span>
+                            </div>
+
+                            @if (Model.Booking.Payments.Any())
+                            {
+                                <hr class="bd-divider" style="margin:.8rem 0;" />
+                                <p class="bd-section-title" style="margin-top:.5rem;"><i class="fa-solid fa-credit-card me-1"></i>Phương thức thanh toán</p>
+
+                                @foreach (var payment in Model.Booking.Payments.OrderBy(p => p.CreatedAt))
+                                {
+                                    var iconCls = payment.Method switch {
+                                        "VNPay"  => "vnpay",
+                                        "Wallet" => "wallet",
+                                        _        => "default"
+                                    };
+                                    var iconName = payment.Method switch {
+                                        "VNPay"  => "fa-solid fa-credit-card",
+                                        "Wallet" => "fa-solid fa-wallet",
+                                        _        => "fa-solid fa-money-bill"
+                                    };
+                                    <div class="pay-row">
+                                        <div class="pay-icon @iconCls"><i class="@iconName"></i></div>
+                                        <span class="pay-label">@payment.Method</span>
+                                        <span class="pay-amount">@payment.Amount.ToString("N0")₫</span>
+                                    </div>
+                                }
+                            }
+
+                            @if (Model.Booking.WalletAmountPaid.HasValue && Model.Booking.WalletAmountPaid > 0)
+                            {
+                                <div class="info-row" style="margin-top:.4rem;">
+                                    <span class="info-label"><i class="fa-solid fa-wallet"></i>Đã trừ ví</span>
+                                    <span class="info-value" style="color:#059669;">@Model.Booking.WalletAmountPaid.Value.ToString("N0")₫</span>
+                                </div>
+                            }
+
+                            @if (Model.Booking.Status == BookingStatus.Cancelled && Model.Booking.RefundAmount.HasValue)
+                            {
+                                <hr class="bd-divider" style="margin:.8rem 0;" />
+                                <div class="info-row">
+                                    <span class="info-label" style="color:#16A34A;font-weight:600;">
+                                        <i class="fa-solid fa-rotate-left" style="color:#16A34A;"></i>Đã hoàn vào ví
+                                    </span>
+                                    <span class="info-value refund">+@Model.Booking.RefundAmount.Value.ToString("N0")₫</span>
+                                </div>
+                            }
+
+                            <!-- Action buttons -->
+                            <div class="bd-actions">
+                                @if (Model.Booking.Status == BookingStatus.Pending)
+                                {
+                                    <form method="post" asp-page="/Bookings/History" asp-page-handler="RetryPayment" asp-route-id="@Model.Booking.Id" style="display:contents;">
+                                        <button type="submit" class="btn-bd btn-bd-warn" style="flex:1;">
+                                            <i class="fa-solid fa-credit-card"></i> Thanh toán ngay
+                                        </button>
+                                    </form>
+                                }
+
+                                @if ((Model.Booking.Status == BookingStatus.Pending || Model.Booking.Status == BookingStatus.Confirmed)
+                                     && Model.Booking.CheckInDate >= DateTime.Today)
+                                {
+                                    <form method="post" asp-page="/Bookings/History" asp-page-handler="Cancel" asp-route-id="@Model.Booking.Id" style="display:contents;">
+                                        <button type="submit" class="btn-bd btn-bd-danger"
+                                                onclick="return confirm('Gửi yêu cầu hủy? Tiền sẽ hoàn vào ví sau khi manager duyệt.')">
+                                            <i class="fa-solid fa-xmark"></i> Hủy đặt phòng
+                                        </button>
+                                    </form>
+                                }
+
+                                @if (Model.Booking.Status == BookingStatus.CancellationPending)
+                                {
+                                    <span class="btn-bd btn-bd-disabled">
+                                        <i class="fa-solid fa-hourglass-half"></i> Đang chờ duyệt hủy
+                                    </span>
+                                }
+
+                                @if (Model.CanReview)
+                                {
+                                    <a asp-page="/Rooms/Detail" asp-route-id="@Model.ReviewableRoomId" class="btn-bd btn-bd-primary" style="flex:1;">
+                                        <i class="fa-solid fa-star"></i> Đánh giá phòng
+                                    </a>
+                                }
+
+                                @if (room != null)
+                                {
+                                    <a asp-page="/Rooms/Detail" asp-route-id="@room.Id" class="btn-bd btn-bd-outline">
+                                        <i class="fa-solid fa-eye"></i> Xem phòng
+                                    </a>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Customer info -->
+                        <div style="background:var(--white);border:1px solid var(--divider);border-radius:14px;padding:1.5rem;margin-top:1rem;">
+                            <p class="bd-section-title"><i class="fa-solid fa-user me-1"></i>Thông tin khách hàng</p>
+                            <div class="info-row">
+                                <span class="info-label"><i class="fa-solid fa-user"></i>Tên</span>
+                                <span class="info-value">@(Model.Booking.Customer?.FullName ?? Model.Booking.Customer?.UserName ?? "—")</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label"><i class="fa-solid fa-envelope"></i>Email</span>
+                                <span class="info-value">@(Model.Booking.Customer?.Email ?? "—")</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label"><i class="fa-solid fa-phone"></i>Điện thoại</span>
+                                <span class="info-value">@(Model.Booking.Customer?.PhoneNumber ?? "—")</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

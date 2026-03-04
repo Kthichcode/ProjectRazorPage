@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@using System.Security.Claims
+@using Services.Interfaces
+@inject IWalletService WalletService
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
@@ -120,6 +123,28 @@
             color: #EF4444 !important;
         }
 
+        /* ── WALLET PILL (NAVBAR) ── */
+        .nav-wallet-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: .3rem .8rem;
+            background: #EBF8F2;
+            border: 1.5px solid #A7EBC7;
+            border-radius: 980px;
+            font-size: .8rem;
+            font-weight: 600;
+            color: #1A6640 !important;
+            text-decoration: none;
+            transition: all .2s;
+        }
+        .nav-wallet-pill:hover {
+            background: #D1FAE5;
+            border-color: #059669;
+            color: #059669 !important;
+        }
+        .nav-wallet-pill i { color: #059669; font-size: .78rem; }
+
         /* ── FOOTER ── */
         .site-footer {
             background: var(--primary-d);
@@ -185,6 +210,15 @@
                             <span class="nav-link nav-user-text">
                                 <i class="fa-solid fa-circle-user me-1"></i>@User.Identity.Name
                             </span>
+                        </li>
+                        <li class="nav-item">
+                            @{
+                                var walletUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                                var walletBal = walletUserId != null ? WalletService.GetUserWallet(walletUserId).Balance : 0;
+                            }
+                            <a class="nav-link nav-wallet-pill" asp-page="/Bookings/Wallet">
+                                <i class="fa-solid fa-wallet"></i>@walletBal.ToString("N0")₫
+                            </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" asp-page="/Bookings/History">
