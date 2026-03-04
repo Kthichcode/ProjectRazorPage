@@ -184,18 +184,6 @@
     }
     .room-card-apple:hover .room-card-img img { transform: scale(1.04); }
 
-    .room-badge {
-        position: absolute;
-        top: 14px; left: 14px;
-        font-size: .68rem;
-        font-weight: 700;
-        letter-spacing: .5px;
-        padding: .28rem .75rem;
-        border-radius: 980px;
-        background: var(--blue);
-        color: #fff;
-    }
-    .room-badge.unavail { background: #86868B; }
 
     .room-card-body { padding: 1.5rem 1.4rem 1.4rem; }
 
@@ -455,13 +443,9 @@
                             <div class="room-card-img">
                                 @{
                                     var fallback = "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80";
-                                    bool avail = room.Status == BusinessObjects.Enums.RoomStatus.Available;
                                 }
                                 <img src="@(string.IsNullOrEmpty(room.ImageUrl) ? fallback : room.ImageUrl)"
                                      alt="Phòng @room.RoomNumber" />
-                                <span class="room-badge @(avail ? "" : "unavail")">
-                                    @(avail ? "Còn phòng" : "Đã đặt")
-                                </span>
                             </div>
                             <div class="room-card-body">
                                 <div class="room-card-type">@(room.RoomType?.Name ?? "Phòng")</div>

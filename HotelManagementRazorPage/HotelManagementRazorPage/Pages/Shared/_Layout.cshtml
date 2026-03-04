@@ -211,15 +211,18 @@
                                 <i class="fa-solid fa-circle-user me-1"></i>@User.Identity.Name
                             </span>
                         </li>
-                        <li class="nav-item">
-                            @{
-                                var walletUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                                var walletBal = walletUserId != null ? WalletService.GetUserWallet(walletUserId).Balance : 0;
-                            }
-                            <a class="nav-link nav-wallet-pill" asp-page="/Bookings/Wallet">
-                                <i class="fa-solid fa-wallet"></i>@walletBal.ToString("N0")₫
-                            </a>
-                        </li>
+                        @if (!User.IsInRole("Admin") && !User.IsInRole("Manager") && !User.IsInRole("Staff"))
+                        {
+                            <li class="nav-item">
+                                @{
+                                    var walletUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                                    var walletBal = walletUserId != null ? WalletService.GetUserWallet(walletUserId).Balance : 0;
+                                }
+                                <a class="nav-link nav-wallet-pill" asp-page="/Bookings/Wallet">
+                                    <i class="fa-solid fa-wallet"></i>@walletBal.ToString("N0")₫
+                                </a>
+                            </li>
+                        }
                         <li class="nav-item">
                             <a class="nav-link" asp-page="/Bookings/History">
                                 <i class="fa-solid fa-clock-rotate-left me-1"></i>Đơn đặt phòng

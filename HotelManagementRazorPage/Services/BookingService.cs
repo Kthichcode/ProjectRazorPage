@@ -395,27 +395,41 @@ namespace Services
             if (booking.Status != BookingStatus.CancellationPending)
                 throw new Exception("Booking này không ở trạng thái chờ duyệt hủy.");
 
-            // Tính % hoàn tiền dựa trên thời gian yêu cầu hủy
-            var requestedAt = booking.CancellationRequestedAt ?? booking.CreatedAt;
-            var hoursElapsed = (DateTime.UtcNow - requestedAt).TotalHours;
-            // Dùng CreatedAt làm mốc: nếu hủy trong 24h kể từ lúc đặt thì 100%, ngược lại 70%
-            var hoursSinceBooking = (requestedAt - booking.CreatedAt).TotalHours;
+            var requestedAt = booking.CancellationRequestedAt ?? DateTime.UtcNow;
 
-            decimal refundPercent = hoursSinceBooking <= 24 ? 1.0m : 0.7m;
+            // Logic hoàn tiền dựa trên số ngày còn lại đến ngày nhận phòng
+            var daysUntilCheckIn = (booking.CheckInDate.Date - requestedAt.Date).TotalDays;
+
+            decimal refundPercent;
+            string refundDesc;
+            if (daysUntilCheckIn <= 3)
+            {
+                // Hủy trong vòng 1–3 ngày trước check-in → mất toàn bộ
+                refundPercent = 0m;
+                refundDesc = $"Hủy booking #{bookingId} (không hoàn tiền)";
+            }
+            else if (daysUntilCheckIn < 7)
+            {
+                // Hủy trước 4–6 ngày → hoàn 70%
+                refundPercent = 0.7m;
+                refundDesc = $"Hoàn 70% tiền booking #{bookingId}";
+            }
+            else
+            {
+                // Hủy trước từ 7 ngày trở lên → hoàn 100%
+                refundPercent = 1.0m;
+                refundDesc = $"Hoàn 100% tiền booking #{bookingId}";
+            }
+
             decimal refundAmount = Math.Round(booking.TotalAmount * refundPercent, 0);
 
             booking.RefundAmount = refundAmount;
             booking.Status = BookingStatus.Cancelled;
             _bookingRepo.Save();
 
-            // Cộng tiền vào ví khách
+            // Cộng tiền vào ví khách (nếu có)
             if (refundAmount > 0)
-            {
-                string desc = hoursSinceBooking <= 24
-                    ? $"Hoàn 100% tiền booking #{bookingId}"
-                    : $"Hoàn 70% tiền booking #{bookingId}";
-                _walletService.AddBalance(booking.CustomerId, refundAmount, desc);
-            }
+                _walletService.AddBalance(booking.CustomerId, refundAmount, refundDesc);
         }
 
     }

@@ -70,18 +70,7 @@
         font-size: .78rem; font-weight: 600;
         padding: .3rem .75rem; border-radius: 20px;
     }
-    .badge-status-yes {
-        background: #DCFCE7; color: #15803D;
-        font-size: .75rem; font-weight: 700;
-        padding: .25rem .7rem; border-radius: 20px;
-        display: inline-flex; align-items: center; gap: .3rem;
-    }
-    .badge-status-no {
-        background: #FEE2E2; color: #B91C1C;
-        font-size: .75rem; font-weight: 700;
-        padding: .25rem .7rem; border-radius: 20px;
-        display: inline-flex; align-items: center; gap: .3rem;
-    }
+
     .btn-book-big {
         display: flex; align-items: center; justify-content: center; gap: .5rem;
         background: var(--primary); color: var(--white) !important;
@@ -196,22 +185,11 @@
                     @(Model.Room?.RoomType?.Name ?? "Phòng")
                 </div>
 
-                <!-- Room name + status -->
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;">
+                <!-- Room name -->
+                <div style="margin-bottom:1rem;">
                     <h1 style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--text);margin:0;">
                         Phòng @Model.Room?.RoomNumber
                     </h1>
-                    @{
-                        bool avail = Model.Room?.Status == BusinessObjects.Enums.RoomStatus.Available;
-                    }
-                    @if (avail)
-                    {
-                        <span class="badge-status-yes"><i class="fa-solid fa-circle-check"></i>Còn phòng</span>
-                    }
-                    else
-                    {
-                        <span class="badge-status-no"><i class="fa-solid fa-circle-xmark"></i>Hết phòng</span>
-                    }
                 </div>
 
                 <!-- Price -->
