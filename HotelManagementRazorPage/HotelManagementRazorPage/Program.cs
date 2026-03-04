@@ -35,6 +35,7 @@ builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<Services.Interfaces.IDashboardService, Services.DashboardService>();
 
 // AI Chat Service
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<IAiChatService, AiChatService>();
 builder.Services.AddScoped<ISignalRService, HotelManagementRazorPage.SignalR.SignalRService>();
 builder.Services.AddScoped<Repositories.Interfaces.IReviewRepository, Repositories.ReviewRepository>();

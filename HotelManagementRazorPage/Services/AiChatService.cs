@@ -1,355 +1,235 @@
 using BusinessObjects.Entities;
+using Microsoft.Extensions.Configuration;
 using Repositories.Interfaces;
 using Services.Interfaces;
+using System.Net.Http;
 using System.Text;
-using System.Text.RegularExpressions;
+using System.Text.Json;
 
 namespace Services
 {
     public class AiChatService : IAiChatService
     {
         private readonly IRoomRepository _roomRepo;
+        private readonly string _apiKey;
 
-        public AiChatService(IRoomRepository roomRepo)
+        // Danh sách model ưu tiên (free tier quota cao nhất → ít trước nhất)
+        private static readonly string[] _preferredModels =
+        [
+            "gemini-1.5-flash-8b",  // free tier quota cao nhất
+            "gemini-1.5-flash",
+            "gemini-2.0-flash-lite",
+            "gemini-2.0-flash",
+            "gemini-pro"
+        ];
+        private static string? _cachedModel;
+        private static readonly HashSet<string> _failedModels = new();
+        private static readonly SemaphoreSlim _lock = new(1, 1);
+        private static readonly HttpClient _http = new();
+
+        public AiChatService(IRoomRepository roomRepo, IConfiguration config)
         {
             _roomRepo = roomRepo;
+            _apiKey   = config["Gemini:ApiKey"] ?? throw new InvalidOperationException("Gemini:ApiKey chưa được cấu hình.");
+        }
+
+        // ── Tự động chọn model phù hợp từ Gemini API (bỏ qua model bị blacklist)
+        private async Task<string?> GetModelAsync()
+        {
+            if (_cachedModel != null && !_failedModels.Contains(_cachedModel))
+                return _cachedModel;
+
+            await _lock.WaitAsync();
+            try
+            {
+                // Kiểm tra lại sau khi có lock
+                if (_cachedModel != null && !_failedModels.Contains(_cachedModel))
+                    return _cachedModel;
+
+                // Lấy danh sách model available từ API
+                List<string> available = new();
+                try
+                {
+                    string listUrl = $"https://generativelanguage.googleapis.com/v1beta/models?key={_apiKey}";
+                    using var resp = await _http.GetAsync(listUrl);
+                    if (resp.IsSuccessStatusCode)
+                    {
+                        string json = await resp.Content.ReadAsStringAsync();
+                        using var doc = JsonDocument.Parse(json);
+                        available = doc.RootElement
+                            .GetProperty("models")
+                            .EnumerateArray()
+                            .Where(m =>
+                            {
+                                bool canGenerate = m.TryGetProperty("supportedGenerationMethods", out var methods) &&
+                                                   methods.EnumerateArray().Any(x => x.GetString() == "generateContent");
+                                string name = m.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
+                                return canGenerate && !name.Contains("embed") && !name.Contains("vision");
+                            })
+                            .Select(m =>
+                            {
+                                string n = m.GetProperty("name").GetString()!;
+                                return n.StartsWith("models/") ? n["models/".Length..] : n;
+                            })
+                            .ToList();
+                    }
+                }
+                catch { /* ignore, sử dụng preferred list */ }
+
+                // Chọn theo ưu tiên, dùng TÊN THỰC TẾ từ available list
+                foreach (var pref in _preferredModels)
+                {
+                    if (_failedModels.Contains(pref)) continue;
+
+                    if (available.Any())
+                    {
+                        // Tìm tên thực tế (vd: "gemini-1.5-flash-8b-001") khớp với pref
+                        string? actualName = available.FirstOrDefault(a =>
+                            a.Contains(pref) && !_failedModels.Contains(a));
+                        if (actualName != null) { _cachedModel = actualName; return _cachedModel; }
+                    }
+                    else
+                    {
+                        // Không fetch được list → thử trực tiếp bằng pref keyword
+                        _cachedModel = pref; return _cachedModel;
+                    }
+                }
+
+                // Fallback: model available nào chưa fail
+                string? fallback = available.FirstOrDefault(a => !_failedModels.Contains(a));
+                _cachedModel = fallback;
+                return _cachedModel;
+            }
+            finally { _lock.Release(); }
         }
 
         public async Task<ChatResponse> SendMessageAsync(string userMessage, List<ChatMessage> history)
         {
-            await Task.CompletedTask; // giữ async signature
-
-            var msg = userMessage.ToLower().Trim();
             var rooms = _roomRepo.GetAll();
 
-            // ── Phân tích ý định ──────────────────────────────────────
-            var intent = DetectIntent(msg);
-
-            return intent switch
+            // ── System prompt với dữ liệu phòng thực ───────────────────
+            var sb = new StringBuilder();
+            foreach (var r in rooms)
             {
-                "greeting"     => HandleGreeting(),
-                "available"    => HandleAvailable(rooms),
-                "price"        => HandlePriceQuery(msg, rooms),
-                "capacity"     => HandleCapacityQuery(msg, rooms),
-                "room_type"    => HandleRoomTypeQuery(msg, rooms),
-                "all_rooms"    => HandleAllRooms(rooms),
-                "help"         => HandleHelp(),
-                _              => HandleSmartSearch(msg, rooms)
-            };
-        }
-
-        // ══════════════════════════════════════════════════════════════
-        //  INTENT DETECTION
-        // ══════════════════════════════════════════════════════════════
-
-        private string DetectIntent(string msg)
-        {
-            if (IsGreeting(msg))    return "greeting";
-            if (IsHelp(msg))        return "help";
-            if (IsAvailable(msg))   return "available";
-            if (HasPriceKeyword(msg)) return "price";
-            if (HasCapacityKeyword(msg)) return "capacity";
-            if (HasRoomTypeKeyword(msg)) return "room_type";
-            if (IsListAll(msg))     return "all_rooms";
-            return "smart_search";
-        }
-
-        private bool IsGreeting(string m) =>
-            Regex.IsMatch(m, @"\b(xin chào|chào|hello|hi|hey|good morning|good afternoon)\b");
-
-        private bool IsHelp(string m) =>
-            Regex.IsMatch(m, @"\b(giúp|help|hướng dẫn|tư vấn|hỏi|không biết)\b");
-
-        private bool IsAvailable(string m) =>
-            Regex.IsMatch(m, @"\b(còn|trống|available|rảnh|free|đặt được)\b");
-
-        private bool HasPriceKeyword(string m) =>
-            Regex.IsMatch(m, @"\b(giá|tiền|budget|ngân sách|bao nhiêu|rẻ|đắt|triệu|nghìn|vnd|vnđ)\b");
-
-        private bool HasCapacityKeyword(string m) =>
-            Regex.IsMatch(m, @"\b(người|person|khách|guest|người lớn|\d+\s*(người|khách|pax))\b");
-
-        private bool HasRoomTypeKeyword(string m) =>
-            Regex.IsMatch(m, @"\b(vip|suite|deluxe|standard|superior|economy|loại|type|hạng)\b");
-
-        private bool IsListAll(string m) =>
-            Regex.IsMatch(m, @"\b(tất cả|danh sách|xem|show|list|all|hết)\b");
-
-        // ══════════════════════════════════════════════════════════════
-        //  HANDLERS
-        // ══════════════════════════════════════════════════════════════
-
-        private ChatResponse HandleGreeting() => new()
-        {
-            Message = "👋 **Xin chào! Tôi là trợ lý AI của Mường Thanh Hotel.**\n\n" +
-                      "Tôi có thể giúp bạn:\n" +
-                      "• 🔍 Tìm phòng theo **ngân sách** (ví dụ: *\"phòng dưới 2 triệu\"*)\n" +
-                      "• 👥 Tìm phòng theo **số người** (ví dụ: *\"phòng cho 4 người\"*)\n" +
-                      "• 🏷️ Tìm theo **loại phòng** (VIP, Deluxe, Standard...)\n" +
-                      "• 📋 Xem **tất cả phòng** còn trống\n\n" +
-                      "Bạn cần tìm phòng như thế nào?",
-            SuggestedRooms = new()
-        };
-
-        private ChatResponse HandleHelp() => new()
-        {
-            Message = "💡 **Tôi có thể hỗ trợ bạn tìm phòng với các yêu cầu sau:**\n\n" +
-                      "**Theo giá:**\n" +
-                      "• *\"Phòng dưới 1 triệu\"* / *\"Budget 2 triệu\"*\n\n" +
-                      "**Theo số người:**\n" +
-                      "• *\"Phòng cho 2 người\"* / *\"4 khách\"*\n\n" +
-                      "**Theo loại:**\n" +
-                      "• *\"Phòng VIP\"* / *\"Phòng Deluxe\"*\n\n" +
-                      "**Phòng trống:**\n" +
-                      "• *\"Còn phòng nào trống không?\"*\n\n" +
-                      "Hãy thử một câu hỏi! 😊",
-            SuggestedRooms = new()
-        };
-
-        private ChatResponse HandleAvailable(List<Room> rooms)
-        {
-            var available = rooms.Where(r => r.Status == BusinessObjects.Enums.RoomStatus.Available).ToList();
-            if (!available.Any())
-                return new() { Message = "😔 Hiện tại **tất cả các phòng đều đã được đặt**. Vui lòng liên hệ lễ tân để biết lịch trống sớm nhất.", SuggestedRooms = new() };
-
-            return new()
-            {
-                Message = $"✅ Hiện có **{available.Count} phòng đang trống** sẵn sàng đặt. Dưới đây là các phòng bạn có thể chọn:",
-                SuggestedRooms = ToSuggested(available.Take(6).ToList(), "Phòng đang trống, sẵn sàng nhận đặt")
-            };
-        }
-
-        private ChatResponse HandlePriceQuery(string msg, List<Room> rooms)
-        {
-            // Trích xuất số tiền từ message (triệu, nghìn, raw number)
-            decimal? maxPrice = ExtractMaxPrice(msg);
-            decimal? minPrice = ExtractMinPrice(msg);
-
-            var filtered = rooms.Where(r =>
-            {
-                var price = r.RoomType?.PricePerNight ?? 0;
-                if (maxPrice.HasValue && price > maxPrice.Value) return false;
-                if (minPrice.HasValue && price < minPrice.Value) return false;
-                return true;
-            }).OrderBy(r => r.RoomType?.PricePerNight ?? 0).ToList();
-
-            if (!filtered.Any())
-            {
-                string rangeText = maxPrice.HasValue ? $"dưới {maxPrice.Value:N0}₫" : "trong khoảng bạn yêu cầu";
-                return new() { Message = $"😔 Không tìm thấy phòng **{rangeText}**. Bạn có thể tăng ngân sách hoặc xem tất cả phòng không?", SuggestedRooms = new() };
+                sb.AppendLine(
+                    $"- ID:{r.Id} | Phòng {r.RoomNumber} | Loại: {r.RoomType?.Name ?? "N/A"} " +
+                    $"| Giá: {r.RoomType?.PricePerNight ?? 0:N0}₫/đêm " +
+                    $"| Sức chứa: {r.MaxOccupancy} người " +
+                    $"| Mô tả: {(string.IsNullOrEmpty(r.Description) ? "Phòng tiêu chuẩn" : r.Description)}");
             }
 
-            string priceDesc = maxPrice.HasValue ? $"dưới {maxPrice.Value:N0}₫/đêm" : "theo yêu cầu giá của bạn";
-            return new()
+            string systemPrompt =
+                "Bạn là trợ lý AI của khách sạn Mường Thanh Hotel. " +
+                "Nhiệm vụ của bạn là tư vấn, gợi ý phòng phù hợp cho khách hàng dựa trên thông tin thực tế dưới đây. " +
+                "Hãy trả lời ngắn gọn, thân thiện bằng tiếng Việt. " +
+                "Khi gợi ý phòng, hãy đề cập đến ID phòng theo định dạng [ROOM:id] (ví dụ: [ROOM:5]) để hệ thống hiển thị card phòng. " +
+                "Gợi ý tối đa 4 phòng. Chỉ gợi ý phòng có trong danh sách.\n\n" +
+                "DANH SÁCH PHÒNG:\n" + sb.ToString();
+
+            // ── Xây dựng contents ────────────────────────────────────────
+            var contents = new List<object>();
+            foreach (var h in history.TakeLast(8))
             {
-                Message = $"💰 Tìm thấy **{filtered.Count} phòng** {priceDesc}. Đây là các lựa chọn phù hợp nhất:",
-                SuggestedRooms = ToSuggested(filtered.Take(5).ToList(), "Giá phù hợp với ngân sách của bạn")
-            };
-        }
-
-        private ChatResponse HandleCapacityQuery(string msg, List<Room> rooms)
-        {
-            int? capacity = ExtractNumber(msg);
-            if (!capacity.HasValue)
-                return HandleSmartSearch(msg, rooms);
-
-            var filtered = rooms
-                .Where(r => r.MaxOccupancy >= capacity.Value)
-                .OrderBy(r => r.MaxOccupancy)
-                .ThenBy(r => r.RoomType?.PricePerNight ?? 0)
-                .ToList();
-
-            if (!filtered.Any())
-                return new() { Message = $"😔 Không tìm thấy phòng nào chứa được **{capacity.Value} người**. Phòng lớn nhất của chúng tôi có sức chứa {rooms.Max(r => r.MaxOccupancy)} người.", SuggestedRooms = new() };
-
-            return new()
-            {
-                Message = $"👥 Tìm thấy **{filtered.Count} phòng** phù hợp cho **{capacity.Value} người**. Đây là các gợi ý tốt nhất:",
-                SuggestedRooms = ToSuggested(filtered.Take(5).ToList(), $"Sức chứa phù hợp cho {capacity.Value} người")
-            };
-        }
-
-        private ChatResponse HandleRoomTypeQuery(string msg, List<Room> rooms)
-        {
-            var keywords = new[] { "vip", "suite", "deluxe", "standard", "superior", "economy", "executive" };
-            string? matchedType = keywords.FirstOrDefault(k => msg.Contains(k));
-
-            List<Room> filtered;
-            string typeLabel;
-
-            if (matchedType != null)
-            {
-                filtered = rooms
-                    .Where(r => r.RoomType?.Name?.ToLower().Contains(matchedType) == true)
-                    .ToList();
-                typeLabel = matchedType.ToUpper();
-            }
-            else
-            {
-                // Không rõ loại cụ thể, lấy phòng cao cấp nhất
-                filtered = rooms.OrderByDescending(r => r.RoomType?.PricePerNight ?? 0).Take(5).ToList();
-                typeLabel = "cao cấp";
-            }
-
-            if (!filtered.Any())
-                return new() { Message = $"😔 Không tìm thấy phòng loại **{typeLabel}**. Bạn muốn xem các loại phòng khác không?", SuggestedRooms = new() };
-
-            return new()
-            {
-                Message = $"🏨 Tìm thấy **{filtered.Count} phòng** loại **{typeLabel}**:",
-                SuggestedRooms = ToSuggested(filtered.Take(5).ToList(), $"Phòng loại {typeLabel}")
-            };
-        }
-
-        private ChatResponse HandleAllRooms(List<Room> rooms)
-        {
-            if (!rooms.Any())
-                return new() { Message = "📋 Hiện chưa có phòng nào trong hệ thống. Vui lòng liên hệ lễ tân.", SuggestedRooms = new() };
-
-            var available = rooms.Where(r => r.Status == BusinessObjects.Enums.RoomStatus.Available).ToList();
-            return new()
-            {
-                Message = $"📋 **Tổng {rooms.Count} phòng** trong hệ thống, trong đó **{available.Count} phòng đang trống**. Dưới đây là danh sách các phòng:",
-                SuggestedRooms = ToSuggested(rooms.Take(6).ToList(), "")
-            };
-        }
-
-        private ChatResponse HandleSmartSearch(string msg, List<Room> rooms)
-        {
-            // Kết hợp nhiều tiêu chí
-            var scored = new List<(Room room, int score, string reason)>();
-
-            int? capacity = ExtractNumber(msg);
-            decimal? maxPrice = ExtractMaxPrice(msg);
-
-            foreach (var room in rooms)
-            {
-                int score = 0;
-                var reasons = new List<string>();
-
-                if (capacity.HasValue && room.MaxOccupancy >= capacity.Value)
-                { score += 3; reasons.Add($"sức chứa {room.MaxOccupancy} người"); }
-
-                if (maxPrice.HasValue && (room.RoomType?.PricePerNight ?? 0) <= maxPrice.Value)
-                { score += 3; reasons.Add($"giá {room.RoomType?.PricePerNight:N0}₫"); }
-
-                if (room.Status == BusinessObjects.Enums.RoomStatus.Available)
-                { score += 2; reasons.Add("còn trống"); }
-
-                // Keyword match trong description/name
-                var words = msg.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                foreach (var w in words.Where(w => w.Length > 2))
+                contents.Add(new
                 {
-                    if (room.RoomType?.Name?.ToLower().Contains(w) == true ||
-                        room.Description?.ToLower().Contains(w) == true)
-                    { score += 1; reasons.Add("phù hợp yêu cầu"); break; }
-                }
-
-                if (score > 0)
-                    scored.Add((room, score, string.Join(", ", reasons.Distinct())));
+                    role  = h.Role == "assistant" ? "model" : "user",
+                    parts = new[] { new { text = h.Content } }
+                });
             }
-
-            if (scored.Any())
+            contents.Add(new
             {
-                var top = scored.OrderByDescending(x => x.score).Take(4).ToList();
-                return new()
+                role  = "user",
+                parts = new[] { new { text = userMessage } }
+            });
+
+            // ── Gọi Gemini API (retry khi 429, thử model khác) ──────────
+            string? model = await GetModelAsync();
+            if (model == null)
+                return new ChatResponse { Message = "⚠️ Không tìm được model Gemini. Vui lòng thử lại sau.", SuggestedRooms = new() };
+
+            var requestBody = new
+            {
+                system_instruction = new { parts = new[] { new { text = systemPrompt } } },
+                contents,
+                generationConfig   = new { temperature = 0.7, maxOutputTokens = 800 }
+            };
+            string bodyJson = JsonSerializer.Serialize(requestBody);
+
+            for (int attempt = 0; attempt < _preferredModels.Length; attempt++)
+            {
+                string url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={_apiKey}";
+                using var req = new HttpRequestMessage(HttpMethod.Post, url);
+                req.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+                try
                 {
-                    Message = "🔍 Dựa trên yêu cầu của bạn, đây là các phòng phù hợp nhất:",
-                    SuggestedRooms = top.Select(x => new SuggestedRoom
+                    using var resp = await _http.SendAsync(req);
+                    string raw = await resp.Content.ReadAsStringAsync();
+
+                    if ((int)resp.StatusCode == 429)
                     {
-                        Id = x.room.Id,
-                        RoomNumber = x.room.RoomNumber,
-                        RoomType = x.room.RoomType?.Name ?? "Phòng",
-                        PricePerNight = x.room.RoomType?.PricePerNight ?? 0,
-                        MaxOccupancy = x.room.MaxOccupancy,
-                        Reason = string.IsNullOrEmpty(x.reason) ? "Phòng phù hợp" : x.reason,
-                        ImageUrl = x.room.ImageUrl
-                    }).ToList()
-                };
-            }
-
-            // Fallback: hỏi lại
-            return new()
-            {
-                Message = "🤔 Tôi chưa hiểu rõ yêu cầu của bạn. Bạn có thể thử:\n\n" +
-                          "• *\"Phòng cho 2 người dưới 1 triệu\"*\n" +
-                          "• *\"Phòng VIP còn trống\"*\n" +
-                          "• *\"Xem tất cả phòng\"*",
-                SuggestedRooms = new()
-            };
-        }
-
-        // ══════════════════════════════════════════════════════════════
-        //  HELPERS
-        // ══════════════════════════════════════════════════════════════
-
-        private List<SuggestedRoom> ToSuggested(List<Room> rooms, string defaultReason) =>
-            rooms.Select(r => new SuggestedRoom
-            {
-                Id = r.Id,
-                RoomNumber = r.RoomNumber,
-                RoomType = r.RoomType?.Name ?? "Phòng",
-                PricePerNight = r.RoomType?.PricePerNight ?? 0,
-                MaxOccupancy = r.MaxOccupancy,
-                Reason = defaultReason,
-                ImageUrl = r.ImageUrl
-            }).ToList();
-
-        /// <summary>Trích xuất số tiền tối đa (max budget)</summary>
-        private decimal? ExtractMaxPrice(string msg)
-        {
-            // Ví dụ: "dưới 2 triệu", "under 1.5 million", "2000000", "500k"
-            var patterns = new[]
-            {
-                (@"(dưới|under|max|tối đa|không quá|<)\s*(\d+[\.,]?\d*)\s*(triệu|tr|million|m\b)", 1_000_000m),
-                (@"(dưới|under|max|tối đa|không quá|<)\s*(\d+[\.,]?\d*)\s*(nghìn|k|ngàn|thousand)", 1_000m),
-                (@"(dưới|under|max|tối đa|không quá|<)\s*(\d{4,})", 1m),
-                (@"(\d+[\.,]?\d*)\s*(triệu|tr|million)\s*(trở xuống|trở lại|or less)?", 1_000_000m),
-            };
-
-            foreach (var (pattern, multiplier) in patterns)
-            {
-                var m = Regex.Match(msg, pattern, RegexOptions.IgnoreCase);
-                if (m.Success)
-                {
-                    // Lấy group chứa số
-                    for (int i = m.Groups.Count - 1; i >= 1; i--)
-                    {
-                        var val = m.Groups[i].Value.Replace(",", ".").Trim();
-                        if (decimal.TryParse(val, System.Globalization.NumberStyles.Any,
-                            System.Globalization.CultureInfo.InvariantCulture, out var num) && num > 0)
-                            return num * multiplier;
+                        // Blacklist model này, thử model kế tiếp
+                        _failedModels.Add(model);
+                        _cachedModel = null;
+                        model = await GetModelAsync();
+                        if (model == null) break;
+                        continue;
                     }
+
+                    if (!resp.IsSuccessStatusCode)
+                        return new ChatResponse { Message = $"⚠️ Lỗi dịch vụ AI (HTTP {(int)resp.StatusCode}). Vui lòng thử lại.", SuggestedRooms = new() };
+
+                    using var doc = JsonDocument.Parse(raw);
+                    string aiText = doc.RootElement
+                        .GetProperty("candidates")[0]
+                        .GetProperty("content")
+                        .GetProperty("parts")[0]
+                        .GetProperty("text")
+                        .GetString() ?? "Tôi chưa hiểu yêu cầu. Vui lòng thử lại.";
+
+                    return new ChatResponse
+                    {
+                        Message        = CleanRoomTags(aiText),
+                        SuggestedRooms = ExtractSuggestedRooms(aiText, rooms)
+                    };
+                }
+                catch
+                {
+                    return new ChatResponse { Message = "⚠️ Không thể kết nối AI. Vui lòng thử lại sau.", SuggestedRooms = new() };
                 }
             }
-            return null;
+
+            return new ChatResponse { Message = "⚠️ Tất cả model AI đang quá tải. Vui lòng thử lại sau vài phút.", SuggestedRooms = new() };
         }
 
-        private decimal? ExtractMinPrice(string msg)
+        private List<SuggestedRoom> ExtractSuggestedRooms(string text, List<Room> allRooms)
         {
-            var m = Regex.Match(msg, @"(trên|from|từ|hơn|above|>)\s*(\d+[\.,]?\d*)\s*(triệu|tr|million)?", RegexOptions.IgnoreCase);
-            if (m.Success && decimal.TryParse(m.Groups[2].Value.Replace(",", "."),
-                System.Globalization.NumberStyles.Any,
-                System.Globalization.CultureInfo.InvariantCulture, out var num))
+            var result  = new List<SuggestedRoom>();
+            var matches = System.Text.RegularExpressions.Regex.Matches(text, @"\[ROOM:(\d+)\]");
+            var seen    = new HashSet<int>();
+
+            foreach (System.Text.RegularExpressions.Match m in matches)
             {
-                bool hasMillion = m.Groups[3].Value.Length > 0;
-                return hasMillion ? num * 1_000_000m : (num < 1000 ? num * 1_000_000m : num);
+                if (!int.TryParse(m.Groups[1].Value, out int id) || !seen.Add(id)) continue;
+                var room = allRooms.FirstOrDefault(r => r.Id == id);
+                if (room == null) continue;
+
+                result.Add(new SuggestedRoom
+                {
+                    Id            = room.Id,
+                    RoomNumber    = room.RoomNumber,
+                    RoomType      = room.RoomType?.Name ?? "Phòng",
+                    PricePerNight = room.RoomType?.PricePerNight ?? 0,
+                    MaxOccupancy  = room.MaxOccupancy,
+                    ImageUrl      = room.ImageUrl ?? "",
+                    Reason        = ""
+                });
+                if (result.Count >= 4) break;
             }
-            return null;
+            return result;
         }
 
-        /// <summary>Trích xuất số nguyên đầu tiên trong message (số người)</summary>
-        private int? ExtractNumber(string msg)
-        {
-            // Ưu tiên "X người/khách/person"
-            var m = Regex.Match(msg, @"(\d+)\s*(người|khách|person|pax|guests?)", RegexOptions.IgnoreCase);
-            if (m.Success && int.TryParse(m.Groups[1].Value, out var n)) return n;
-
-            // Fallback: số độc lập
-            m = Regex.Match(msg, @"\b([1-9]\d?)\b");
-            if (m.Success && int.TryParse(m.Groups[1].Value, out var n2) && n2 <= 20) return n2;
-
-            return null;
-        }
+        private static string CleanRoomTags(string text) =>
+            System.Text.RegularExpressions.Regex.Replace(text, @"\[ROOM:\d+\]", "").Trim();
     }
 }
