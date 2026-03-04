@@ -11,6 +11,10 @@ namespace Services.DTOs
         public int CurrentlyCheckedIn { get; set; }
         public int PendingCount { get; set; }
 
+        // Refund / cancellation pending
+        public int CancellationPendingCount { get; set; }
+        public List<Booking> CancellationPendingBookings { get; set; } = new();
+
         // Action lists
         public List<Booking> PendingBookings { get; set; } = new();
         public List<Booking> CheckIngToday { get; set; } = new();

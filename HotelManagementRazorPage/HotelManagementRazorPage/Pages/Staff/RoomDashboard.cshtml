@@ -4,148 +4,416 @@
 @{
     ViewData["Title"] = "Sơ đồ phòng";
     Layout = "/Pages/Staff/_StaffLayout.cshtml";
+    int availCount = Model.Rooms.Count(r => r.Status == RoomStatus.Available);
+    int occupiedCount = Model.Rooms.Count(r => r.Status == RoomStatus.Occupied);
+    int cleaningCount = Model.Rooms.Count(r => r.Status == RoomStatus.Cleaning);
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+@section StaffStyles {
+    <style>
+        /* ── PAGE HEADER ── */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.8rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .page-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -.3px;
+        }
+        .page-sub {
+            font-size: .8rem;
+            color: var(--text-sub);
+            margin-top: .2rem;
+        }
+
+        /* ── STAT CHIPS ── */
+        .stat-chips { display: flex; gap: .6rem; flex-wrap: wrap; }
+        .stat-chip {
+            display: flex; align-items: center; gap: .55rem;
+            background: var(--bg);
+            border: 1px solid var(--divider);
+            border-radius: 980px;
+            padding: .38rem 1rem;
+            font-size: .8rem;
+            font-weight: 600;
+        }
+        .chip-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .chip-dot.avail    { background: #34C759; }
+        .chip-dot.occupied { background: #FF3B30; }
+        .chip-dot.cleaning { background: #FF9500; }
+        .chip-count { color: var(--text); }
+        .chip-label { color: var(--text-sub); }
+
+        /* ── ALERT ── */
+        .staff-alert { display:flex; align-items:center; gap:.75rem; padding:.85rem 1.2rem; border-radius:10px; font-size:.855rem; font-weight:500; margin-bottom:1.4rem; }
+        .staff-alert-success { background:#EBF8F2; border:1px solid #A7EBC7; color:#1A6640; }
+        .staff-alert-danger  { background:#FEF2F2; border:1px solid #FCA5A5; color:#991B1B; }
+
+        /* ── ROOM GRID ── */
+        .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+
+        .room-tile {
+            background: var(--bg);
+            border: 1px solid var(--divider);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            transition: box-shadow .25s, transform .25s;
+        }
+        .room-tile:hover {
+            box-shadow: 0 12px 40px rgba(0,0,0,.1);
+            transform: translateY(-3px);
+        }
+
+        .room-tile-img {
+            height: 130px;
+            overflow: hidden;
+            position: relative;
+        }
+        .room-tile-img img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform .5s;
+        }
+        .room-tile:hover .room-tile-img img { transform: scale(1.04); }
+
+        /* Status pill overlay */
+        .room-status-pill {
+            position: absolute;
+            top: 10px; left: 10px;
+            font-size: .65rem;
+            font-weight: 700;
+            letter-spacing: .5px;
+            padding: .22rem .65rem;
+            border-radius: 980px;
+            color: #fff;
+        }
+        .pill-avail    { background: #34C759; }
+        .pill-occupied { background: #FF3B30; }
+        .pill-cleaning { background: #FF9500; }
+        .pill-other    { background: #86868B; }
+
+        .room-tile-body { padding: 1rem; }
+
+        .room-number {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -.3px;
+        }
+        .room-type {
+            font-size: .72rem;
+            color: var(--text-sub);
+            margin-top: .1rem;
+        }
+
+        .room-guest {
+            margin-top: .7rem;
+            padding-top: .7rem;
+            border-top: 1px solid var(--bg-alt);
+            font-size: .78rem;
+        }
+        .guest-name { font-weight: 700; color: var(--text); }
+        .guest-checkout { color: var(--text-sub); margin-top: .1rem; }
+
+        .room-tile-action {
+            padding: .75rem 1rem 1rem;
+        }
+        .btn-tile-action {
+            display: flex; align-items: center; justify-content: center; gap: .4rem;
+            width: 100%;
+            padding: .52rem;
+            border-radius: 8px;
+            border: none;
+            font-size: .78rem;
+            font-weight: 700;
+            letter-spacing: .3px;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .btn-checkin-tile {
+            background: var(--blue-dim);
+            color: var(--blue);
+        }
+        .btn-checkin-tile:hover { background: var(--blue); color: #fff; }
+        .btn-checkout-tile {
+            background: #FFF0EE;
+            color: #C0392B;
+        }
+        .btn-checkout-tile:hover { background: #C0392B; color: #fff; }
+
+        /* ── MODAL ── */
+        .modal-content {
+            border: none;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 24px 64px rgba(0,0,0,.15);
+        }
+        .modal-header-apple {
+            background: var(--blue);
+            padding: 1.1rem 1.4rem;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .modal-header-apple h5 {
+            color: #fff;
+            font-weight: 700;
+            font-size: .95rem;
+            margin: 0;
+        }
+        .modal-close-btn {
+            background: rgba(255,255,255,.2); border: none;
+            border-radius: 6px; color: rgba(255,255,255,.85);
+            width: 28px; height: 28px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background .2s; font-size: .8rem;
+        }
+        .modal-close-btn:hover { background: rgba(255,255,255,.3); color: #fff; }
+
+        .modal-apple-body { padding: 0; }
+
+        /* Booking list table inside modal */
+        .booking-modal-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .booking-modal-table thead th {
+            background: var(--bg-alt); color: var(--text-sub);
+            font-size: .68rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; padding: .85rem 1.2rem;
+            border-bottom: 1px solid var(--divider);
+        }
+        .booking-modal-table tbody td {
+            padding: 1rem 1.2rem;
+            border-bottom: 1px solid var(--bg-alt);
+            font-size: .855rem;
+            vertical-align: middle;
+        }
+        .booking-modal-table tbody tr:hover { background: var(--bg-alt); }
+        .booking-modal-table tbody tr:last-child td { border-bottom: none; }
+
+        .cust-name { font-weight: 700; color: var(--text); display: block; }
+        .cust-phone { font-size: .78rem; color: var(--text-sub); }
+
+        .btn-confirm-action {
+            display: inline-flex; align-items: center; gap: .35rem;
+            padding: .38rem .9rem;
+            border-radius: 980px;
+            border: none;
+            font-size: .78rem; font-weight: 700;
+            cursor: pointer; transition: all .2s;
+        }
+        .btn-checkin-modal  { background: var(--blue-dim); color: var(--blue); }
+        .btn-checkin-modal:hover { background: var(--blue); color: #fff; }
+
+        /* Confirm modal */
+        .confirm-modal-body {
+            padding: 2.2rem 1.8rem;
+            text-align: center;
+        }
+        .confirm-icon {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.2rem;
+            font-size: 1.4rem;
+        }
+        .confirm-icon.info { background: var(--blue-dim); color: var(--blue); }
+        .confirm-icon.warn { background: #FEF3C7; color: #D97706; }
+
+        .confirm-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: .4rem; }
+        .confirm-detail { font-size: .82rem; color: var(--text-sub); margin-bottom: 1.4rem; line-height: 1.55; }
+
+        .confirm-btns { display: flex; gap: .7rem; }
+        .btn-cancel-confirm {
+            flex: 1; padding: .6rem; border-radius: 8px;
+            border: 1px solid var(--divider); background: var(--bg-alt);
+            color: var(--text-sub); font-size: .84rem; font-weight: 600; cursor: pointer;
+            transition: all .2s;
+        }
+        .btn-cancel-confirm:hover { background: var(--divider); }
+        .btn-ok-checkin {
+            flex: 1; padding: .6rem; border-radius: 8px;
+            border: none; background: var(--blue); color: #fff;
+            font-size: .84rem; font-weight: 700; cursor: pointer; transition: all .2s;
+        }
+        .btn-ok-checkin:hover { background: var(--blue-dark); }
+        .btn-ok-checkout {
+            flex: 1; padding: .6rem; border-radius: 8px;
+            border: none; background: #C0392B; color: #fff;
+            font-size: .84rem; font-weight: 700; cursor: pointer; transition: all .2s;
+        }
+        .btn-ok-checkout:hover { background: #a93226; }
+
+        /* No bookings */
+        .no-bookings-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--text-sub);
+        }
+        .no-bookings-state i { font-size: 2.5rem; color: var(--divider); display: block; margin-bottom: .9rem; }
+    </style>
+}
+
+<!-- PAGE HEADER -->
+<div class="page-header">
     <div>
-        <h2 class="fw-bold mb-0" style="color:var(--primary)">Sơ đồ phòng thực tế</h2>
-        <p class="text-muted small">Cập nhật trạng thái phòng theo thời gian thực (Live Dashboard)</p>
+        <div class="page-title">Sơ đồ phòng thực tế</div>
+        <div class="page-sub">Cập nhật trạng thái theo thời gian thực · Live Dashboard</div>
     </div>
-    <div class="d-flex gap-3">
-        <div class="stat-mini">
-            <span class="dot bg-success"></span>
-            <span class="val">@Model.Rooms.Count(r => r.Status == RoomStatus.Available)</span>
-            <span class="lab">Trống</span>
+    <div class="stat-chips">
+        <div class="stat-chip">
+            <span class="chip-dot avail"></span>
+            <span class="chip-count">@availCount</span>
+            <span class="chip-label">Còn trống</span>
         </div>
-        <div class="stat-mini">
-            <span class="dot bg-danger"></span>
-            <span class="val">@Model.Rooms.Count(r => r.Status == RoomStatus.Occupied)</span>
-            <span class="lab">Đang ở</span>
+        <div class="stat-chip">
+            <span class="chip-dot occupied"></span>
+            <span class="chip-count">@occupiedCount</span>
+            <span class="chip-label">Đang ở</span>
         </div>
+        @if (cleaningCount > 0)
+        {
+            <div class="stat-chip">
+                <span class="chip-dot cleaning"></span>
+                <span class="chip-count">@cleaningCount</span>
+                <span class="chip-label">Dọn phòng</span>
+            </div>
+        }
     </div>
 </div>
 
 @if (TempData["SuccessMessage"] != null)
 {
-    <div class="admin-alert admin-alert-success fade show">
+    <div class="staff-alert staff-alert-success">
         <i class="fa-solid fa-circle-check"></i> @TempData["SuccessMessage"]
     </div>
 }
 @if (TempData["ErrorMessage"] != null)
 {
-    <div class="admin-alert admin-alert-danger">
+    <div class="staff-alert staff-alert-danger">
         <i class="fa-solid fa-triangle-exclamation"></i> @TempData["ErrorMessage"]
     </div>
 }
 
-<div class="row g-3">
+<!-- ROOM GRID -->
+<div class="room-grid">
     @foreach (var room in Model.Rooms)
     {
         var activeBooking = Model.GetActiveBooking(room.Id);
         bool isOccupied = room.Status == RoomStatus.Occupied;
-        var firstImage = room.RoomImages?.FirstOrDefault()?.ImageUrl ?? "https://images.unsplash.com/photo-1611892440504-42a792e24d32?q=80&w=2070&auto=format&fit=crop";
+        var firstImage = room.RoomImages?.FirstOrDefault()?.ImageUrl
+            ?? "https://images.unsplash.com/photo-1611892440504-42a792e24d32?q=80&w=800&auto=format&fit=crop";
 
-        string statusColor = room.Status switch
-        {
-            RoomStatus.Available => "#0D7055", 
-            RoomStatus.Occupied => "#EF4444", 
-            RoomStatus.Cleaning => "#F59E0B",
-            _ => "#6B7280"
+        string pillClass = room.Status switch {
+            RoomStatus.Available => "pill-avail",
+            RoomStatus.Occupied  => "pill-occupied",
+            RoomStatus.Cleaning  => "pill-cleaning",
+            _                    => "pill-other"
+        };
+        string pillLabel = room.Status switch {
+            RoomStatus.Available => "Còn trống",
+            RoomStatus.Occupied  => "Đang ở",
+            RoomStatus.Cleaning  => "Dọn phòng",
+            _                    => room.Status.ToString()
         };
 
-        <div class="col-6 col-md-4 col-lg-3">
-            <div class="room-card" style="--card-color: @statusColor; background-image: url('@firstImage');">
-                <div class="room-overlay"></div>
-                <div class="room-content">
-                    <div class="room-top">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <span class="room-number">@room.RoomNumber</span>
-                            <span class="room-badge">@room.RoomType?.Name</span>
-                        </div>
-                    </div>
-                    
-                    <div class="room-mid text-center">
-                        @if (isOccupied && activeBooking != null)
-                        {
-                            <div class="guest-info animate__animated animate__fadeIn">
-                                <i class="fa-solid fa-user-check mb-2 d-block fs-4 text-white"></i>
-                                <div class="guest-name text-white">@activeBooking.Customer?.UserName</div>
-                                <div class="time-stay small text-white-50">Ngày trả: @activeBooking.CheckOutDate.ToString("dd/MM")</div>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="available-info text-white">
-                                <i class="fa-solid fa-door-open mb-2 d-block fs-4 opacity-75"></i>
-                                <div class="small fw-bold opacity-100">PHÒNG TRỐNG</div>
-                            </div>
-                        }
-                    </div>
+        <div class="room-tile">
+            <div class="room-tile-img">
+                <img src="@firstImage" alt="Phòng @room.RoomNumber" />
+                <span class="room-status-pill @pillClass">@pillLabel</span>
+            </div>
+            <div class="room-tile-body">
+                <div class="room-number">Phòng @room.RoomNumber</div>
+                <div class="room-type">@(room.RoomType?.Name ?? "—")</div>
 
-                    <div class="room-bottom">
-                        @if (isOccupied && activeBooking != null)
-                        {
-                            <button class="btn-dashboard-action btn-checkout-style w-100" onclick="confirmCheckOut(@activeBooking.Id, '@room.RoomNumber', '@activeBooking.Customer?.UserName')">
-                                <i class="fa-solid fa-person-walking-luggage me-1"></i> CHECK-OUT
-                            </button>
-                        }
-                        else
-                        {
-                            <button class="btn-dashboard-action btn-checkin-style w-100" onclick="loadRoomBookings(@room.Id, '@room.RoomNumber')">
-                                <i class="fa-solid fa-id-card-clip me-1"></i> CHECK-IN
-                            </button>
-                        }
+                @if (isOccupied && activeBooking != null)
+                {
+                    <div class="room-guest">
+                        <div class="guest-name">
+                            <i class="fa-solid fa-user me-1" style="color:var(--blue);font-size:.7rem;"></i>
+                            @activeBooking.Customer?.UserName
+                        </div>
+                        <div class="guest-checkout">Trả phòng: @activeBooking.CheckOutDate.ToString("dd/MM/yyyy")</div>
                     </div>
-                </div>
+                }
+            </div>
+            <div class="room-tile-action">
+                @if (isOccupied && activeBooking != null)
+                {
+                    <button class="btn-tile-action btn-checkout-tile"
+                            onclick="confirmCheckOut(@activeBooking.Id, '@room.RoomNumber', '@activeBooking.Customer?.UserName')">
+                        <i class="fa-solid fa-person-walking-luggage"></i> CHECK-OUT
+                    </button>
+                }
+                else
+                {
+                    <button class="btn-tile-action btn-checkin-tile"
+                            onclick="loadRoomBookings(@room.Id, '@room.RoomNumber')">
+                        <i class="fa-solid fa-id-card-clip"></i> CHECK-IN
+                    </button>
+                }
             </div>
         </div>
     }
 </div>
 
-<!-- Modal Danh sách khách đặt (Check-in) -->
+
+<!-- Modal: Chọn khách check-in -->
 <div class="modal fade" id="bookingListModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
-            <div class="modal-header bg-success text-white py-3">
-                <h5 class="modal-title fw-bold"><i class="fa-solid fa-list-check me-2"></i>Chọn khách nhận phòng - <span id="modalRoomNum">---</span></h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content">
+            <div class="modal-header-apple">
+                <h5><i class="fa-solid fa-list-check me-2"></i>Chọn khách nhận phòng — <span id="modalRoomNum"></span></h5>
+                <button class="modal-close-btn" data-bs-dismiss="modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-            <div class="modal-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0 align-middle">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="ps-4">Khách hàng</th>
-                                <th>Thời gian</th>
-                                <th class="text-center">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bookingTableBody">
-                        </tbody>
-                    </table>
-                </div>
-                <div id="noBookingsMsg" class="p-5 text-center d-none">
-                    <i class="fa-solid fa-calendar-xmark display-4 text-muted mb-3 d-block"></i>
-                    <p class="text-muted fw-bold">Không có yêu cầu nhận phòng nào.</p>
+            <div class="modal-apple-body">
+                <table class="booking-modal-table">
+                    <thead>
+                        <tr>
+                            <th>Khách hàng</th>
+                            <th>Thời gian</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookingTableBody"></tbody>
+                </table>
+                <div id="noBookingsMsg" class="no-bookings-state d-none">
+                    <i class="fa-solid fa-calendar-xmark"></i>
+                    <p>Không có yêu cầu nhận phòng nào.</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal Xác nhận Check-out -->
+<!-- Modal: Xác nhận Check-out -->
 <div class="modal fade" id="checkOutModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-sm modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
-            <div class="modal-body p-4 text-center">
-                <i class="fa-solid fa-circle-info text-primary display-4 mb-3"></i>
-                <h5 class="fw-bold mb-1">Xác nhận trả phòng?</h5>
-                <p class="text-muted small mb-3">Phòng: <strong id="outRoomNum">---</strong><br/>Khách: <span id="outCustName">---</span></p>
+        <div class="modal-content">
+            <div class="confirm-modal-body">
+                <div class="confirm-icon info">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </div>
+                <div class="confirm-title">Xác nhận trả phòng?</div>
+                <div class="confirm-detail">
+                    Phòng: <strong id="outRoomNum"></strong><br>
+                    Khách: <span id="outCustName"></span>
+                </div>
                 <form method="post" asp-page-handler="CheckOut">
                     <input type="hidden" name="bookingId" id="outBookingId" />
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-light flex-fill fw-bold" data-bs-dismiss="modal">HỦY</button>
-                        <button type="submit" class="btn btn-primary flex-fill fw-bold">XÁC NHẬN</button>
+                    <div class="confirm-btns">
+                        <button type="button" class="btn-cancel-confirm" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn-ok-checkout">Xác nhận</button>
                     </div>
                 </form>
             </div>
@@ -153,18 +421,21 @@
     </div>
 </div>
 
-<!-- Modal Xác nhận Check-in Final -->
-<div class="modal fade" id="confirmCheckInModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+<!-- Modal: Xác nhận Check-in -->
+<div class="modal fade" id="confirmCheckInModal" tabindex="-1" aria-hidden="true" style="z-index:1060;">
     <div class="modal-dialog modal-sm modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
-            <div class="modal-body p-4 text-center">
-                <i class="fa-solid fa-circle-question text-warning display-4 mb-3"></i>
-                <h5 class="fw-bold mb-3">Xác nhận nhận phòng?</h5>
+        <div class="modal-content">
+            <div class="confirm-modal-body">
+                <div class="confirm-icon warn">
+                    <i class="fa-solid fa-key"></i>
+                </div>
+                <div class="confirm-title">Xác nhận nhận phòng?</div>
+                <div class="confirm-detail">Hành động này sẽ chuyển trạng thái phòng sang "Đang ở".</div>
                 <form method="post" asp-page-handler="CheckIn">
                     <input type="hidden" name="bookingId" id="finalBookingId" />
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-light flex-fill fw-bold" data-bs-dismiss="modal">HỦY</button>
-                        <button type="submit" class="btn btn-success flex-fill fw-bold">XÁC NHẬN</button>
+                    <div class="confirm-btns">
+                        <button type="button" class="btn-cancel-confirm" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn-ok-checkin">Xác nhận</button>
                     </div>
                 </form>
             </div>
@@ -172,55 +443,6 @@
     </div>
 </div>
 
-@section StaffStyles {
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    <style>
-        .stat-mini {
-            background: #fff; padding: .6rem 1.2rem; border-radius: 12px; border: 1px solid #D1FAE5;
-            display: flex; align-items: center; gap: .8rem; box-shadow: 0 2px 6px rgba(13,112,85,.04);
-        }
-        .stat-mini .dot { width: 10px; height: 10px; border-radius: 50%; }
-        .stat-mini .val { font-weight: 700; color: var(--text); font-size: 1.1rem; }
-        .stat-mini .lab { font-size: .75rem; color: var(--text-sub); font-weight: 500; }
-
-        .room-card {
-            background-size: cover; background-position: center; border-radius: 20px; 
-            height: 220px; position: relative; overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 2px solid transparent;
-        }
-        .room-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.2); border-color: var(--card-color); }
-        .room-overlay { 
-            position: absolute; top:0; left:0; width:100%; height:100%; 
-            background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.8));
-            backdrop-filter: blur(1px); transition: 0.3s;
-        }
-        .room-card:hover .room-overlay { background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.9)); backdrop-filter: blur(2px); }
-
-        .room-content { position: relative; z-index: 2; height: 100%; padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between; }
-
-        .room-number { font-size: 1.8rem; font-weight: 900; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .room-badge { font-size: .6rem; padding: .2rem .6rem; border-radius: 20px; background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: #fff; font-weight: 700; border: 1px solid rgba(255,255,255,0.3); }
-
-        .room-mid { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
-        .guest-name { font-weight: 800; font-size: 1rem; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
-
-        .btn-dashboard-action {
-            border: none; padding: .6rem; border-radius: 12px; font-size: .75rem; font-weight: 900;
-            transition: all .2s; backdrop-filter: blur(10px); color: #fff; border: 1px solid rgba(255,255,255,0.3);
-        }
-        .btn-checkin-style { background: rgba(13, 112, 85, 0.6); }
-        .btn-checkin-style:hover { background: rgba(13, 112, 85, 0.9); transform: scale(1.05); }
-        .btn-checkout-style { background: rgba(239, 68, 68, 0.6); }
-        .btn-checkout-style:hover { background: rgba(239, 68, 68, 0.9); transform: scale(1.05); }
-
-        /* Table inside modal */
-        #bookingListModal table th { font-size: .75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748B; padding: 1rem .5rem; }
-        #bookingListModal table td { padding: 1.2rem .5rem; font-size: .9rem; border-bottom: 1px solid #F1F5F9; }
-        .cust-name { font-weight: 700; color: #1E293B; display: block; }
-        .cust-phone { color: #64748B; font-size: .8rem; }
-    </style>
-}
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
@@ -229,17 +451,17 @@
             document.getElementById('modalRoomNum').innerText = roomNum;
             const tableBody = document.getElementById('bookingTableBody');
             const noMsg = document.getElementById('noBookingsMsg');
-            
-            tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-5"><div class="spinner-border text-success" role="status"></div></td></tr>';
+
+            tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-5"><div class="spinner-border text-primary" style="width:1.5rem;height:1.5rem;" role="status"></div></td></tr>';
             noMsg.classList.add('d-none');
-            
+
             var modal = new bootstrap.Modal(document.getElementById('bookingListModal'));
             modal.show();
 
             try {
                 const response = await fetch(`?handler=BookingsByRoom&roomId=${roomId}`);
                 const data = await response.json();
-                
+
                 tableBody.innerHTML = '';
                 if (data.length === 0) {
                     noMsg.classList.remove('d-none');
@@ -247,48 +469,45 @@
                 }
 
                 data.forEach(b => {
-                    const row = `
+                    tableBody.innerHTML += `
                         <tr>
-                            <td class="ps-4">
+                            <td>
                                 <span class="cust-name">${b.customerName}</span>
                                 <span class="cust-phone"><i class="fa-solid fa-phone me-1"></i>${b.phoneNumber}</span>
                             </td>
-                            <td>
-                                <div class="time-range small">
-                                    <span class="d-block text-muted">Từ: ${b.checkIn}</span>
-                                    <span class="d-block text-muted">Đến: ${b.checkOut}</span>
-                                </div>
+                            <td style="font-size:.8rem;color:var(--text-sub);">
+                                <div>Từ: ${b.checkIn}</div>
+                                <div>Đến: ${b.checkOut}</div>
                             </td>
                             <td class="text-center">
-                                <button class="btn btn-success btn-sm px-3 fw-bold rounded-pill" onclick="confirmCheckIn(${b.id})">
-                                    NHẬN PHÒNG
+                                <button class="btn-confirm-action btn-checkin-modal" onclick="confirmCheckIn(${b.id})">
+                                    <i class="fa-solid fa-key"></i> Nhận phòng
                                 </button>
                             </td>
-                        </tr>
-                    `;
-                    tableBody.innerHTML += row;
+                        </tr>`;
                 });
-            } catch (error) {
+            } catch {
                 tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger p-4">Lỗi tải dữ liệu.</td></tr>';
             }
         }
 
         function confirmCheckIn(bookingId) {
             document.getElementById('finalBookingId').value = bookingId;
-            var confirmModal = new bootstrap.Modal(document.getElementById('confirmCheckInModal'));
-            confirmModal.show();
+            new bootstrap.Modal(document.getElementById('confirmCheckInModal')).show();
         }
 
         function confirmCheckOut(bookingId, roomNum, custName) {
             document.getElementById('outBookingId').value = bookingId;
             document.getElementById('outRoomNum').innerText = roomNum;
             document.getElementById('outCustName').innerText = custName;
-            var modal = new bootstrap.Modal(document.getElementById('checkOutModal'));
-            modal.show();
+            new bootstrap.Modal(document.getElementById('checkOutModal')).show();
         }
 
-        const connection = new signalR.HubConnectionBuilder().withUrl("/roomHub").withAutomaticReconnect().build();
-        connection.on("ReceiveStatusUpdate", () => { setTimeout(() => { location.reload(); }, 1000); });
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/roomHub").withAutomaticReconnect().build();
+        connection.on("ReceiveStatusUpdate", () => {
+            setTimeout(() => location.reload(), 1000);
+        });
         connection.start().catch(err => console.error(err.toString()));
     </script>
 }

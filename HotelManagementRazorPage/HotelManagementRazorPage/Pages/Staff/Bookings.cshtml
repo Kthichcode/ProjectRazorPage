@@ -6,238 +6,351 @@
     Layout = "/Pages/Staff/_StaffLayout.cshtml";
 }
 
+@section StaffStyles {
+    <style>
+        /* ── PAGE HEADER ── */
+        .page-title   { font-size:1.4rem; font-weight:700; color:var(--text); letter-spacing:-.3px; }
+        .page-sub     { font-size:.8rem; color:var(--text-sub); margin-top:.2rem; }
+
+        /* ── ALERT ── */
+        .staff-alert { display:flex; align-items:center; gap:.75rem; padding:.85rem 1.2rem; border-radius:10px; font-size:.855rem; font-weight:500; margin-bottom:1.4rem; }
+        .staff-alert-success { background:#EBF8F2; border:1px solid #A7EBC7; color:#1A6640; }
+
+        /* ── FILTER CARD ── */
+        .filter-card {
+            background: var(--bg);
+            border: 1px solid var(--divider);
+            border-radius: 14px;
+            margin-bottom: 1.4rem;
+            overflow: hidden;
+        }
+        .filter-card-inner { padding: 1.4rem 1.6rem; }
+        .filter-label {
+            font-size: .68rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-sub);
+            margin-bottom: .4rem;
+            display: block;
+        }
+        .filter-input, .filter-select {
+            width: 100%;
+            padding: .58rem .9rem;
+            border: 1px solid var(--divider);
+            border-radius: 8px;
+            font-size: .855rem;
+            color: var(--text);
+            background: var(--bg-alt);
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+            font-family: 'Inter', sans-serif;
+        }
+        .filter-input:focus, .filter-select:focus {
+            border-color: var(--blue);
+            background: var(--bg);
+            box-shadow: 0 0 0 3px rgba(0,102,204,.1);
+        }
+        .btn-filter {
+            display: flex; align-items: center; gap: .4rem;
+            padding: .58rem 1.4rem;
+            background: var(--blue); color: #fff;
+            border: none; border-radius: 8px;
+            font-size: .845rem; font-weight: 600;
+            cursor: pointer; transition: background .2s;
+        }
+        .btn-filter:hover { background: var(--blue-dark); }
+        .btn-filter-reset {
+            display: flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px;
+            background: var(--bg-alt);
+            border: 1px solid var(--divider);
+            border-radius: 8px;
+            color: var(--text-sub);
+            text-decoration: none;
+            transition: all .2s;
+        }
+        .btn-filter-reset:hover { background: var(--divider); color: var(--text); }
+
+        /* ── TABLE ── */
+        .table-card {
+            background: var(--bg);
+            border: 1px solid var(--divider);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .data-table thead th {
+            background: var(--bg-alt);
+            color: var(--text-sub);
+            font-size: .67rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: .95rem 1.1rem;
+            border-bottom: 1px solid var(--divider);
+        }
+        .data-table thead th:first-child { padding-left: 1.6rem; }
+        .data-table thead th:last-child  { padding-right: 1.6rem; }
+        .data-table tbody td {
+            padding: 1.1rem;
+            border-bottom: 1px solid var(--bg-alt);
+            vertical-align: middle;
+            font-size: .855rem;
+        }
+        .data-table tbody td:first-child { padding-left: 1.6rem; }
+        .data-table tbody td:last-child  { padding-right: 1.6rem; }
+        .data-table tbody tr:hover { background: var(--bg-alt); }
+        .data-table tbody tr:last-child td { border-bottom: none; }
+
+        /* booking ID */
+        .booking-id {
+            font-variant-numeric: tabular-nums;
+            font-weight: 800;
+            color: var(--blue);
+            font-size: .88rem;
+        }
+
+        /* customer avatar */
+        .cust-avatar {
+            width: 34px; height: 34px;
+            background: var(--blue-dim);
+            color: var(--blue);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .85rem; font-weight: 800;
+            flex-shrink: 0;
+        }
+        .cust-name  { font-weight: 700; color: var(--text); font-size: .855rem; }
+        .cust-phone { font-size: .75rem; color: var(--text-sub); }
+
+        /* room pills */
+        .room-pill {
+            display: inline-block;
+            background: var(--bg-alt);
+            border: 1px solid var(--divider);
+            color: var(--text-sub);
+            font-size: .7rem; font-weight: 700;
+            padding: .18rem .55rem;
+            border-radius: 6px;
+        }
+
+        /* status badge */
+        .status-badge {
+            display: inline-flex; align-items: center;
+            gap: .4rem;
+            padding: .3rem .75rem;
+            border-radius: 980px;
+            font-size: .67rem;
+            font-weight: 700;
+            letter-spacing: .3px;
+        }
+        .status-badge::before {
+            content: '';
+            width: 5px; height: 5px;
+            border-radius: 50%;
+        }
+        .st-confirmed { background:#DBEAFE; color:#1E40AF; } .st-confirmed::before { background:#1E40AF; }
+        .st-checkedin { background:#FEF3C7; color:#92400E; } .st-checkedin::before { background:#D97706; }
+        .st-completed { background:#DCFCE7; color:#166534; } .st-completed::before { background:#16A34A; }
+        .st-cancelled { background:#FEE2E2; color:#991B1B; } .st-cancelled::before { background:#DC2626; }
+        .st-pending   { background:var(--bg-alt); color:var(--text-sub); } .st-pending::before { background:#86868B; }
+
+        /* action buttons */
+        .action-btn {
+            width: 30px; height: 30px;
+            border-radius: 7px; border: none;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .78rem; cursor: pointer; transition: all .2s;
+        }
+        .btn-do-checkin  { background:var(--blue-dim); color:var(--blue); }
+        .btn-do-checkin:hover  { background:var(--blue); color:#fff; }
+        .btn-do-checkout { background:#FEF3C7; color:#92400E; }
+        .btn-do-checkout:hover { background:#D97706; color:#fff; }
+
+        /* amount */
+        .amount-val { font-weight: 700; color: var(--text); }
+
+        /* empty */
+        .empty-row td { padding: 4rem !important; text-align: center; }
+        .empty-row i  { font-size: 2.2rem; color: var(--divider); display: block; margin-bottom: .8rem; }
+        .empty-row p  { color: var(--text-sub); margin: 0; font-weight: 500; }
+
+        /* Toast */
+        #bookingToastContainer {
+            position: fixed; top: 1.2rem; right: 1.2rem; z-index: 9999;
+            display: flex; flex-direction: column; gap: .6rem;
+            pointer-events: none;
+        }
+        .booking-toast {
+            pointer-events: all;
+            background: var(--bg);
+            border-radius: 12px;
+            padding: .9rem 1.1rem;
+            box-shadow: 0 12px 30px rgba(0,0,0,.12);
+            border-left: 3px solid var(--blue);
+            min-width: 280px; max-width: 340px;
+            animation: toastIn .4s cubic-bezier(.34,1.56,.64,1) forwards;
+        }
+        @@keyframes toastIn  { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @@keyframes toastOut { from { transform: translateX(0);    opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
+        .booking-toast.hiding { animation: toastOut .3s ease-in forwards; }
+
+        @@keyframes newRowSlide {
+            from { background: var(--blue-dim); opacity: 0.6; }
+            to   { background: transparent;    opacity: 1; }
+        }
+        .new-booking-row { animation: newRowSlide 1.4s ease-out forwards; }
+    </style>
+}
+
+<!-- PAGE HEADER -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2 class="fw-bold mb-0" style="color:var(--primary)">Hệ thống quản lý đặt phòng</h2>
-        <p class="text-muted small">Tra cứu, điều chỉnh và cập nhật trạng thái đơn đặt phòng</p>
+        <div class="page-title">Quản lý đặt phòng</div>
+        <div class="page-sub">Tra cứu, điều chỉnh và cập nhật trạng thái đơn đặt phòng</div>
     </div>
 </div>
 
 @if (TempData["SuccessMessage"] != null)
 {
-    <div class="admin-alert admin-alert-success fade show">
+    <div class="staff-alert staff-alert-success">
         <i class="fa-solid fa-circle-check"></i> @TempData["SuccessMessage"]
     </div>
 }
 
-<div class="booking-filter-card mb-4">
-    <form method="get" class="row g-3 align-items-end p-4">
-        <div class="col-md-3">
-            <label class="filter-label"><i class="fa-solid fa-calendar-days me-2"></i>Ngày nhận phòng</label>
-            <input type="date" asp-for="FilterDate" class="filter-input" />
-        </div>
-        <div class="col-md-3">
-            <label class="filter-label"><i class="fa-solid fa-phone me-2"></i>Số điện thoại</label>
-            <input type="text" asp-for="PhoneNumber" class="filter-input" placeholder="Tìm khách hàng..." />
-        </div>
-        <div class="col-md-3">
-            <label class="filter-label"><i class="fa-solid fa-tags me-2"></i>Trạng thái</label>
-            <select asp-for="Status" class="filter-select" asp-items="Html.GetEnumSelectList<BookingStatus>()">
-                <option value="">-- Tất cả trạng thái --</option>
-            </select>
-        </div>
-        <div class="col-md-3 d-flex gap-2">
-            <button type="submit" class="filter-btn-search flex-grow-1">
-                <i class="fa-solid fa-filter me-2"></i> LỌC DỮ LIỆU
-            </button>
-            <a asp-page="/Staff/Bookings" class="filter-btn-reset">
-                <i class="fa-solid fa-rotate-right"></i>
-            </a>
+<!-- FILTER -->
+<div class="filter-card">
+    <form method="get" class="filter-card-inner">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="filter-label"><i class="fa-solid fa-calendar-days me-1"></i>Ngày nhận phòng</label>
+                <input type="date" asp-for="FilterDate" class="filter-input" />
+            </div>
+            <div class="col-md-3">
+                <label class="filter-label"><i class="fa-solid fa-phone me-1"></i>Số điện thoại</label>
+                <input type="text" asp-for="PhoneNumber" class="filter-input" placeholder="Tìm khách hàng..." />
+            </div>
+            <div class="col-md-3">
+                <label class="filter-label"><i class="fa-solid fa-tags me-1"></i>Trạng thái</label>
+                <select asp-for="Status" class="filter-select" asp-items="Html.GetEnumSelectList<BookingStatus>()">
+                    <option value="">— Tất cả trạng thái —</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn-filter flex-grow-1">
+                    <i class="fa-solid fa-filter"></i> Lọc
+                </button>
+                <a asp-page="/Staff/Bookings" class="btn-filter-reset">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </a>
+            </div>
         </div>
     </form>
 </div>
 
-<div class="premium-table-container shadow-sm">
-    <table class="premium-table">
-        <thead>
-            <tr>
-                <th class="ps-4">Mã đơn</th>
-                <th>Thông tin khách hàng</th>
-                <th>Phòng</th>
-                <th>Lịch trình</th>
-                <th>Thanh toán</th>
-                <th>Trạng thái</th>
-                <th class="text-end pe-4">Hành động</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var b in Model.Bookings)
-            {
+<!-- TABLE -->
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
                 <tr>
-                    <td class="ps-4">
-                        <span class="booking-id">#@b.Id</span>
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <div class="avatar-sm me-3">@b.Customer?.UserName?.Substring(0, 1).ToUpper()</div>
-                            <div>
-                                <div class="table-cust-name">@b.Customer?.FullName</div>
-                                <div class="table-cust-phone text-muted small"><i class="fa-solid fa-phone-flip me-1"></i>@b.Customer?.PhoneNumber</div>
+                    <th>Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Phòng</th>
+                    <th>Lịch trình</th>
+                    <th>Thanh toán</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Bookings.Any())
+                {
+                    <tr class="empty-row">
+                        <td colspan="7">
+                            <i class="fa-solid fa-calendar-xmark"></i>
+                            <p>Không có đơn đặt phòng nào.</p>
+                        </td>
+                    </tr>
+                }
+                @foreach (var b in Model.Bookings)
+                {
+                    string badgeClass = b.Status switch {
+                        BookingStatus.Confirmed => "st-confirmed",
+                        BookingStatus.CheckedIn => "st-checkedin",
+                        BookingStatus.Completed => "st-completed",
+                        BookingStatus.Cancelled => "st-cancelled",
+                        _                       => "st-pending"
+                    };
+                    string statusTxt = b.Status switch {
+                        BookingStatus.Confirmed => "Chờ nhận",
+                        BookingStatus.CheckedIn => "Đang ở",
+                        BookingStatus.Completed => "Hoàn tất",
+                        BookingStatus.Cancelled => "Đã hủy",
+                        _                       => "Chờ xử lý"
+                    };
+                    <tr>
+                        <td><span class="booking-id">#@b.Id</span></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="cust-avatar">@b.Customer?.UserName?.Substring(0,1).ToUpper()</div>
+                                <div>
+                                    <div class="cust-name">@b.Customer?.FullName</div>
+                                    <div class="cust-phone">
+                                        <i class="fa-solid fa-phone-flip me-1"></i>@b.Customer?.PhoneNumber
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="d-flex flex-wrap gap-1">
-                            @foreach (var br in b.BookingRooms)
-                            {
-                                <span class="room-pill">P.@br.Room?.RoomNumber</span>
-                            }
-                        </div>
-                    </td>
-                    <td>
-                        <div class="stay-date">
-                            <span class="d-block fw-bold" style="font-size: 0.85rem;">@b.CheckInDate.ToString("dd MMM, yyyy")</span>
-                            <span class="d-block text-muted" style="font-size: 0.75rem;">Đến @b.CheckOutDate.ToString("dd MMM, yyyy")</span>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="amount-cell">
-                            <span class="d-block fw-bold text-dark">@b.TotalAmount.ToString("N0")₫</span>
-                            <span class="badge bg-light text-success border border-success-subtle py-1 px-2" style="font-size: .6rem;">Đã thanh toán</span>
-                        </div>
-                    </td>
-                    <td>
-                        @{
-                            string badgeClass = b.Status switch {
-                                BookingStatus.Confirmed => "st-confirmed",
-                                BookingStatus.CheckedIn => "st-checkedin",
-                                BookingStatus.Completed => "st-completed",
-                                BookingStatus.Cancelled => "st-cancelled",
-                                _ => "st-pending"
-                            };
-                            string statusTxt = b.Status switch {
-                                BookingStatus.Confirmed => "CHỜ NHẬN",
-                                BookingStatus.CheckedIn => "ĐANG Ở",
-                                BookingStatus.Completed => "HOÀN TẤT",
-                                BookingStatus.Cancelled => "ĐÃ HỦY",
-                                _ => "CHỜ XỬ LÝ"
-                            };
-                        }
-                        <span class="status-indicator @badgeClass">@statusTxt</span>
-                    </td>
-                    <td class="text-end pe-4">
-                        <div class="d-flex justify-content-end gap-1">
-                            @if (b.Status == BookingStatus.Confirmed && b.CheckInDate.Date <= DateTime.Today)
-                            {
-                                <form method="post" asp-page-handler="UpdateStatus">
-                                    <input type="hidden" name="id" value="@b.Id" />
-                                    <input type="hidden" name="newStatus" value="@BookingStatus.CheckedIn" />
-                                    <button type="submit" class="action-btn btn-checkin" title="Nhận phòng"><i class="fa-solid fa-key"></i></button>
-                                </form>
-                            }
-                            @if (b.Status == BookingStatus.CheckedIn)
-                            {
-                                <form method="post" asp-page-handler="UpdateStatus">
-                                    <input type="hidden" name="id" value="@b.Id" />
-                                    <input type="hidden" name="newStatus" value="@BookingStatus.Completed" />
-                                    <button type="submit" class="action-btn btn-checkout" title="Trả phòng"><i class="fa-solid fa-person-walking-luggage"></i></button>
-                                </form>
-                            }
-                            <button class="action-btn btn-detail" title="Chi tiết"><i class="fa-solid fa-ellipsis-vertical"></i></button>
-                        </div>
-                    </td>
-                </tr>
-            }
-            @if (!Model.Bookings.Any())
-            {
-                <tr>
-                    <td colspan="7" class="text-center py-5">
-                        <img src="https://cdni.iconscout.com/illustration/premium/thumb/empty-box-2571567-2149023.png" style="width: 150px; opacity: 0.5;" />
-                        <p class="mt-3 text-muted fw-bold">Không có dữ liệu đơn đặt phòng nào.</p>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var br in b.BookingRooms)
+                                {
+                                    <span class="room-pill">P.@br.Room?.RoomNumber</span>
+                                }
+                            </div>
+                        </td>
+                        <td style="font-size:.82rem;">
+                            <div style="font-weight:700;">@b.CheckInDate.ToString("dd MMM, yyyy")</div>
+                            <div style="color:var(--text-sub);">→ @b.CheckOutDate.ToString("dd MMM, yyyy")</div>
+                        </td>
+                        <td>
+                            <div class="amount-val">@b.TotalAmount.ToString("N0")₫</div>
+                        </td>
+                        <td>
+                            <span class="status-badge @badgeClass">@statusTxt</span>
+                        </td>
+                        <td>
+                            <div class="d-flex justify-content-end gap-1">
+                                @if (b.Status == BookingStatus.Confirmed && b.CheckInDate.Date <= DateTime.Today)
+                                {
+                                    <form method="post" asp-page-handler="UpdateStatus">
+                                        <input type="hidden" name="id" value="@b.Id" />
+                                        <input type="hidden" name="newStatus" value="@BookingStatus.CheckedIn" />
+                                        <button type="submit" class="action-btn btn-do-checkin" title="Nhận phòng">
+                                            <i class="fa-solid fa-key"></i>
+                                        </button>
+                                    </form>
+                                }
+                                @if (b.Status == BookingStatus.CheckedIn)
+                                {
+                                    <form method="post" asp-page-handler="UpdateStatus">
+                                        <input type="hidden" name="id" value="@b.Id" />
+                                        <input type="hidden" name="newStatus" value="@BookingStatus.Completed" />
+                                        <button type="submit" class="action-btn btn-do-checkout" title="Trả phòng">
+                                            <i class="fa-solid fa-person-walking-luggage"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
-
-@section StaffStyles {
-    <style>
-        .booking-filter-card { background: #fff; border-radius: 15px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
-        .filter-label { font-size: 0.75rem; font-weight: 800; color: #64748B; text-transform: uppercase; margin-bottom: 0.5rem; display: block; }
-        .filter-input, .filter-select { 
-            width: 100%; padding: 0.6rem 1rem; border-radius: 10px; border: 1px solid #E2E8F0; 
-            font-size: 0.9rem; font-weight: 500; color: #1E293B; background: #F8FAFC; outline: none; transition: 0.2s;
-        }
-        .filter-input:focus, .filter-select:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(13,112,85,0.05); }
-        
-        .filter-btn-search { 
-            background: var(--primary); color: #fff; border: none; padding: 0.6rem; border-radius: 10px; 
-            font-size: 0.85rem; font-weight: 800; transition: 0.2s; 
-        }
-        .filter-btn-search:hover { background: #0a5a44; transform: scale(1.02); }
-        .filter-btn-reset { 
-            background: #F1F5F9; color: #64748B; width: 42px; height: 42px; border-radius: 10px; 
-            display: flex; align-items: center; justify-content: center; text-decoration: none; border: 1px solid #E2E8F0;
-        }
-        .filter-btn-reset:hover { background: #E2E8F0; color: #1E293B; }
-
-        .premium-table-container { background: #fff; border-radius: 15px; border: 1px solid #E2E8F0; overflow: hidden; }
-        .premium-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        .premium-table thead th { 
-            background: #F8FAFC; color: #64748B; font-size: 0.7rem; font-weight: 800; 
-            text-transform: uppercase; letter-spacing: 1px; padding: 1.2rem 1rem; border-bottom: 1px solid #E2E8F0;
-        }
-        .premium-table tbody td { padding: 1.2rem 1rem; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
-        .premium-table tbody tr:hover { background: #F8FAFC; }
-        .premium-table tbody tr:last-child td { border-bottom: none; }
-
-        .booking-id { font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--primary); font-size: 0.95rem; }
-        .avatar-sm { width: 36px; height: 36px; background: #D1FAE5; color: #0D7055; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; }
-        .table-cust-name { font-weight: 700; color: #1E293B; font-size: 0.9rem; }
-        
-        .room-pill { background: #F1F5F9; color: #475569; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 800; border: 1px solid #E2E8F0; }
-        
-        .status-indicator { 
-            display: inline-flex; align-items: center; padding: 0.4rem 0.8rem; border-radius: 20px; 
-            font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;
-        }
-        .status-indicator::before { content: ''; width: 6px; height: 6px; border-radius: 50%; margin-right: 8px; }
-        
-        .st-confirmed { background: #DBEAFE; color: #1E40AF; } .st-confirmed::before { background: #1E40AF; }
-        .st-checkedin { background: #FEF3C7; color: #92400E; } .st-checkedin::before { background: #92400E; }
-        .st-completed { background: #D1FAE5; color: #065F46; } .st-completed::before { background: #065F46; }
-        .st-cancelled { background: #FEE2E2; color: #991B1B; } .st-cancelled::before { background: #991B1B; }
-        .st-pending { background: #F3F4F6; color: #4B5563; } .st-pending::before { background: #4B5563; }
-
-        .action-btn { 
-            width: 32px; height: 32px; border-radius: 8px; border: none; 
-            display: flex; align-items: center; justify-content: center; font-size: 0.8rem; transition: 0.2s;
-        }
-        .btn-checkin { background: #D1FAE5; color: #0D7055; } .btn-checkin:hover { background: #0D7055; color: #fff; }
-        .btn-checkout { background: #FEF3C7; color: #92400E; } .btn-checkout:hover { background: #B45309; color: #fff; }
-        .btn-detail { background: #F1F5F9; color: #64748B; } .btn-detail:hover { background: #E2E8F0; color: #1E293B; }
-
-        /* ── SignalR: New booking row animation ── */
-        @@keyframes newRowSlide {
-            from { background: #D1FAE5; transform: translateX(-8px); opacity: 0.5; }
-            to   { background: transparent; transform: translateX(0); opacity: 1; }
-        }
-        .new-booking-row { animation: newRowSlide 1.2s ease-out forwards; }
-
-        /* ── SignalR: Toast notification ── */
-        #bookingToastContainer {
-            position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999;
-            display: flex; flex-direction: column; gap: 0.75rem; pointer-events: none;
-        }
-        .booking-toast {
-            pointer-events: all;
-            background: #fff; border-radius: 14px; padding: 1rem 1.2rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.12); border-left: 4px solid #0D7055;
-            min-width: 300px; max-width: 360px;
-            animation: toastIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
-        }
-        @@keyframes toastIn {
-            from { transform: translateX(120%); opacity: 0; }
-            to   { transform: translateX(0);    opacity: 1; }
-        }
-        @@keyframes toastOut {
-            from { transform: translateX(0);    opacity: 1; }
-            to   { transform: translateX(120%); opacity: 0; }
-        }
-        .booking-toast.hiding { animation: toastOut 0.3s ease-in forwards; }
-    </style>
-}
 
 <!-- Toast container -->
 <div id="bookingToastContainer"></div>
@@ -245,9 +358,7 @@
 @section Scripts {
     <script>
         const connection = new signalR.HubConnectionBuilder()
-            .withUrl("/roomHub")
-            .withAutomaticReconnect()
-            .build();
+            .withUrl("/roomHub").withAutomaticReconnect().build();
 
         connection.on("ReceiveNewBooking", function (bookingId, customerName, phoneNumber, roomNumbers, totalAmount, checkIn, checkOut, createdAt) {
             const data = { bookingId, customerName, phoneNumber, roomNumbers, totalAmount, checkIn, checkOut, createdAt };
@@ -257,27 +368,23 @@
 
         connection.start().catch(err => console.error("SignalR error:", err));
 
-        function formatCurrency(n) {
-            return Number(n).toLocaleString('vi-VN') + '₫';
-        }
+        function fmt(n) { return Number(n).toLocaleString('vi-VN') + '₫'; }
 
         function showBookingToast(data) {
             const container = document.getElementById('bookingToastContainer');
             const toast = document.createElement('div');
             toast.className = 'booking-toast';
             toast.innerHTML = `
-                <div class="d-flex align-items-center gap-2 mb-1">
-                    <i class="fa-solid fa-bell text-success"></i>
-                    <span style="font-weight:800;font-size:.85rem;color:#0D7055;">ĐƠN ĐẶT PHÒNG MỚI</span>
-                    <span style="margin-left:auto;font-size:.7rem;color:#94A3B8;">${data.createdAt}</span>
+                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;">
+                    <i class="fa-solid fa-bell" style="color:var(--blue);"></i>
+                    <span style="font-weight:700;font-size:.8rem;color:var(--blue);">ĐƠN MỚI</span>
+                    <span style="margin-left:auto;font-size:.7rem;color:var(--text-sub);">${data.createdAt}</span>
                 </div>
-                <div style="font-weight:700;font-size:.9rem;color:#1E293B;">${data.customerName}</div>
-                <div style="font-size:.78rem;color:#64748B;">
-                    Phòng <strong>${data.roomNumbers}</strong> &nbsp;·&nbsp;
-                    ${data.checkIn} → ${data.checkOut}
+                <div style="font-weight:700;font-size:.88rem;">${data.customerName}</div>
+                <div style="font-size:.77rem;color:var(--text-sub);">
+                    Phòng <strong>${data.roomNumbers}</strong> &nbsp;·&nbsp; ${data.checkIn} → ${data.checkOut}
                 </div>
-                <div style="font-size:.78rem;color:#0D7055;font-weight:800;margin-top:.3rem;">${formatCurrency(data.totalAmount)}</div>
-            `;
+                <div style="font-size:.78rem;color:var(--blue);font-weight:700;margin-top:.25rem;">${fmt(data.totalAmount)}</div>`;
             container.prepend(toast);
             setTimeout(() => {
                 toast.classList.add('hiding');
@@ -286,45 +393,33 @@
         }
 
         function prependBookingRow(data) {
-            const tbody = document.querySelector('.premium-table tbody');
+            const tbody = document.querySelector('.data-table tbody');
             if (!tbody) return;
-
-            // Remove "no data" row if present
-            const emptyRow = tbody.querySelector('td[colspan="7"]');
-            if (emptyRow) emptyRow.closest('tr').remove();
-
+            const emptyRow = tbody.querySelector('.empty-row');
+            if (emptyRow) emptyRow.remove();
             const initials = data.customerName ? data.customerName.charAt(0).toUpperCase() : '?';
             const tr = document.createElement('tr');
             tr.className = 'new-booking-row';
             tr.innerHTML = `
-                <td class="ps-4"><span class="booking-id">#${data.bookingId}</span></td>
+                <td><span class="booking-id">#${data.bookingId}</span></td>
                 <td>
-                    <div class="d-flex align-items-center">
-                        <div class="avatar-sm me-3">${initials}</div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="cust-avatar">${initials}</div>
                         <div>
-                            <div class="table-cust-name">${data.customerName}</div>
-                            <div class="table-cust-phone text-muted small"><i class="fa-solid fa-phone-flip me-1"></i>${data.phoneNumber || '—'}</div>
+                            <div class="cust-name">${data.customerName}</div>
+                            <div class="cust-phone"><i class="fa-solid fa-phone-flip me-1"></i>${data.phoneNumber || '—'}</div>
                         </div>
                     </div>
                 </td>
                 <td><span class="room-pill">P.${data.roomNumbers}</span></td>
-                <td>
-                    <div class="stay-date">
-                        <span class="d-block fw-bold" style="font-size:.85rem;">${data.checkIn}</span>
-                        <span class="d-block text-muted" style="font-size:.75rem;">Đến ${data.checkOut}</span>
-                    </div>
+                <td style="font-size:.82rem;">
+                    <div style="font-weight:700;">${data.checkIn}</div>
+                    <div style="color:var(--text-sub);">→ ${data.checkOut}</div>
                 </td>
-                <td>
-                    <div class="amount-cell">
-                        <span class="d-block fw-bold text-dark">${formatCurrency(data.totalAmount)}</span>
-                        <span class="badge bg-light text-success border border-success-subtle py-1 px-2" style="font-size:.6rem;">Đã thanh toán</span>
-                    </div>
-                </td>
-                <td><span class="status-indicator st-confirmed">CHỜ NHẬN</span></td>
-                <td class="text-end pe-4"></td>
-            `;
+                <td><div class="amount-val">${fmt(data.totalAmount)}</div></td>
+                <td><span class="status-badge st-confirmed">Chờ nhận</span></td>
+                <td></td>`;
             tbody.prepend(tr);
         }
     </script>
 }
-

@@ -5,10 +5,279 @@
     ViewData["Title"] = "Lịch sử đặt phòng";
 }
 
-<div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-        <h2 class="mb-0">Lịch sử đặt phòng của tôi</h2>
-        <a asp-page="/Bookings/Wallet" class="btn btn-outline-success d-flex align-items-center gap-2" style="border-radius:20px;">
+<style>
+    /* ── VARIABLES (same token system as layout) ── */
+    :root {
+        --blue:      #0066CC;
+        --blue-dark: #004FA3;
+        --blue-dim:  #E8F0FE;
+        --blue-mid:  #D0E4FF;
+        --divider:   #D2D2D7;
+        --bg:        #FFFFFF;
+        --bg-alt:    #F5F5F7;
+        --text:      #1D1D1F;
+        --text-sub:  #6E6E73;
+    }
+
+    /* ── PAGE HEADER ── */
+    .hist-header {
+        padding: 2.5rem 0 1.8rem;
+    }
+    .hist-title {
+        font-size: 1.85rem;
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: -.5px;
+    }
+    .hist-sub {
+        font-size: .875rem;
+        color: var(--text-sub);
+        margin-top: .2rem;
+    }
+
+    /* ── WALLET PILL ── */
+    .wallet-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: .55rem;
+        padding: .55rem 1.1rem;
+        background: var(--bg);
+        border: 1px solid var(--divider);
+        border-radius: 980px;
+        font-size: .855rem;
+        font-weight: 600;
+        color: var(--text);
+        text-decoration: none;
+        transition: all .2s;
+    }
+    .wallet-pill:hover {
+        border-color: var(--blue);
+        color: var(--blue);
+        background: var(--blue-dim);
+    }
+    .wallet-pill i { color: var(--blue); }
+
+    /* ── ALERT ── */
+    .hist-alert {
+        display: flex; align-items: center; gap: .75rem;
+        padding: .85rem 1.2rem;
+        border-radius: 10px;
+        font-size: .855rem; font-weight: 500;
+        margin-bottom: 1.4rem;
+    }
+    .hist-alert-success { background: #EBF8F2; border: 1px solid #A7EBC7; color: #1A6640; }
+    .hist-alert-danger  { background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B; }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+        background: var(--bg);
+        border: 1px solid var(--divider);
+        border-radius: 14px;
+        padding: 1.1rem 1.4rem;
+        margin-bottom: 1.8rem;
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        flex-wrap: wrap;
+    }
+    .filter-bar-label {
+        font-size: .75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-sub);
+        white-space: nowrap;
+    }
+    .filter-select {
+        border: 1px solid var(--divider);
+        border-radius: 8px;
+        padding: .48rem .85rem;
+        font-size: .845rem;
+        color: var(--text);
+        background: var(--bg-alt);
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+        font-family: inherit;
+        flex: 1; min-width: 160px;
+    }
+    .filter-select:focus {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px rgba(0,102,204,.1);
+        background: var(--bg);
+    }
+    .btn-filter-apply {
+        display: inline-flex; align-items: center; gap: .4rem;
+        padding: .5rem 1.2rem;
+        background: var(--blue); color: #fff;
+        border: none; border-radius: 8px;
+        font-size: .845rem; font-weight: 600;
+        cursor: pointer; transition: background .2s;
+        white-space: nowrap;
+    }
+    .btn-filter-apply:hover { background: var(--blue-dark); }
+    .btn-filter-reset {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 38px; height: 38px;
+        background: var(--bg-alt); border: 1px solid var(--divider);
+        border-radius: 8px; color: var(--text-sub);
+        text-decoration: none; transition: all .2s;
+    }
+    .btn-filter-reset:hover { background: var(--divider); color: var(--text); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+        text-align: center;
+        padding: 5rem 1rem;
+    }
+    .empty-state-icon {
+        width: 80px; height: 80px;
+        border-radius: 50%;
+        background: var(--bg-alt);
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1.4rem;
+        font-size: 2rem;
+        color: var(--divider);
+    }
+    .empty-state h4 { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: .5rem; }
+    .empty-state p  { font-size: .875rem; color: var(--text-sub); }
+    .btn-explore {
+        display: inline-flex; align-items: center; gap: .4rem;
+        margin-top: 1.2rem;
+        padding: .6rem 1.6rem;
+        background: var(--blue); color: #fff;
+        border-radius: 980px; border: none;
+        font-size: .875rem; font-weight: 700;
+        text-decoration: none; transition: all .2s;
+    }
+    .btn-explore:hover { background: var(--blue-dark); color: #fff; }
+
+    /* ── BOOKING CARD ── */
+    .booking-card {
+        background: var(--bg);
+        border: 1px solid var(--divider);
+        border-radius: 16px;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        transition: box-shadow .25s, transform .25s;
+    }
+    .booking-card:hover {
+        box-shadow: 0 12px 36px rgba(0,0,0,.09);
+        transform: translateY(-3px);
+    }
+
+    /* Card top strip */
+    .card-strip {
+        height: 4px;
+        width: 100%;
+    }
+    .strip-confirmed      { background: var(--blue); }
+    .strip-checkedin      { background: #16A34A; }
+    .strip-completed      { background: #16A34A; }
+    .strip-cancelled      { background: #DC2626; }
+    .strip-pending        { background: #D97706; }
+    .strip-cancelpending  { background: #F59E0B; }
+
+    .card-head {
+        padding: 1.1rem 1.2rem .5rem;
+        display: flex; align-items: flex-start; justify-content: space-between;
+        gap: .5rem;
+    }
+    .card-id {
+        font-size: .78rem;
+        color: var(--text-sub);
+    }
+    .card-id strong { color: var(--blue); font-weight: 700; }
+
+    /* Status badge */
+    .st-badge {
+        display: inline-flex; align-items: center; gap: .3rem;
+        padding: .22rem .7rem; border-radius: 980px;
+        font-size: .67rem; font-weight: 700; letter-spacing: .3px;
+        flex-shrink: 0;
+    }
+    .st-pending   { background: #FEF3C7; color: #92400E; }
+    .st-confirmed { background: var(--blue-dim); color: var(--blue-dark); }
+    .st-checkedin { background: #DCFCE7; color: #166534; }
+    .st-completed { background: #DCFCE7; color: #166534; }
+    .st-cancelled { background: #FEE2E2; color: #991B1B; }
+    .st-cancelpending { background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; }
+
+    .card-body-inner { padding: .5rem 1.2rem 1rem; flex: 1; }
+
+    .card-room-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: -.2px;
+        margin-bottom: .75rem;
+    }
+    .card-room-type {
+        font-size: .75rem;
+        color: var(--text-sub);
+        margin-bottom: .8rem;
+    }
+
+    .date-row {
+        display: flex;
+        gap: .6rem;
+        margin-bottom: .9rem;
+    }
+    .date-box {
+        flex: 1;
+        background: var(--bg-alt);
+        border-radius: 8px;
+        padding: .55rem .75rem;
+    }
+    .date-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--text-sub); }
+    .date-value { font-size: .9rem; font-weight: 700; color: var(--text); margin-top: .1rem; }
+
+    .total-row {
+        display: flex; justify-content: space-between; align-items: center;
+        padding-top: .8rem;
+        border-top: 1px solid var(--bg-alt);
+    }
+    .total-label { font-size: .78rem; color: var(--text-sub); }
+    .total-value { font-size: 1.05rem; font-weight: 800; color: var(--blue); }
+
+    .refund-row {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-top: .4rem;
+    }
+    .refund-label { font-size: .75rem; color: #166534; }
+    .refund-value { font-size: .875rem; font-weight: 700; color: #16A34A; }
+
+    /* Card footer actions */
+    .card-actions {
+        padding: .9rem 1.2rem 1.1rem;
+        border-top: 1px solid var(--bg-alt);
+        display: flex; gap: .5rem; flex-wrap: wrap;
+    }
+    .btn-card {
+        display: flex; align-items: center; justify-content: center; gap: .35rem;
+        padding: .48rem .9rem; border-radius: 8px;
+        font-size: .78rem; font-weight: 700;
+        cursor: pointer; text-decoration: none;
+        border: none; flex: 1; transition: all .2s;
+        min-width: 80px;
+    }
+    .btn-detail    { background: var(--blue-dim); color: var(--blue); }
+    .btn-detail:hover { background: var(--blue); color: #fff; }
+    .btn-pay       { background: #FEF3C7; color: #92400E; }
+    .btn-pay:hover { background: #D97706; color: #fff; }
+    .btn-cancel    { background: var(--bg-alt); color: var(--text-sub); border: 1px solid var(--divider); }
+    .btn-cancel:hover { border-color: #DC2626; color: #DC2626; background: #FEF2F2; }
+    .btn-waiting   { background: var(--bg-alt); color: var(--text-sub); pointer-events: none; border: 1px solid var(--divider); }
+</style>
+
+<div class="container">
+    <div class="hist-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+            <div class="hist-title">Lịch sử đặt phòng</div>
+            <div class="hist-sub">Quản lý tất cả đặt phòng của bạn</div>
+        </div>
+        <a asp-page="/Bookings/Wallet" class="wallet-pill">
             <i class="fa-solid fa-wallet"></i>
             <span>Ví: <strong>@Model.WalletBalance.ToString("N0")₫</strong></span>
         </a>
@@ -16,144 +285,162 @@
 
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show">
+        <div class="hist-alert hist-alert-success">
             <i class="fa-solid fa-circle-check"></i> @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show">
+        <div class="hist-alert hist-alert-danger">
             <i class="fa-solid fa-circle-exclamation"></i> @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
 
-    <!-- Nút Filter (Search) -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-body bg-light rounded">
-            <form method="get" class="row g-3 align-items-center">
-                <div class="col-auto">
-                    <label class="col-form-label fw-bold"><i class="fa-solid fa-filter text-primary"></i> Trạng thái:</label>
-                </div>
-                <div class="col-auto">
-                    <select asp-for="FilterStatus" class="form-select" asp-items="Html.GetEnumSelectList<BookingStatus>()">
-                        <option value="">-- Tất cả --</option>
-                    </select>
-                </div>
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm</button>
-                    <a asp-page="./History" class="btn btn-outline-secondary">Xóa bộ lọc</a>
-                </div>
-            </form>
-        </div>
-    </div>
+    <!-- FILTER -->
+    <form method="get" class="filter-bar">
+        <span class="filter-bar-label">Lọc theo trạng thái</span>
+        <select asp-for="FilterStatus" class="filter-select" asp-items="Html.GetEnumSelectList<BookingStatus>()">
+            <option value="">— Tất cả —</option>
+        </select>
+        <button type="submit" class="btn-filter-apply">
+            <i class="fa-solid fa-filter"></i> Lọc
+        </button>
+        <a asp-page="./History" class="btn-filter-reset">
+            <i class="fa-solid fa-rotate-right"></i>
+        </a>
+    </form>
 
     @if (!Model.Bookings.Any())
     {
-        <div class="text-center py-5">
-            <i class="fa-solid fa-box-open text-muted" style="font-size:4rem;"></i>
-            <h4 class="mt-3 text-muted">Không tìm thấy đặt phòng nào.</h4>
-            <a asp-page="/Rooms/Index" class="btn btn-primary mt-3">Khám phá các phòng</a>
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fa-solid fa-calendar-xmark"></i>
+            </div>
+            <h4>Chưa có đặt phòng nào</h4>
+            <p>Hãy khám phá các phòng nghỉ tuyệt vời của chúng tôi</p>
+            <a asp-page="/Rooms/Index" class="btn-explore">
+                <i class="fa-solid fa-magnifying-glass"></i> Xem danh sách phòng
+            </a>
         </div>
     }
     else
     {
-        <div class="row g-4">
+        <div class="row g-3 pb-5">
             @foreach (var booking in Model.Bookings)
             {
-                <div class="col-md-6 col-lg-4">
-                    <div class="card h-100 shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
-                        <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted" style="font-size:0.85rem;">#@booking.Id &bull; @booking.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
-                                 @{
-                                    var badgeColor = booking.Status switch
-                                    {
-                                        BookingStatus.Pending => "bg-warning text-dark",
-                                        BookingStatus.Confirmed => "bg-info text-dark",
-                                        BookingStatus.CheckedIn => "bg-primary",
-                                        BookingStatus.Completed => "bg-success",
-                                        BookingStatus.Cancelled => "bg-danger",
-                                        BookingStatus.CancellationPending => "bg-warning text-dark",
-                                        _ => "bg-secondary"
-                                    };
-                                }
-                                @{
-                                    var statusText = booking.Status switch
-                                    {
-                                        BookingStatus.Pending => "Chờ thanh toán",
-                                        BookingStatus.Confirmed => "Đã xác nhận",
-                                        BookingStatus.CheckedIn => "Đang ở",
-                                        BookingStatus.Completed => "Hoàn thành",
-                                        BookingStatus.Cancelled => "Đã hủy",
-                                        BookingStatus.CancellationPending => "⏳ Chờ duyệt hủy",
-                                        _ => booking.Status.ToString()
-                                    };
-                                }
-                                <span class="badge @badgeColor">@statusText</span>
+                var room      = booking.BookingRooms.FirstOrDefault()?.Room;
+                var roomName  = room != null ? $"Phòng {room.RoomNumber}" : "N/A";
+                var roomType  = room?.RoomType?.Name ?? "";
+                var nights    = (booking.CheckOutDate - booking.CheckInDate).Days;
+
+                string stripCls = booking.Status switch {
+                    BookingStatus.Confirmed          => "strip-confirmed",
+                    BookingStatus.CheckedIn          => "strip-checkedin",
+                    BookingStatus.Completed          => "strip-completed",
+                    BookingStatus.Cancelled          => "strip-cancelled",
+                    BookingStatus.CancellationPending => "strip-cancelpending",
+                    _                                => "strip-pending"
+                };
+                string badgeCls = booking.Status switch {
+                    BookingStatus.Confirmed          => "st-confirmed",
+                    BookingStatus.CheckedIn          => "st-checkedin",
+                    BookingStatus.Completed          => "st-completed",
+                    BookingStatus.Cancelled          => "st-cancelled",
+                    BookingStatus.CancellationPending => "st-cancelpending",
+                    _                                => "st-pending"
+                };
+                string statusTxt = booking.Status switch {
+                    BookingStatus.Pending            => "Chờ thanh toán",
+                    BookingStatus.Confirmed          => "Đã xác nhận",
+                    BookingStatus.CheckedIn          => "Đang ở",
+                    BookingStatus.Completed          => "Hoàn thành",
+                    BookingStatus.Cancelled          => "Đã hủy",
+                    BookingStatus.CancellationPending => "Chờ duyệt hủy",
+                    _                                => booking.Status.ToString()
+                };
+
+                <div class="col-md-6 col-xl-4">
+                    <div class="booking-card">
+                        <!-- Color strip -->
+                        <div class="card-strip @stripCls"></div>
+
+                        <!-- Header -->
+                        <div class="card-head">
+                            <div class="card-id">
+                                <strong>#@booking.Id</strong>
+                                &nbsp;·&nbsp; @booking.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                             </div>
+                            <span class="st-badge @badgeCls">@statusTxt</span>
                         </div>
-                        <div class="card-body">
-                            @{
-                                var room = booking.BookingRooms.FirstOrDefault()?.Room;
-                                var roomName = room != null ? $"Phòng {room.RoomNumber}" : "N/A";
+
+                        <!-- Body -->
+                        <div class="card-body-inner">
+                            <div class="card-room-name">@roomName</div>
+                            @if (!string.IsNullOrEmpty(roomType))
+                            {
+                                <div class="card-room-type"><i class="fa-solid fa-tag me-1"></i>@roomType</div>
                             }
-                            <h5 class="card-title fw-bold">@roomName</h5>
-                            
-                            <div class="d-flex my-3 gap-3">
-                                <div class="p-2 bg-light rounded" style="flex:1;">
-                                    <div style="font-size:0.75rem; color:#6c757d;">Nhận phòng</div>
-                                    <div class="fw-bold fs-6">@booking.CheckInDate.ToString("dd/MM")</div>
+
+                            <div class="date-row">
+                                <div class="date-box">
+                                    <div class="date-label">Nhận phòng</div>
+                                    <div class="date-value">@booking.CheckInDate.ToString("dd/MM/yyyy")</div>
                                 </div>
-                                <div class="p-2 bg-light rounded" style="flex:1;">
-                                    <div style="font-size:0.75rem; color:#6c757d;">Trả phòng</div>
-                                    <div class="fw-bold fs-6">@booking.CheckOutDate.ToString("dd/MM")</div>
+                                <div class="date-box">
+                                    <div class="date-label">Trả phòng</div>
+                                    <div class="date-value">@booking.CheckOutDate.ToString("dd/MM/yyyy")</div>
                                 </div>
                             </div>
-                            
-                         <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                                <span class="text-muted">Tổng cộng</span>
-                                <span class="fw-bold text-danger fs-5">@booking.TotalAmount.ToString("N0")₫</span>
+
+                            <div class="total-row">
+                                <span class="total-label">
+                                    <i class="fa-solid fa-moon me-1" style="color:var(--blue);"></i>
+                                    @nights đêm
+                                </span>
+                                <span class="total-value">@booking.TotalAmount.ToString("N0")₫</span>
                             </div>
+
                             @if (booking.Status == BookingStatus.Cancelled && booking.RefundAmount.HasValue)
                             {
-                                <div class="d-flex justify-content-between align-items-center mt-2">
-                                    <span class="text-muted" style="font-size:.85rem;">✅ Hoàn ví</span>
-                                    <span class="fw-bold text-success">+@booking.RefundAmount.Value.ToString("N0")₫</span>
+                                <div class="refund-row">
+                                    <span class="refund-label"><i class="fa-solid fa-rotate-left me-1"></i>Đã hoàn ví</span>
+                                    <span class="refund-value">+@booking.RefundAmount.Value.ToString("N0")₫</span>
                                 </div>
                             }
                         </div>
-                        <div class="card-footer bg-white border-top-0 pb-3">
-                         <div class="d-flex gap-2 flex-wrap">
-                                <a asp-page="/Admin/Bookings/Details" asp-route-id="@booking.Id" class="btn btn-outline-primary btn-sm flex-grow-1">Chi tiết</a>
-                                @if (booking.Status == BookingStatus.Pending)
-                                {
-                                    <form method="post" asp-page-handler="RetryPayment" asp-route-id="@booking.Id" class="flex-grow-1 m-0">
-                                        <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold">
-                                            <i class="fa-solid fa-credit-card me-1"></i>Thanh toán ngay
-                                        </button>
-                                    </form>
-                                }
-                                @if (booking.Status == BookingStatus.Pending || booking.Status == BookingStatus.Confirmed)
-                                {
-                                    if (booking.CheckInDate >= DateTime.Today)
-                                    {
-                                        <form method="post" asp-page-handler="Cancel" asp-route-id="@booking.Id" class="flex-grow-1 m-0">
-                                            <button type="submit" class="btn btn-outline-danger btn-sm w-100"
-                                                    onclick="return confirm('Bạn có chắc muốn gửi yêu cầu hủy? Tiền sẽ được hoàn vào ví sau khi manager duyệt.')">
-                                                <i class="fa-solid fa-xmark me-1"></i>Gửi yêu cầu hủy
-                                            </button>
-                                        </form>
-                                    }
-                                }
-                                @if (booking.Status == BookingStatus.CancellationPending)
-                                {
-                                    <span class="btn btn-outline-warning btn-sm flex-grow-1 disabled">
-                                        <i class="fa-solid fa-hourglass-half me-1"></i>Chờ manager duyệt
-                                    </span>
-                                }
-                            </div>
+
+                        <!-- Actions -->
+                        <div class="card-actions">
+                            <a asp-page="/Bookings/BookingDetail" asp-route-id="@booking.Id" class="btn-card btn-detail">
+                                <i class="fa-solid fa-eye"></i> Chi tiết
+                            </a>
+
+                            @if (booking.Status == BookingStatus.Pending)
+                            {
+                                <form method="post" asp-page-handler="RetryPayment" asp-route-id="@booking.Id" class="flex-grow-1 m-0" style="display:contents;">
+                                    <button type="submit" class="btn-card btn-pay">
+                                        <i class="fa-solid fa-credit-card"></i> Thanh toán
+                                    </button>
+                                </form>
+                            }
+
+                            @if ((booking.Status == BookingStatus.Pending || booking.Status == BookingStatus.Confirmed)
+                                 && booking.CheckInDate >= DateTime.Today)
+                            {
+                                <form method="post" asp-page-handler="Cancel" asp-route-id="@booking.Id" class="flex-grow-1 m-0" style="display:contents;">
+                                    <button type="submit" class="btn-card btn-cancel"
+                                            onclick="return confirm('Gửi yêu cầu hủy? Tiền sẽ hoàn vào ví sau khi manager duyệt.')">
+                                        <i class="fa-solid fa-xmark"></i> Hủy đặt
+                                    </button>
+                                </form>
+                            }
+
+                            @if (booking.Status == BookingStatus.CancellationPending)
+                            {
+                                <span class="btn-card btn-waiting">
+                                    <i class="fa-solid fa-hourglass-half"></i> Chờ duyệt
+                                </span>
+                            }
                         </div>
                     </div>
                 </div>

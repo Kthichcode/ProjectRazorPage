@@ -6,350 +6,363 @@
     <title>@ViewData["Title"] - Manager | Mường Thanh Hotel</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <style>
         :root {
-            --primary:   #0D7055;
-            --primary-d: #085C44;
-            --primary-l: #0F8A68;
-            --accent:    #34D399;
-            --sidebar-w: 256px;
-            --sidebar-bg:#093D2E;
-            --sidebar-txt:rgba(255,255,255,.72);
-            --sidebar-hover:#0D7055;
-            --topbar-h:  64px;
-            --white:     #FFFFFF;
-            --gray-50:   #F0FAF6;
-            --gray-100:  #D1FAE5;
-            --gray-200:  #A7F3D0;
-            --text:      #1E293B;
-            --text-sub:  #64748B;
+            --blue:       #0066CC;
+            --blue-dark:  #004FA3;
+            --blue-dim:   #E8F0FE;
+            --blue-mid:   #D0E4FF;
+            --divider:    #D2D2D7;
+            --bg:         #FFFFFF;
+            --bg-alt:     #F5F5F7;
+            --text:       #1D1D1F;
+            --text-sub:   #6E6E73;
+            --sidebar-w:  240px;
+            --topbar-h:   56px;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: #F0F5F2; color: var(--text); }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-alt);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+        }
 
         /* ── SIDEBAR ── */
-        .admin-sidebar {
+        .mgr-sidebar {
             position: fixed;
             left: 0; top: 0;
             width: var(--sidebar-w);
             height: 100vh;
-            background: var(--sidebar-bg);
+            background: var(--bg);
+            border-right: 1px solid var(--divider);
             display: flex;
             flex-direction: column;
-            z-index: 100;
-            transition: transform .3s;
+            z-index: 200;
+            transition: transform .3s ease;
         }
+
         .sidebar-brand {
             height: var(--topbar-h);
             display: flex;
             align-items: center;
-            padding: 0 1.5rem;
-            border-bottom: 1px solid rgba(255,255,255,.08);
-            text-decoration: none;
-        }
-        .sidebar-brand-txt {
-            font-family: 'Playfair Display', serif;
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--white);
-            line-height: 1.2;
-        }
-        .sidebar-brand-sub {
-            font-size: .68rem;
-            color: var(--accent);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
-
-        .sidebar-nav { flex: 1; overflow-y: auto; padding: 1.2rem 0; }
-        .sidebar-section-label {
-            font-size: .63rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: rgba(255,255,255,.3);
-            padding: .9rem 1.5rem .4rem;
-        }
-        .sidebar-link {
-            display: flex;
-            align-items: center;
             gap: .75rem;
-            padding: .65rem 1.5rem;
-            color: var(--sidebar-txt);
+            padding: 0 1.4rem;
+            border-bottom: 1px solid var(--divider);
             text-decoration: none;
-            font-size: .875rem;
-            font-weight: 500;
-            border-left: 3px solid transparent;
-            transition: all .2s;
         }
-        .sidebar-link:hover {
-            background: rgba(255,255,255,.07);
-            color: var(--white);
-            border-left-color: var(--accent);
+        .sidebar-brand-icon {
+            width: 30px; height: 30px;
+            background: var(--blue);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff;
+            font-size: .85rem;
+            flex-shrink: 0;
         }
-        .sidebar-link.active {
-            background: rgba(13,112,85,.4);
-            color: var(--white);
-            border-left-color: var(--accent);
-        }
-        .sidebar-link i { width: 18px; text-align: center; font-size: .9rem; }
+        .sidebar-brand-txt  { font-size: .88rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+        .sidebar-brand-role { font-size: .67rem; color: var(--blue); font-weight: 600; letter-spacing: .5px; text-transform: uppercase; }
 
-        .sidebar-footer {
-            padding: 1.2rem 1.5rem;
-            border-top: 1px solid rgba(255,255,255,.08);
+        .sidebar-nav { flex: 1; overflow-y: auto; padding: 1rem 0; }
+        .sidebar-section { font-size:.63rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text-sub); padding:.9rem 1.4rem .35rem; opacity:.7; }
+
+        .sidebar-link {
+            display: flex; align-items: center; gap: .75rem;
+            padding: .6rem 1.4rem;
+            color: var(--text-sub); text-decoration: none;
+            font-size: .845rem; font-weight: 500;
+            position: relative;
+            transition: color .15s, background .15s;
         }
+        .sidebar-link::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 20%; bottom: 20%;
+            width: 3px; border-radius: 0 3px 3px 0;
+            background: var(--blue); opacity: 0;
+            transition: opacity .15s;
+        }
+        .sidebar-link:hover { color: var(--text); background: var(--bg-alt); }
+        .sidebar-link.active { color: var(--blue); background: var(--blue-dim); font-weight: 600; }
+        .sidebar-link.active::before { opacity: 1; }
+        .sidebar-link i { width: 18px; text-align: center; font-size: .85rem; }
+
+        /* Badge for pending counts */
+        .nav-badge {
+            margin-left: auto;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 9px;
+            background: #FF3B30;
+            color: #fff;
+            font-size: .62rem;
+            font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .sidebar-footer { padding: 1rem 1.4rem; border-top: 1px solid var(--divider); }
+        .btn-sidebar-logout {
+            display: flex; align-items: center; gap: .6rem;
+            width: 100%; padding: .55rem 1rem;
+            background: none; border: 1px solid var(--divider);
+            border-radius: 8px; color: var(--text-sub);
+            font-size: .82rem; font-weight: 500;
+            cursor: pointer; transition: all .2s;
+        }
+        .btn-sidebar-logout:hover { border-color: #C0392B; color: #C0392B; background: #FFF5F5; }
 
         /* ── TOPBAR ── */
-        .admin-topbar {
+        .mgr-topbar {
             position: fixed;
-            left: var(--sidebar-w);
-            top: 0;
-            right: 0;
+            left: var(--sidebar-w); top: 0; right: 0;
             height: var(--topbar-h);
-            background: var(--white);
-            border-bottom: 1px solid #D1FAE5;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            background: var(--bg);
+            border-bottom: 1px solid var(--divider);
+            display: flex; align-items: center; justify-content: space-between;
             padding: 0 2rem;
-            z-index: 99;
-            box-shadow: 0 2px 8px rgba(13,112,85,.06);
+            z-index: 100;
         }
-        .topbar-title { font-weight: 600; font-size: 1rem; color: var(--text); }
-        .topbar-user { display: flex; align-items: center; gap: .8rem; }
+        .topbar-title { font-size: .92rem; font-weight: 600; color: var(--text); }
+        .topbar-right  { display: flex; align-items: center; gap: .75rem; }
         .topbar-avatar {
-            width: 36px; height: 36px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            border-radius: 50%;
+            width: 32px; height: 32px;
+            background: var(--blue); border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            color: var(--white);
-            font-size: .85rem;
-            font-weight: 700;
+            color: #fff; font-size: .78rem; font-weight: 700;
         }
-        .topbar-username { font-size: .875rem; font-weight: 600; color: var(--primary); }
-        .btn-topbar-logout {
-            background: none;
-            border: 1.5px solid #CBD5E1;
-            color: var(--text-sub);
-            border-radius: 8px;
-            padding: .35rem .9rem;
-            font-size: .8rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all .2s;
-        }
-        .btn-topbar-logout:hover { border-color: #EF4444; color: #EF4444; }
+        .topbar-name { font-size: .845rem; font-weight: 600; color: var(--text); }
 
-        /* ── MAIN CONTENT ── */
-        .admin-main {
+        /* ── MAIN ── */
+        .mgr-main {
             margin-left: var(--sidebar-w);
             margin-top: var(--topbar-h);
-            padding: 2rem;
+            padding: 2rem 2.2rem;
             min-height: calc(100vh - var(--topbar-h));
         }
 
         /* ── PAGE HEADER ── */
-        .page-header { margin-bottom: 1.8rem; }
-        .page-header h1 { font-size: 1.45rem; font-weight: 700; color: var(--text); margin-bottom: .25rem; }
-        .page-header .breadcrumb { font-size: .8rem; margin: 0; }
+        .page-title { font-size: 1.4rem; font-weight: 700; color: var(--text); letter-spacing: -.3px; }
+        .page-sub   { font-size: .8rem; color: var(--text-sub); margin-top: .2rem; }
 
-        /* ── ADMIN CARD ── */
-        .admin-card {
-            background: var(--white);
-            border-radius: 12px;
-            border: 1px solid #D1FAE5;
-            box-shadow: 0 2px 8px rgba(13,112,85,.05);
-            overflow: hidden;
-        }
-        .admin-card-header {
-            padding: 1.2rem 1.5rem;
-            border-bottom: 1px solid #D1FAE5;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .admin-card-header h5 { font-size: .96rem; font-weight: 700; color: var(--text); margin: 0; }
-        .admin-card-body { padding: 1.5rem; }
-
-        /* ── STAT CARD ── */
-        .stat-card {
-            background: var(--white);
+        /* ── CARDS ── */
+        .mgr-card {
+            background: var(--bg);
+            border: 1px solid var(--divider);
             border-radius: 14px;
-            border: 1px solid #D1FAE5;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(13,112,85,.05);
-            position: relative;
             overflow: hidden;
-            transition: transform .25s, box-shadow .25s;
         }
-        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(13,112,85,.12); }
+        .mgr-card-header {
+            padding: 1rem 1.4rem;
+            border-bottom: 1px solid var(--divider);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .mgr-card-header h5 { font-size: .9rem; font-weight: 700; color: var(--text); margin: 0; }
+        .mgr-card-body { padding: 1.4rem; }
+
+        /* ── STAT CARDS ── */
+        .stat-card {
+            background: var(--bg);
+            border: 1px solid var(--divider);
+            border-radius: 14px;
+            padding: 1.4rem;
+            transition: box-shadow .25s, transform .25s;
+        }
+        .stat-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.08); transform: translateY(-2px); }
         .stat-card-icon {
-            width: 52px; height: 52px;
-            border-radius: 12px;
+            width: 44px; height: 44px;
+            border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.25rem;
-            margin-bottom: 1.1rem;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
         }
-        .stat-card-value {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--text);
-            line-height: 1;
-            margin-bottom: .25rem;
+        .stat-card-value { font-size: 2rem; font-weight: 700; color: var(--text); line-height: 1; margin-bottom: .25rem; }
+        .stat-card-label { font-size: .75rem; color: var(--text-sub); font-weight: 500; }
+
+        /* Highlight card (blue) */
+        .stat-card.highlight {
+            background: var(--blue);
+            border-color: transparent;
         }
-        .stat-card-label { font-size: .78rem; color: var(--text-sub); font-weight: 500; }
+        .stat-card.highlight .stat-card-value,
+        .stat-card.highlight .stat-card-label { color: rgba(255,255,255,.9); }
+        .stat-card.highlight .stat-card-icon { background: rgba(255,255,255,.15); }
+
+        /* Alert card (refund) */
+        .stat-card.alert-card {
+            background: #FFF8F0;
+            border-color: #F59E0B;
+        }
+        .stat-card.alert-card .stat-card-value { color: #92400E; }
+        .stat-card.alert-card .stat-card-label { color: #B45309; }
 
         /* ── TABLE ── */
-        .admin-table { width: 100%; border-collapse: collapse; }
-        .admin-table th {
-            background: var(--gray-50);
-            padding: .75rem 1rem;
-            font-size: .75rem;
-            font-weight: 700;
-            letter-spacing: .5px;
-            text-transform: uppercase;
-            color: var(--text-sub);
-            border-bottom: 1px solid #D1FAE5;
-            white-space: nowrap;
+        .mgr-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .mgr-table thead th {
+            background: var(--bg-alt); color: var(--text-sub);
+            font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+            padding: .9rem 1.1rem;
+            border-bottom: 1px solid var(--divider);
         }
-        .admin-table td {
-            padding: .85rem 1rem;
-            font-size: .875rem;
-            border-bottom: 1px solid #F0FAF6;
+        .mgr-table thead th:first-child { padding-left: 1.4rem; }
+        .mgr-table thead th:last-child  { padding-right: 1.4rem; }
+        .mgr-table tbody td {
+            padding: .95rem 1.1rem;
+            border-bottom: 1px solid var(--bg-alt);
+            font-size: .855rem;
             vertical-align: middle;
         }
-        .admin-table tbody tr:hover { background: var(--gray-50); }
-        .admin-table tbody tr:last-child td { border-bottom: none; }
+        .mgr-table tbody td:first-child { padding-left: 1.4rem; }
+        .mgr-table tbody td:last-child  { padding-right: 1.4rem; }
+        .mgr-table tbody tr:hover { background: var(--bg-alt); }
+        .mgr-table tbody tr:last-child td { border-bottom: none; }
 
         /* ── BUTTONS ── */
-        .btn-admin-primary {
-            background: var(--primary);
-            color: var(--white) !important;
-            border: none;
-            border-radius: 8px;
-            padding: .5rem 1.2rem;
-            font-size: .875rem;
-            font-weight: 600;
+        .btn-mgr-primary {
+            background: var(--blue); color: #fff !important;
+            border: none; border-radius: 8px;
+            padding: .52rem 1.2rem;
+            font-size: .845rem; font-weight: 600;
             text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: .45rem;
-            cursor: pointer;
-            transition: all .2s;
+            display: inline-flex; align-items: center; gap: .4rem;
+            cursor: pointer; transition: all .2s;
         }
-        .btn-admin-primary:hover { background: var(--primary-d); transform: translateY(-1px); }
+        .btn-mgr-primary:hover { background: var(--blue-dark); transform: translateY(-1px); }
 
-        .btn-admin-sm {
-            padding: .3rem .75rem;
-            font-size: .78rem;
-            border-radius: 6px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: .3rem;
-            cursor: pointer;
-            transition: all .2s;
-            border: none;
+        .btn-mgr-sm {
+            padding: .3rem .75rem; font-size: .775rem; border-radius: 6px;
+            font-weight: 600; text-decoration: none;
+            display: inline-flex; align-items: center; gap: .3rem;
+            cursor: pointer; transition: all .2s; border: none;
         }
-        .btn-edit  { background: #ECFDF5; color: var(--primary); }
-        .btn-edit:hover  { background: #D1FAE5; }
-        .btn-delete { background: #FEF2F2; color: #EF4444; }
+        .btn-view   { background: var(--blue-dim); color: var(--blue); }
+        .btn-view:hover { background: var(--blue-mid); }
+        .btn-edit   { background: var(--bg-alt); color: var(--text-sub); border: 1px solid var(--divider); }
+        .btn-edit:hover { background: var(--divider); color: var(--text); }
+        .btn-delete { background: #FEF2F2; color: #DC2626; }
         .btn-delete:hover { background: #FEE2E2; }
-        .btn-view  { background: #F0FDF4; color: #16A34A; }
-        .btn-view:hover  { background: #DCFCE7; }
-        .btn-warn  { background: #FFF7ED; color: #C2410C; }
-        .btn-warn:hover  { background: #FEF3C7; }
+        .btn-warn   { background: #FEF3C7; color: #92400E; }
+        .btn-warn:hover { background: #FDE68A; }
 
-        /* ── BADGES ── */
+        /* ── STATUS BADGES ── */
         .status-badge {
-            padding: .25rem .75rem;
-            border-radius: 20px;
-            font-size: .72rem;
-            font-weight: 700;
-            letter-spacing: .3px;
+            display: inline-flex; align-items: center; gap: .35rem;
+            padding: .28rem .7rem; border-radius: 980px;
+            font-size: .67rem; font-weight: 700; letter-spacing: .3px;
         }
-        .badge-pending    { background: #FFF7ED; color: #C2410C; }
-        .badge-confirmed  { background: #ECFDF5; color: #0D7055; }
-        .badge-checkedin  { background: #F0FDF4; color: #15803D; }
-        .badge-completed  { background: #F5F3FF; color: #7C3AED; }
-        .badge-cancelled  { background: #FEF2F2; color: #DC2626; }
-        .badge-available  { background: #ECFDF5; color: #0D7055; }
-        .badge-occupied   { background: #FEF2F2; color: #DC2626; }
-        .badge-maintenance{ background: #FFF7ED; color: #C2410C; }
+        .status-badge::before {
+            content: ''; width: 5px; height: 5px; border-radius: 50%;
+        }
+        .badge-pending        { background: #FEF3C7; color: #92400E; }
+        .badge-pending::before        { background: #D97706; }
+        .badge-confirmed      { background: var(--blue-dim); color: var(--blue-dark); }
+        .badge-confirmed::before      { background: var(--blue); }
+        .badge-checkedin      { background: #DCFCE7; color: #166534; }
+        .badge-checkedin::before      { background: #16A34A; }
+        .badge-completed      { background: #F3F4F6; color: #374151; }
+        .badge-completed::before      { background: #6B7280; }
+        .badge-cancelled      { background: #FEE2E2; color: #991B1B; }
+        .badge-cancelled::before      { background: #DC2626; }
+        .badge-available      { background: var(--blue-dim); color: var(--blue); }
+        .badge-available::before      { background: var(--blue); }
+        .badge-cancelpending  { background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; }
+        .badge-cancelpending::before  { background: #F59E0B; }
 
-        /* ── FORM STYLES ── */
+        /* ── FORM ── */
         .admin-form-label {
-            font-size: .78rem;
-            font-weight: 700;
-            letter-spacing: .5px;
-            text-transform: uppercase;
-            color: var(--primary);
-            margin-bottom: .4rem;
+            font-size: .68rem; font-weight: 700; letter-spacing: 1.5px;
+            text-transform: uppercase; color: var(--text-sub); margin-bottom: .4rem; display: block;
         }
         .admin-form-control {
-            border: 1.5px solid #CBD5E1;
-            border-radius: 8px;
-            padding: .6rem .9rem;
-            font-size: .9rem;
-            width: 100%;
-            color: var(--text);
-            transition: border-color .2s, box-shadow .2s;
+            border: 1px solid var(--divider); border-radius: 8px;
+            padding: .58rem .9rem; font-size: .855rem;
+            width: 100%; color: var(--text); background: var(--bg-alt);
+            outline: none; transition: border-color .2s, box-shadow .2s;
+            font-family: 'Inter', sans-serif;
         }
         .admin-form-control:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(13,112,85,.1);
-            outline: none;
+            border-color: var(--blue); background: var(--bg);
+            box-shadow: 0 0 0 3px rgba(0,102,204,.1);
         }
-        .text-danger { color: #DC2626 !important; font-size: .78rem; margin-top: .2rem; }
 
-        /* ── ALERT ── */
-        .admin-alert {
-            border-radius: 10px;
-            padding: .8rem 1.1rem;
-            font-size: .875rem;
-            margin-bottom: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: .6rem;
+        /* ── ALERTS ── */
+        .mgr-alert {
+            display: flex; align-items: center; gap: .75rem;
+            padding: .85rem 1.2rem; border-radius: 10px;
+            font-size: .855rem; font-weight: 500; margin-bottom: 1.4rem;
         }
-        .admin-alert-success { background: #F0FDF4; border: 1px solid #BBF7D0; color: #15803D; }
-        .admin-alert-danger  { background: #FEF2F2; border: 1px solid #FECACA; color: #DC2626; }
+        .mgr-alert-success { background: #EBF8F2; border: 1px solid #A7EBC7; color: #1A6640; }
+        .mgr-alert-danger  { background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B; }
 
         /* ── RESPONSIVE ── */
         @@media (max-width: 768px) {
-            .admin-sidebar { transform: translateX(-100%); }
-            .admin-sidebar.open { transform: translateX(0); }
-            .admin-topbar, .admin-main { left: 0; margin-left: 0; }
+            .mgr-sidebar { transform: translateX(-100%); }
+            .mgr-sidebar.open { transform: translateX(0); }
+            .mgr-topbar, .mgr-main { left: 0; margin-left: 0; }
         }
 
         @RenderSection("AdminStyles", required: false)
+
+        /* ── BACKWARD COMPATIBILITY (Details.cshtml uses these) ── */
+        :root {
+            --primary:   var(--blue);
+            --primary-d: var(--blue-dark);
+            --gray-50:   var(--bg-alt);
+            --gray-100:  var(--blue-dim);
+            --text-sub:  #6E6E73;
+            --white:     #FFFFFF;
+        }
+        /* admin-card → mgr-card */
+        .admin-card { background:var(--bg); border:1px solid var(--divider); border-radius:14px; overflow:hidden; }
+        .admin-card-header { padding:1rem 1.4rem; border-bottom:1px solid var(--divider); display:flex; align-items:center; justify-content:space-between; }
+        .admin-card-header h5 { font-size:.9rem; font-weight:700; color:var(--text); margin:0; }
+        .admin-card-body { padding:1.4rem; }
+        /* admin-alert → mgr-alert */
+        .admin-alert { display:flex; align-items:center; gap:.75rem; padding:.85rem 1.2rem; border-radius:10px; font-size:.855rem; font-weight:500; margin-bottom:1.4rem; }
+        .admin-alert-success { background:#EBF8F2; border:1px solid #A7EBC7; color:#1A6640; }
+        .admin-alert-danger  { background:#FEF2F2; border:1px solid #FCA5A5; color:#991B1B; }
+        /* btn-admin-primary → btn-mgr-primary */
+        .btn-admin-primary { background:var(--blue); color:#fff!important; border:none; border-radius:8px; padding:.52rem 1.2rem; font-size:.845rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:.4rem; cursor:pointer; transition:all .2s; }
+        .btn-admin-primary:hover { background:var(--blue-dark); }
+        /* admin-table → mgr-table */
+        .admin-table { width:100%; border-collapse:separate; border-spacing:0; }
+        .admin-table thead th { background:var(--bg-alt); color:var(--text-sub); font-size:.67rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; padding:.9rem 1.1rem; border-bottom:1px solid var(--divider); }
+        .admin-table tbody td { padding:.95rem 1.1rem; border-bottom:1px solid var(--bg-alt); font-size:.855rem; vertical-align:middle; }
+        .admin-table tbody tr:hover { background:var(--bg-alt); }
+        .admin-table tbody tr:last-child td { border-bottom:none; }
+        /* admin form */
+        .admin-form-label { font-size:.68rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-sub); margin-bottom:.4rem; display:block; }
+        .admin-form-control { border:1px solid var(--divider); border-radius:8px; padding:.58rem .9rem; font-size:.855rem; width:100%; color:var(--text); background:var(--bg-alt); outline:none; transition:border-color .2s; font-family:'Inter',sans-serif; }
+        .admin-form-control:focus { border-color:var(--blue); background:var(--bg); box-shadow:0 0 0 3px rgba(0,102,204,.1); }
+        /* page-header breadcrumb */
+        .page-header { margin-bottom:1.8rem; }
+        .page-header h1 { font-size:1.4rem; font-weight:700; color:var(--text); margin-bottom:.25rem; }
     </style>
 </head>
 <body>
-
-    <!-- ── SIDEBAR ── -->
-    <aside class="admin-sidebar" id="adminSidebar">
+    <!-- SIDEBAR -->
+    <aside class="mgr-sidebar" id="mgrSidebar">
         <a class="sidebar-brand" asp-page="/Manager/Index">
-            <div class="me-3">
-                <i class="fa-solid fa-user-tie" style="color:var(--accent);font-size:1.4rem;"></i>
+            <div class="sidebar-brand-icon">
+                <i class="fa-solid fa-user-tie"></i>
             </div>
             <div>
                 <div class="sidebar-brand-txt">Mường Thanh</div>
-                <div class="sidebar-brand-sub">Quản lý vận hành</div>
+                <div class="sidebar-brand-role">Quản lý</div>
             </div>
         </a>
 
         <nav class="sidebar-nav">
-            <div class="sidebar-section-label">Tổng quan</div>
+            <div class="sidebar-section">Tổng quan</div>
             <a class="sidebar-link @(ViewContext.RouteData.Values["page"]?.ToString() == "/Manager/Index" ? "active" : "")"
                asp-page="/Manager/Index">
                 <i class="fa-solid fa-chart-pie"></i> Dashboard
             </a>
 
-            <div class="sidebar-section-label">Vận hành</div>
+            <div class="sidebar-section">Vận hành</div>
             <a class="sidebar-link @(ViewContext.RouteData.Values["page"]?.ToString()?.StartsWith("/Manager/Bookings") == true ? "active" : "")"
                asp-page="/Manager/Bookings/Index">
                 <i class="fa-solid fa-calendar-check"></i> Đặt phòng
@@ -363,7 +376,7 @@
                 <i class="fa-solid fa-star"></i> Duyệt bình luận
             </a>
 
-            <div class="sidebar-section-label">Hệ thống</div>
+            <div class="sidebar-section">Hệ thống</div>
             <a class="sidebar-link" asp-page="/Index">
                 <i class="fa-solid fa-house"></i> Về trang chủ
             </a>
@@ -371,31 +384,32 @@
 
         <div class="sidebar-footer">
             <form asp-page="/Account/Logout" method="post" class="m-0">
-                <button type="submit" class="btn-topbar-logout w-100" style="border-radius:8px;padding:.5rem;">
-                    <i class="fa-solid fa-right-from-bracket me-2"></i>Đăng xuất
+                <button type="submit" class="btn-sidebar-logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>Đăng xuất
                 </button>
             </form>
         </div>
     </aside>
 
-    <!-- ── TOP BAR ── -->
-    <header class="admin-topbar">
+    <!-- TOPBAR -->
+    <header class="mgr-topbar">
         <div class="d-flex align-items-center gap-3">
-            <button class="btn border-0 d-lg-none p-1" id="sidebarToggle" onclick="document.getElementById('adminSidebar').classList.toggle('open')">
-                <i class="fa-solid fa-bars" style="color:var(--primary);"></i>
+            <button class="d-lg-none btn border-0 p-1"
+                    onclick="document.getElementById('mgrSidebar').classList.toggle('open')">
+                <i class="fa-solid fa-bars" style="color:var(--blue);"></i>
             </button>
-            <div class="topbar-title">@ViewData["Title"]</div>
+            <span class="topbar-title">@ViewData["Title"]</span>
         </div>
-        <div class="topbar-user">
+        <div class="topbar-right">
             <div class="topbar-avatar">
                 @(User.Identity?.Name?.Length > 0 ? User.Identity.Name[0].ToString().ToUpper() : "M")
             </div>
-            <span class="topbar-username d-none d-sm-block">@User.Identity?.Name</span>
+            <span class="topbar-name d-none d-sm-inline">@User.Identity?.Name</span>
         </div>
     </header>
 
-    <!-- ── MAIN ── -->
-    <main class="admin-main">
+    <!-- MAIN -->
+    <main class="mgr-main">
         @RenderBody()
     </main>
 

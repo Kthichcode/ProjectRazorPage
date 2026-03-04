@@ -113,6 +113,14 @@ namespace Services
             // Check-outs for today
             dto.CheckingOutToday = checkOutsToday;
 
+            // Cancellation / refund pending
+            var cancellationPending = bookingsQuery
+                .Where(b => b.Status == BookingStatus.CancellationPending)
+                .OrderByDescending(b => b.CreatedAt)
+                .ToList();
+            dto.CancellationPendingCount = cancellationPending.Count;
+            dto.CancellationPendingBookings = cancellationPending;
+
             return dto;
         }
     }

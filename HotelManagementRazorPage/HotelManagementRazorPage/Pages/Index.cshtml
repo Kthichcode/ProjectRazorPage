@@ -5,453 +5,432 @@
 }
 
 <style>
+    /* ── RESET & TOKENS ── */
     :root {
-        --primary:   #1565C0;
-        --primary-d: #0D47A1;
-        --primary-l: #1976D2;
-        --accent:    #42A5F5;
-        --white:     #FFFFFF;
-        --gray-50:   #F8FAFF;
-        --gray-100:  #EFF4FF;
-        --gray-200:  #DBEAFE;
-        --text:      #1E293B;
-        --text-sub:  #64748B;
+        --blue:      #0066CC;
+        --blue-dark: #004FA3;
+        --blue-dim:  #E8F0FE;
+        --blue-mid:  #D0E4FF;
+        --text:      #1D1D1F;
+        --text-sub:  #6E6E73;
+        --divider:   #D2D2D7;
+        --bg:        #FFFFFF;
+        --bg-alt:    #F5F5F7;
     }
 
     /* ── HERO ── */
-    .hero {
-        background: linear-gradient(135deg, var(--primary-d) 0%, var(--primary) 50%, var(--primary-l) 100%);
-        min-height: 88vh;
-        display: flex;
-        align-items: center;
+    .hero-apple {
+        background: var(--bg);
+        padding: 140px 0 100px;
+        text-align: center;
         position: relative;
         overflow: hidden;
     }
 
-    .hero::before {
+    .hero-apple::before {
         content: '';
         position: absolute;
         inset: 0;
-        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,102,204,.08) 0%, transparent 70%);
+        pointer-events: none;
     }
 
-    .hero::after {
-        content: '';
-        position: absolute;
-        right: -100px;
-        top: -100px;
-        width: 600px;
-        height: 600px;
-        border-radius: 50%;
-        background: rgba(255,255,255,.05);
-    }
-
-    .hero-content { position: relative; z-index: 2; }
-
-    .hero-tag {
-        display: inline-flex;
-        align-items: center;
-        gap: .5rem;
-        background: rgba(255,255,255,.15);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255,255,255,.25);
-        color: var(--white);
+    .hero-eyebrow {
         font-size: .78rem;
         font-weight: 600;
-        letter-spacing: 2px;
+        letter-spacing: 3px;
         text-transform: uppercase;
-        padding: .4rem 1.1rem;
-        border-radius: 20px;
-        margin-bottom: 1.6rem;
+        color: var(--blue);
+        margin-bottom: 1.1rem;
     }
 
-    .hero-title {
+    .hero-headline {
         font-family: 'Playfair Display', serif;
-        font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+        font-size: clamp(3rem, 7vw, 5.6rem);
         font-weight: 700;
-        color: var(--white);
-        line-height: 1.15;
+        color: var(--text);
+        line-height: 1.08;
+        letter-spacing: -1.5px;
         margin-bottom: 1.2rem;
-    }
-    .hero-title span {
-        color: #90CAF9;
     }
 
     .hero-sub {
-        color: rgba(255,255,255,.82);
-        font-size: 1.05rem;
-        line-height: 1.75;
-        max-width: 520px;
-        margin-bottom: 2.4rem;
+        font-size: clamp(1rem, 2.2vw, 1.25rem);
+        color: var(--text-sub);
+        font-weight: 400;
+        max-width: 560px;
+        margin: 0 auto 2.4rem;
+        line-height: 1.65;
     }
 
-    .btn-hero {
-        display: inline-flex;
-        align-items: center;
-        gap: .5rem;
-        background: var(--white);
-        color: var(--primary) !important;
-        font-weight: 700;
-        font-size: .95rem;
-        padding: .85rem 2rem;
-        border-radius: 10px;
-        text-decoration: none;
-        transition: all .3s;
-        box-shadow: 0 6px 20px rgba(0,0,0,.15);
-    }
-    .btn-hero:hover {
-        background: var(--gray-100);
-        transform: translateY(-2px);
-        box-shadow: 0 12px 32px rgba(0,0,0,.2);
-    }
-
-    .btn-hero-ghost {
-        display: inline-flex;
-        align-items: center;
-        gap: .5rem;
-        background: rgba(255,255,255,.12);
-        backdrop-filter: blur(8px);
-        border: 1.5px solid rgba(255,255,255,.35);
-        color: var(--white) !important;
-        font-weight: 600;
-        font-size: .95rem;
-        padding: .85rem 2rem;
-        border-radius: 10px;
-        text-decoration: none;
-        transition: all .3s;
-    }
-    .btn-hero-ghost:hover {
-        background: rgba(255,255,255,.22);
-    }
-
-    .hero-stats {
+    .hero-cta-group {
         display: flex;
-        gap: 2.5rem;
-        margin-top: 3rem;
-        padding-top: 2.2rem;
-        border-top: 1px solid rgba(255,255,255,.2);
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
     }
-    .stat-val {
+
+    .btn-apple-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        background: var(--blue);
+        color: #fff !important;
+        text-decoration: none;
+        font-size: .92rem;
+        font-weight: 600;
+        padding: .75rem 1.8rem;
+        border-radius: 980px;
+        transition: background .2s, transform .2s;
+        letter-spacing: -.2px;
+    }
+    .btn-apple-primary:hover {
+        background: var(--blue-dark);
+        transform: scale(1.02);
+    }
+
+    .btn-apple-ghost {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        background: transparent;
+        color: var(--blue) !important;
+        text-decoration: none;
+        font-size: .92rem;
+        font-weight: 600;
+        padding: .75rem 1.8rem;
+        border-radius: 980px;
+        border: 1.5px solid var(--blue);
+        transition: all .2s;
+        letter-spacing: -.2px;
+    }
+    .btn-apple-ghost:hover {
+        background: var(--blue);
+        color: #fff !important;
+        transform: scale(1.02);
+    }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+        background: var(--bg-alt);
+        border-top: 1px solid var(--divider);
+        border-bottom: 1px solid var(--divider);
+        padding: 2.2rem 0;
+    }
+    .stats-bar .row { text-align: center; }
+    .stat-num {
         font-family: 'Playfair Display', serif;
-        font-size: 2rem;
+        font-size: 2.4rem;
         font-weight: 700;
-        color: var(--white);
+        color: var(--blue);
         line-height: 1;
     }
-    .stat-lbl {
-        font-size: .75rem;
-        color: rgba(255,255,255,.65);
-        letter-spacing: 1px;
+    .stat-label {
+        font-size: .78rem;
+        color: var(--text-sub);
+        letter-spacing: 1.5px;
         text-transform: uppercase;
-        margin-top: .3rem;
+        margin-top: .35rem;
     }
 
-    /* ── SEARCH CARD ── */
-    .search-wrap {
-        position: relative;
-        z-index: 10;
-        margin-top: -56px;
-    }
-
-    .search-card {
-        background: var(--white);
-        border-radius: 16px;
-        box-shadow: 0 20px 60px rgba(21,101,192,.18);
-        padding: 2rem 2.5rem;
-    }
-
-    .search-card .form-label {
-        font-size: .75rem;
-        font-weight: 700;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        color: var(--primary);
-        margin-bottom: .45rem;
-    }
-
-    .search-card .form-control,
-    .search-card .form-select {
-        border: 1.5px solid #CBD5E1;
-        border-radius: 8px;
-        padding: .65rem .9rem;
-        font-size: .9rem;
-        color: var(--text);
-        transition: border-color .2s, box-shadow .2s;
-    }
-    .search-card .form-control:focus,
-    .search-card .form-select:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(21,101,192,.12);
-        outline: none;
-    }
-
-    .btn-search {
-        background: var(--primary);
-        color: var(--white);
-        font-weight: 700;
-        padding: .72rem 1.5rem;
-        border-radius: 8px;
-        border: none;
-        width: 100%;
-        font-size: .92rem;
-        transition: all .25s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: .5rem;
-    }
-    .btn-search:hover {
-        background: var(--primary-d);
-        transform: translateY(-1px);
-        box-shadow: 0 6px 18px rgba(21,101,192,.3);
-    }
-
-    /* ── SECTION HEADER ── */
-    .sec-tag {
+    /* ── SECTION CHROME ── */
+    .section-label {
         font-size: .72rem;
-        font-weight: 700;
+        font-weight: 600;
         letter-spacing: 3px;
         text-transform: uppercase;
-        color: var(--primary);
+        color: var(--blue);
         margin-bottom: .6rem;
     }
-    .sec-title {
+    .section-title {
         font-family: 'Playfair Display', serif;
-        font-size: clamp(1.6rem, 3vw, 2.2rem);
+        font-size: clamp(1.8rem, 3.5vw, 2.6rem);
         font-weight: 700;
         color: var(--text);
-    }
-    .sec-line {
-        width: 48px;
-        height: 3px;
-        background: linear-gradient(90deg, var(--primary), var(--accent));
-        border-radius: 2px;
-        margin: .9rem auto 0;
+        letter-spacing: -0.5px;
+        line-height: 1.15;
     }
 
-    /* ── ROOM CARD ── */
-    .room-card {
-        background: var(--white);
-        border-radius: 14px;
+    /* ── ROOMS SECTION ── */
+    .rooms-section {
+        padding: 100px 0 80px;
+        background: var(--bg);
+    }
+
+    .room-card-apple {
+        background: var(--bg);
+        border: 1px solid var(--divider);
+        border-radius: 18px;
         overflow: hidden;
-        border: 1px solid #E2EAF4;
-        transition: all .35s;
-        height: 100%;
-        box-shadow: 0 2px 12px rgba(21,101,192,.06);
-    }
-    .room-card:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 20px 50px rgba(21,101,192,.14);
-        border-color: var(--accent);
-    }
-
-    .room-img {
-        position: relative;
-        height: 210px;
-        overflow: hidden;
-    }
-    .room-img img {
-        width: 100%; height: 100%;
-        object-fit: cover;
-        transition: transform .5s;
-    }
-    .room-card:hover .room-img img { transform: scale(1.06); }
-
-    .badge-avail {
-        position: absolute; top: 12px; left: 12px;
-        padding: .25rem .7rem;
-        border-radius: 20px;
-        font-size: .7rem; font-weight: 700;
-        letter-spacing: .5px;
-    }
-    .badge-avail.yes { background: #1565C0; color: #fff; }
-    .badge-avail.no  { background: #EF4444; color: #fff; }
-
-    .room-body { padding: 1.4rem; }
-
-    .room-type-tag {
-        font-size: .7rem; font-weight: 700;
-        letter-spacing: 2px; text-transform: uppercase;
-        color: var(--accent);
-        margin-bottom: .35rem;
-    }
-    .room-name {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.1rem; font-weight: 700;
-        color: var(--text); margin-bottom: .5rem;
-    }
-    .room-desc {
-        font-size: .83rem; color: var(--text-sub);
-        line-height: 1.6; margin-bottom: .9rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    .room-meta {
-        display: flex; gap: 1rem; align-items: center;
-        font-size: .8rem; color: var(--text-sub);
-        padding: .9rem 0;
-        border-top: 1px solid var(--gray-100);
-        border-bottom: 1px solid var(--gray-100);
-        margin-bottom: .9rem;
-    }
-    .room-meta i { color: var(--primary); }
-
-    .room-foot {
-        display: flex; align-items: center; justify-content: space-between;
-    }
-    .room-price-num {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.3rem; font-weight: 700;
-        color: var(--primary);
-    }
-    .room-price-unit { font-size: .75rem; color: var(--text-sub); }
-
-    .btn-book {
-        background: var(--primary);
-        color: var(--white) !important;
-        font-size: .82rem; font-weight: 600;
-        padding: .45rem 1.1rem;
-        border-radius: 8px; text-decoration: none;
-        transition: all .25s;
-        display: inline-flex; align-items: center; gap: .4rem;
-    }
-    .btn-book:hover { background: var(--primary-d); transform: translateY(-1px); }
-
-    /* ── FEATURES ── */
-    .features-section {
-        background: var(--gray-50);
-        padding: 5.5rem 0;
-    }
-
-    .feature-card {
-        background: var(--white);
-        border: 1px solid #E2EAF4;
-        border-radius: 14px;
-        padding: 2rem 1.5rem;
-        text-align: center;
-        transition: all .3s;
+        transition: box-shadow .3s, transform .3s;
         height: 100%;
     }
-    .feature-card:hover {
-        border-color: var(--accent);
-        box-shadow: 0 12px 35px rgba(21,101,192,.1);
+    .room-card-apple:hover {
+        box-shadow: 0 20px 60px rgba(0,0,0,.1);
         transform: translateY(-4px);
     }
 
-    .feature-icon {
-        width: 68px; height: 68px;
-        background: var(--gray-100);
-        border-radius: 50%;
+    .room-card-img {
+        height: 220px;
+        overflow: hidden;
+        position: relative;
+    }
+    .room-card-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform .6s ease;
+        display: block;
+    }
+    .room-card-apple:hover .room-card-img img { transform: scale(1.04); }
+
+    .room-badge {
+        position: absolute;
+        top: 14px; left: 14px;
+        font-size: .68rem;
+        font-weight: 700;
+        letter-spacing: .5px;
+        padding: .28rem .75rem;
+        border-radius: 980px;
+        background: var(--blue);
+        color: #fff;
+    }
+    .room-badge.unavail { background: #86868B; }
+
+    .room-card-body { padding: 1.5rem 1.4rem 1.4rem; }
+
+    .room-card-type {
+        font-size: .7rem;
+        font-weight: 600;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--blue);
+        margin-bottom: .4rem;
+    }
+    .room-card-name {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: .45rem;
+    }
+    .room-card-desc {
+        font-size: .83rem;
+        color: var(--text-sub);
+        line-height: 1.6;
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .room-card-meta {
+        display: flex;
+        gap: 1.1rem;
+        font-size: .78rem;
+        color: var(--text-sub);
+        padding: .9rem 0;
+        border-top: 1px solid var(--bg-alt);
+        border-bottom: 1px solid var(--bg-alt);
+        margin-bottom: 1rem;
+    }
+    .room-card-meta i { color: var(--blue); }
+
+    .room-card-foot { display: flex; align-items: center; justify-content: space-between; }
+    .room-price {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text);
+    }
+    .room-price-unit { font-size: .75rem; color: var(--text-sub); margin-left: .2rem; }
+
+    .room-btn-group { display: flex; gap: .4rem; }
+    .btn-room-outline {
+        display: inline-flex; align-items: center; gap: .3rem;
+        font-size: .78rem; font-weight: 600; color: var(--blue) !important;
+        border: 1.5px solid var(--blue); border-radius: 980px;
+        padding: .38rem 1rem; text-decoration: none; transition: all .2s;
+    }
+    .btn-room-outline:hover { background: var(--blue); color: #fff !important; }
+
+    .btn-room-solid {
+        display: inline-flex; align-items: center; gap: .3rem;
+        font-size: .78rem; font-weight: 600; color: #fff !important;
+        background: var(--blue); border-radius: 980px;
+        padding: .38rem 1rem; text-decoration: none; transition: all .2s;
+    }
+    .btn-room-solid:hover { background: var(--blue-dark); }
+
+    /* ── EMPTY STATE ── */
+    .empty-apple {
+        text-align: center;
+        padding: 5rem 1rem;
+        color: var(--text-sub);
+    }
+    .empty-apple i { font-size: 2.6rem; color: var(--divider); display: block; margin-bottom: 1rem; }
+
+    /* ── AMENITIES ── */
+    .amenities-section {
+        background: var(--bg-alt);
+        padding: 100px 0;
+        border-top: 1px solid var(--divider);
+        border-bottom: 1px solid var(--divider);
+    }
+
+    .amenity-item {
+        text-align: center;
+        padding: 2.4rem 1.2rem;
+        border-radius: 18px;
+        background: var(--bg);
+        border: 1px solid var(--divider);
+        height: 100%;
+        transition: box-shadow .25s, transform .25s;
+    }
+    .amenity-item:hover {
+        box-shadow: 0 12px 40px rgba(0,0,0,.08);
+        transform: translateY(-3px);
+    }
+    .amenity-icon {
+        width: 56px; height: 56px;
+        border-radius: 14px;
+        background: var(--blue-dim);
         display: flex; align-items: center; justify-content: center;
-        margin: 0 auto 1.2rem;
-        font-size: 1.5rem;
-        color: var(--primary);
-        transition: all .3s;
+        margin: 0 auto 1.1rem;
+        font-size: 1.3rem;
+        color: var(--blue);
+        transition: background .25s, color .25s;
     }
-    .feature-card:hover .feature-icon {
-        background: var(--primary);
-        color: var(--white);
+    .amenity-item:hover .amenity-icon {
+        background: var(--blue);
+        color: #fff;
     }
-    .feature-name {
-        font-weight: 700; font-size: .96rem;
-        color: var(--text); margin-bottom: .4rem;
+    .amenity-name {
+        font-size: .9rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: .4rem;
     }
-    .feature-desc { font-size: .82rem; color: var(--text-sub); line-height: 1.6; }
+    .amenity-desc {
+        font-size: .78rem;
+        color: var(--text-sub);
+        line-height: 1.55;
+    }
 
     /* ── CTA ── */
-    .cta-section {
-        background: linear-gradient(135deg, var(--primary-d), var(--primary));
-        padding: 5rem 0;
+    .cta-apple {
+        background: var(--blue);
+        padding: 100px 0;
         text-align: center;
         position: relative;
         overflow: hidden;
     }
-    .cta-section::before {
+    .cta-apple::before {
         content: '';
-        position: absolute; inset: 0;
-        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse 70% 80% at 50% 50%, rgba(255,255,255,.06) 0%, transparent 70%);
     }
-    .cta-title {
+    .cta-headline {
         font-family: 'Playfair Display', serif;
-        font-size: clamp(1.8rem, 3.5vw, 2.8rem);
-        color: var(--white); font-weight: 700;
-        margin-bottom: .9rem; position: relative;
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: -.5px;
+        margin-bottom: .8rem;
+        position: relative;
     }
-    .cta-sub { color: rgba(255,255,255,.78); font-size: 1rem; margin-bottom: 2rem; position: relative; }
-
-    /* ── EMPTY ── */
-    .empty-state {
-        text-align: center; padding: 4rem 1rem; color: var(--text-sub);
+    .cta-sub {
+        color: rgba(255,255,255,.75);
+        font-size: 1rem;
+        margin-bottom: 2.2rem;
+        position: relative;
     }
-    .empty-state i { font-size: 3rem; color: var(--gray-200); display: block; margin-bottom: 1rem; }
+    .btn-cta-white {
+        display: inline-flex; align-items: center; gap: .5rem;
+        background: #fff; color: var(--blue) !important;
+        text-decoration: none; font-size: .92rem; font-weight: 700;
+        padding: .8rem 2rem; border-radius: 980px;
+        transition: all .2s; position: relative;
+    }
+    .btn-cta-white:hover { background: var(--blue-dim); transform: scale(1.02); }
+    .btn-cta-outline {
+        display: inline-flex; align-items: center; gap: .5rem;
+        background: transparent; color: #fff !important;
+        text-decoration: none; font-size: .92rem; font-weight: 600;
+        padding: .8rem 2rem; border-radius: 980px;
+        border: 1.5px solid rgba(255,255,255,.5);
+        transition: all .2s; position: relative;
+    }
+    .btn-cta-outline:hover { border-color: #fff; background: rgba(255,255,255,.1); }
 </style>
 
+
 <!-- ═══ HERO ═══ -->
-<section class="hero">
-    <div class="container hero-content">
-        <div class="row align-items-center">
-            <div class="col-lg-7">
-                <div class="hero-tag">
-                    <i class="fa-solid fa-star"></i> Khách sạn 5 sao hàng đầu Việt Nam
-                </div>
-                <h1 class="hero-title">
-                    Nghỉ dưỡng sang trọng<br>tại <span>Mường Thanh Hotel</span>
-                </h1>
-                <p class="hero-sub">
-                    Hệ thống khách sạn hàng đầu Việt Nam với hơn 50 phòng cao cấp,
-                    mang đến trải nghiệm lưu trú đẳng cấp, ấm cúng và khó quên.
-                </p>
-                <div class="d-flex flex-wrap gap-3">
-                    <a href="#rooms" class="btn-hero">
-                        <i class="fa-solid fa-bed"></i>Xem phòng ngay
-                    </a>
-                    @if (!User.Identity!.IsAuthenticated)
-                    {
-                        <a asp-page="/Account/Register" class="btn-hero-ghost">
-                            <i class="fa-solid fa-user-plus"></i>Đăng ký tài khoản
-                        </a>
-                    }
-                </div>
-                <div class="hero-stats">
-                    <div>
-                        <div class="stat-val">50+</div>
-                        <div class="stat-lbl">Phòng cao cấp</div>
-                    </div>
-                    <div>
-                        <div class="stat-val">5★</div>
-                        <div class="stat-lbl">Xếp hạng</div>
-                    </div>
-                    <div>
-                        <div class="stat-val">10k+</div>
-                        <div class="stat-lbl">Lượt khách</div>
-                    </div>
-                    <div>
-                        <div class="stat-val">24/7</div>
-                        <div class="stat-lbl">Hỗ trợ</div>
-                    </div>
-                </div>
-            </div>
+<section class="hero-apple">
+    <div class="container">
+        <p class="hero-eyebrow">Khách sạn 5 sao hàng đầu Việt Nam</p>
+        <h1 class="hero-headline">
+            Nghỉ dưỡng sang trọng<br>
+            <span style="color:var(--blue);">tại Mường Thanh</span>
+        </h1>
+        <p class="hero-sub">
+            Trải nghiệm lưu trú đẳng cấp với hơn 50 phòng cao cấp,
+            thiết kế tinh tế và dịch vụ hoàn hảo 24/7.
+        </p>
+        <div class="hero-cta-group">
+            <a href="#rooms" class="btn-apple-primary">
+                <i class="fa-solid fa-bed"></i>Xem phòng ngay
+            </a>
+            @if (!User.Identity!.IsAuthenticated)
+            {
+                <a asp-page="/Account/Register" class="btn-apple-ghost">
+                    <i class="fa-solid fa-user-plus"></i>Đăng ký
+                </a>
+            }
         </div>
     </div>
 </section>
 
+<!-- ═══ STATS ═══ -->
+<div class="stats-bar">
+    <div class="container">
+        <div class="row g-3 justify-content-center">
+            <div class="col-6 col-md-3">
+                <div class="stat-num">50+</div>
+                <div class="stat-label">Phòng cao cấp</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-num">5★</div>
+                <div class="stat-label">Xếp hạng</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-num">10k+</div>
+                <div class="stat-label">Lượt khách</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-num">24/7</div>
+                <div class="stat-label">Hỗ trợ</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <!-- ═══ ROOMS ═══ -->
-<section id="rooms" class="py-5" style="background:var(--white);">
+<section id="rooms" class="rooms-section">
     <div class="container">
         <div class="text-center mb-5">
-            <p class="sec-tag">Danh sách phòng</p>
-            <h2 class="sec-title">
+            <p class="section-label">Danh sách phòng</p>
+            <h2 class="section-title">
                 @(Model.IsSearching ? "Kết quả tìm kiếm" : "Phòng nổi bật")
             </h2>
-            <div class="sec-line"></div>
         </div>
 
         @if (!Model.Rooms.Any())
         {
-            <div class="empty-state">
+            <div class="empty-apple">
                 <i class="fa-solid fa-bed"></i>
                 <p>Không tìm thấy phòng phù hợp.<br>Vui lòng thử lại với điều kiện khác.</p>
             </div>
@@ -462,49 +441,47 @@
                 @foreach (var room in Model.Rooms)
                 {
                     <div class="col-md-6 col-xl-4">
-                        <div class="room-card">
-                            <div class="room-img">
+                        <div class="room-card-apple">
+                            <div class="room-card-img">
                                 @{
                                     var fallback = "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80";
+                                    bool avail = room.Status == BusinessObjects.Enums.RoomStatus.Available;
                                 }
                                 <img src="@(string.IsNullOrEmpty(room.ImageUrl) ? fallback : room.ImageUrl)"
                                      alt="Phòng @room.RoomNumber" />
-                                @{
-                                    bool avail = room.Status == BusinessObjects.Enums.RoomStatus.Available;
-                                }
-                                <span class="badge-avail @(avail ? "yes" : "no")">
-                                    <i class="fa-solid @(avail ? "fa-circle-check" : "fa-clock") me-1"></i>
-                                    @(avail ? "Còn phòng" : "Đặt ngay")
+                                <span class="room-badge @(avail ? "" : "unavail")">
+                                    @(avail ? "Còn phòng" : "Đã đặt")
                                 </span>
                             </div>
-                            <div class="room-body">
-                                <div class="room-type-tag">@(room.RoomType?.Name ?? "Phòng")</div>
-                                <div class="room-name">Phòng @room.RoomNumber</div>
-                                <div class="room-desc">
+                            <div class="room-card-body">
+                                <div class="room-card-type">@(room.RoomType?.Name ?? "Phòng")</div>
+                                <div class="room-card-name">Phòng @room.RoomNumber</div>
+                                <div class="room-card-desc">
                                     @(string.IsNullOrEmpty(room.Description)
                                         ? "Phòng tiện nghi đầy đủ, thiết kế hiện đại mang lại sự thoải mái tuyệt vời."
                                         : room.Description)
                                 </div>
-                                <div class="room-meta">
+                                <div class="room-card-meta">
                                     <span><i class="fa-solid fa-users me-1"></i>@room.MaxOccupancy khách</span>
                                     @if (room.RoomType != null)
                                     {
                                         <span><i class="fa-solid fa-layer-group me-1"></i>@room.RoomType.Name</span>
                                     }
                                 </div>
-                                <div class="room-foot">
+                                <div class="room-card-foot">
                                     <div>
-                                        <div class="room-price-num">
+                                        <span class="room-price">
                                             @((room.RoomType?.PricePerNight ?? 0).ToString("N0"))₫
-                                        </div>
-                                        <div class="room-price-unit">/ đêm</div>
+                                        </span>
+                                        <span class="room-price-unit">/ đêm</span>
                                     </div>
-                                    <div style="display:flex;gap:.4rem;">
+                                    <div class="room-btn-group">
                                         <a asp-page="/Rooms/Detail" asp-route-id="@room.Id"
-                                           class="btn-book" style="background:var(--white);color:var(--primary)!important;border:1.5px solid var(--primary);">
-                                            <i class="fa-solid fa-eye"></i>Chi tiết
+                                           class="btn-room-outline">
+                                            <i class="fa-solid fa-eye"></i>
                                         </a>
-                                        <a asp-page="/Rooms/Detail" asp-route-id="@room.Id" class="btn-book">
+                                        <a asp-page="/Rooms/Detail" asp-route-id="@room.Id"
+                                           class="btn-room-solid">
                                             <i class="fa-solid fa-calendar-check"></i>Đặt phòng
                                         </a>
                                     </div>
@@ -518,87 +495,88 @@
     </div>
 </section>
 
-<!-- ═══ FEATURES ═══ -->
-<section class="features-section">
+
+<!-- ═══ AMENITIES ═══ -->
+<section class="amenities-section">
     <div class="container">
         <div class="text-center mb-5">
-            <p class="sec-tag">Tiện ích & Dịch vụ</p>
-            <h2 class="sec-title">Trải nghiệm đẳng cấp</h2>
-            <div class="sec-line"></div>
+            <p class="section-label">Tiện ích &amp; Dịch vụ</p>
+            <h2 class="section-title">Mọi thứ bạn cần</h2>
         </div>
         <div class="row g-4">
             <div class="col-6 col-md-3">
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fa-solid fa-wifi"></i></div>
-                    <div class="feature-name">WiFi tốc độ cao</div>
-                    <div class="feature-desc">Kết nối không giới hạn 24/7 trên toàn khuôn viên</div>
+                <div class="amenity-item">
+                    <div class="amenity-icon"><i class="fa-solid fa-wifi"></i></div>
+                    <div class="amenity-name">WiFi tốc độ cao</div>
+                    <div class="amenity-desc">Kết nối không giới hạn 24/7 trên toàn khu</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fa-solid fa-utensils"></i></div>
-                    <div class="feature-name">Nhà hàng 5 sao</div>
-                    <div class="feature-desc">Ẩm thực đa dạng từ truyền thống đến quốc tế</div>
+                <div class="amenity-item">
+                    <div class="amenity-icon"><i class="fa-solid fa-utensils"></i></div>
+                    <div class="amenity-name">Nhà hàng 5 sao</div>
+                    <div class="amenity-desc">Ẩm thực đa dạng từ truyền thống đến quốc tế</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fa-solid fa-person-swimming"></i></div>
-                    <div class="feature-name">Hồ bơi vô cực</div>
-                    <div class="feature-desc">View toàn cảnh thành phố tuyệt đẹp</div>
+                <div class="amenity-item">
+                    <div class="amenity-icon"><i class="fa-solid fa-person-swimming"></i></div>
+                    <div class="amenity-name">Hồ bơi vô cực</div>
+                    <div class="amenity-desc">View toàn cảnh thành phố tuyệt đẹp</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fa-solid fa-spa"></i></div>
-                    <div class="feature-name">Spa & Wellness</div>
-                    <div class="feature-desc">Liệu pháp thư giãn và chăm sóc sức khỏe</div>
+                <div class="amenity-item">
+                    <div class="amenity-icon"><i class="fa-solid fa-spa"></i></div>
+                    <div class="amenity-name">Spa &amp; Wellness</div>
+                    <div class="amenity-desc">Liệu pháp thư giãn và chăm sóc sức khỏe</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fa-solid fa-car"></i></div>
-                    <div class="feature-name">Đưa đón sân bay</div>
-                    <div class="feature-desc">Dịch vụ limousine cao cấp 24/7</div>
+                <div class="amenity-item">
+                    <div class="amenity-icon"><i class="fa-solid fa-car"></i></div>
+                    <div class="amenity-name">Đưa đón sân bay</div>
+                    <div class="amenity-desc">Dịch vụ limousine cao cấp 24/7</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fa-solid fa-dumbbell"></i></div>
-                    <div class="feature-name">Phòng gym</div>
-                    <div class="feature-desc">Trang thiết bị hiện đại, huấn luyện viên riêng</div>
+                <div class="amenity-item">
+                    <div class="amenity-icon"><i class="fa-solid fa-dumbbell"></i></div>
+                    <div class="amenity-name">Phòng gym</div>
+                    <div class="amenity-desc">Trang thiết bị hiện đại, huấn luyện viên riêng</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fa-solid fa-mug-hot"></i></div>
-                    <div class="feature-name">Phòng hội nghị</div>
-                    <div class="feature-desc">Không gian hiện đại cho sự kiện doanh nghiệp</div>
+                <div class="amenity-item">
+                    <div class="amenity-icon"><i class="fa-solid fa-mug-hot"></i></div>
+                    <div class="amenity-name">Phòng hội nghị</div>
+                    <div class="amenity-desc">Không gian hiện đại cho sự kiện doanh nghiệp</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                    <div class="feature-name">An ninh 24/7</div>
-                    <div class="feature-desc">Hệ thống bảo vệ và an toàn tuyệt đối</div>
+                <div class="amenity-item">
+                    <div class="amenity-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div class="amenity-name">An ninh 24/7</div>
+                    <div class="amenity-desc">Hệ thống bảo vệ và an toàn tuyệt đối</div>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
+
 <!-- ═══ CTA ═══ -->
 @if (!User.Identity!.IsAuthenticated)
 {
-    <section class="cta-section">
+    <section class="cta-apple">
         <div class="container position-relative">
-            <h2 class="cta-title">Đặt phòng ngay hôm nay!</h2>
-            <p class="cta-sub">Đăng ký tài khoản để nhận ưu đãi thành viên và trải nghiệm dịch vụ đặt phòng nhanh chóng.</p>
+            <h2 class="cta-headline">Đặt phòng ngay hôm nay.</h2>
+            <p class="cta-sub">Đăng ký tài khoản để nhận ưu đãi thành viên và trải nghiệm đặt phòng nhanh chóng.</p>
             <div class="d-flex justify-content-center gap-3 flex-wrap">
-                <a asp-page="/Account/Register" class="btn-hero">
+                <a asp-page="/Account/Register" class="btn-cta-white">
                     <i class="fa-solid fa-user-plus"></i>Đăng ký miễn phí
                 </a>
-                <a asp-page="/Account/Login" class="btn-hero-ghost">
+                <a asp-page="/Account/Login" class="btn-cta-outline">
                     <i class="fa-solid fa-right-to-bracket"></i>Đăng nhập
                 </a>
             </div>

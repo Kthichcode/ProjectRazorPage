@@ -1,25 +1,27 @@
 @page
 @model HotelManagementRazorPage.Pages.Manager.IndexModel
 @{
-    ViewData["Title"] = "Dashboard Quản lý";
+    ViewData["Title"] = "Dashboard";
     Layout = "/Pages/Manager/_ManagerLayout.cshtml";
 }
 
-<div class="page-header">
-    <h1><i class="fa-solid fa-chart-pie me-2" style="color:var(--primary)"></i>Dashboard Quản lý</h1>
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item active">Tổng quan vận hành</li>
-        </ol>
-    </nav>
+<!-- PAGE HEADER -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="page-title">Dashboard Quản lý</div>
+        <div class="page-sub">Tổng quan vận hành · @DateTime.Now.ToString("dddd, dd MMMM yyyy")</div>
+    </div>
+    <a asp-page="/Manager/Bookings/Index" class="btn-mgr-primary">
+        <i class="fa-solid fa-calendar-check"></i> Xem tất cả đặt phòng
+    </a>
 </div>
 
-<!-- ── STAT CARDS ── -->
-<div class="row g-3 mb-4">
+<!-- STAT CARDS ROW 1 -->
+<div class="row g-3 mb-3">
     <div class="col-sm-6 col-xl-3">
         <div class="stat-card">
-            <div class="stat-card-icon" style="background:#ECFDF5;">
-                <i class="fa-solid fa-calendar-plus" style="color:#0D7055;"></i>
+            <div class="stat-card-icon" style="background:var(--blue-dim);">
+                <i class="fa-solid fa-calendar-plus" style="color:var(--blue);"></i>
             </div>
             <div class="stat-card-value">@Model.Data.BookingsToday</div>
             <div class="stat-card-label">Đặt phòng hôm nay</div>
@@ -27,7 +29,7 @@
     </div>
     <div class="col-sm-6 col-xl-3">
         <div class="stat-card">
-            <div class="stat-card-icon" style="background:#F0FDF4;">
+            <div class="stat-card-icon" style="background:#DCFCE7;">
                 <i class="fa-solid fa-door-open" style="color:#16A34A;"></i>
             </div>
             <div class="stat-card-value">@Model.Data.CheckInsToday</div>
@@ -36,124 +38,188 @@
     </div>
     <div class="col-sm-6 col-xl-3">
         <div class="stat-card">
-            <div class="stat-card-icon" style="background:#FFF7ED;">
-                <i class="fa-solid fa-door-closed" style="color:#C2410C;"></i>
+            <div class="stat-card-icon" style="background:#FEF3C7;">
+                <i class="fa-solid fa-door-closed" style="color:#D97706;"></i>
             </div>
             <div class="stat-card-value">@Model.Data.CheckOutsToday</div>
             <div class="stat-card-label">Check-Out hôm nay</div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="stat-card" style="background:linear-gradient(135deg,#085C44,#0D7055);border-color:transparent;">
-            <div class="stat-card-icon" style="background:rgba(255,255,255,.15);">
+        <div class="stat-card highlight">
+            <div class="stat-card-icon">
                 <i class="fa-solid fa-bed" style="color:#fff;"></i>
             </div>
-            <div class="stat-card-value" style="color:#fff;">@Model.Data.CurrentlyCheckedIn</div>
-            <div class="stat-card-label" style="color:rgba(255,255,255,.75);">Đang có khách</div>
+            <div class="stat-card-value">@Model.Data.CurrentlyCheckedIn</div>
+            <div class="stat-card-label">Đang có khách lưu trú</div>
         </div>
     </div>
 </div>
 
-<!-- ── PENDING & CHECK-IN TABLES ── -->
-<div class="row g-3">
-    <!-- Pending Bookings -->
+<!-- STAT CARDS ROW 2 (pending actions) -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <a asp-page="/Manager/Bookings/Index" asp-route-status="1" style="text-decoration:none;">
+            <div class="stat-card" style="border-color:@(Model.Data.PendingCount > 0 ? "#F59E0B" : "var(--divider)");background:@(Model.Data.PendingCount > 0 ? "#FFFBEB" : "var(--bg)");">
+                <div class="stat-card-icon" style="background:#FEF3C7;">
+                    <i class="fa-solid fa-clock" style="color:#D97706;"></i>
+                </div>
+                <div class="stat-card-value" style="color:@(Model.Data.PendingCount > 0 ? "#92400E" : "var(--text)");">@Model.Data.PendingCount</div>
+                <div class="stat-card-label" style="color:#B45309;">Chờ xác nhận</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <a asp-page="/Manager/Bookings/Index" asp-route-status="6" style="text-decoration:none;">
+            <div class="stat-card" style="border-color:@(Model.Data.CancellationPendingCount > 0 ? "#EF4444" : "var(--divider)");background:@(Model.Data.CancellationPendingCount > 0 ? "#FFF5F5" : "var(--bg)");">
+                <div class="stat-card-icon" style="background:#FEE2E2;">
+                    <i class="fa-solid fa-rotate-left" style="color:#DC2626;"></i>
+                </div>
+                <div class="stat-card-value" style="color:@(Model.Data.CancellationPendingCount > 0 ? "#991B1B" : "var(--text)");">@Model.Data.CancellationPendingCount</div>
+                <div class="stat-card-label" style="color:#B91C1C;">Chờ duyệt hoàn tiền</div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- TABLES ROW -->
+<div class="row g-3 mb-3">
+    <!-- Pending bookings -->
     <div class="col-lg-6">
-        <div class="admin-card h-100">
-            <div class="admin-card-header">
-                <h5><i class="fa-solid fa-clock me-2" style="color:#C2410C;"></i>Chờ xác nhận (@Model.Data.PendingCount)</h5>
-                <a asp-page="/Manager/Bookings/Index" asp-route-status="1" class="btn-admin-sm btn-edit">Xem tất cả</a>
+        <div class="mgr-card h-100">
+            <div class="mgr-card-header">
+                <h5><i class="fa-solid fa-clock me-2" style="color:#D97706;"></i>Chờ xác nhận (@Model.Data.PendingCount)</h5>
+                <a asp-page="/Manager/Bookings/Index" asp-route-status="1" class="btn-mgr-sm btn-view">Xem tất cả</a>
             </div>
-            <div class="admin-card-body p-0">
-                @if (!Model.Data.PendingBookings.Any())
-                {
-                    <div class="text-center py-4" style="color:var(--text-sub);">
-                        <i class="fa-solid fa-circle-check fa-2x mb-2 d-block" style="color:#BBF7D0;"></i>
-                        Không có booking nào đang chờ
-                    </div>
-                }
-                else
-                {
-                    <table class="admin-table">
-                        <thead>
+            @if (!Model.Data.PendingBookings.Any())
+            {
+                <div class="text-center py-5" style="color:var(--text-sub);">
+                    <i class="fa-solid fa-circle-check fa-2x mb-2 d-block" style="color:var(--divider);"></i>
+                    Không có booking nào đang chờ
+                </div>
+            }
+            else
+            {
+                <table class="mgr-table">
+                    <thead>
+                        <tr>
+                            <th>Mã</th><th>Khách hàng</th><th>Nhận phòng</th><th>Tổng tiền</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var b in Model.Data.PendingBookings.Take(5))
+                        {
                             <tr>
-                                <th>Mã</th>
-                                <th>Khách hàng</th>
-                                <th>Nhận phòng</th>
-                                <th>Tổng tiền</th>
-                                <th></th>
+                                <td><span style="font-weight:700;color:var(--blue);">#@b.Id</span></td>
+                                <td>
+                                    <div style="font-weight:600;">@(b.Customer?.UserName ?? "—")</div>
+                                    <div style="font-size:.73rem;color:var(--text-sub);">@(b.Customer?.PhoneNumber ?? "")</div>
+                                </td>
+                                <td style="font-size:.82rem;">@b.CheckInDate.ToString("dd/MM/yyyy")</td>
+                                <td style="font-weight:700;color:var(--blue);font-size:.82rem;">@b.TotalAmount.ToString("N0")₫</td>
+                                <td>
+                                    <a asp-page="/Manager/Bookings/Details" asp-route-id="@b.Id" class="btn-mgr-sm btn-view">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var b in Model.Data.PendingBookings.Take(5))
-                            {
-                                <tr>
-                                    <td><span style="font-weight:700;color:var(--primary);">#@b.Id</span></td>
-                                    <td>
-                                        <div style="font-weight:600;">@(b.Customer?.UserName ?? "—")</div>
-                                        <div style="font-size:.73rem;color:var(--text-sub);">@(b.Customer?.PhoneNumber ?? "")</div>
-                                    </td>
-                                    <td>@b.CheckInDate.ToString("dd/MM/yyyy")</td>
-                                    <td style="font-weight:700;color:var(--primary);">@b.TotalAmount.ToString("N0")₫</td>
-                                    <td>
-                                        <a asp-page="/Manager/Bookings/Details" asp-route-id="@b.Id"
-                                           class="btn-admin-sm btn-view">
-                                            <i class="fa-solid fa-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                }
-            </div>
+                        }
+                    </tbody>
+                </table>
+            }
         </div>
     </div>
 
-    <!-- Check-In Today -->
+    <!-- Refund pending -->
     <div class="col-lg-6">
-        <div class="admin-card h-100">
-            <div class="admin-card-header">
-                <h5><i class="fa-solid fa-right-to-bracket me-2" style="color:#0D7055;"></i>Check-In hôm nay (@Model.Data.CheckIngToday.Count)</h5>
+        <div class="mgr-card h-100">
+            <div class="mgr-card-header">
+                <h5><i class="fa-solid fa-rotate-left me-2" style="color:#DC2626;"></i>Chờ duyệt hoàn tiền (@Model.Data.CancellationPendingCount)</h5>
+                <a asp-page="/Manager/Bookings/Index" asp-route-status="6" class="btn-mgr-sm btn-view">Xem tất cả</a>
             </div>
-            <div class="admin-card-body p-0">
-                @if (!Model.Data.CheckIngToday.Any())
-                {
-                    <div class="text-center py-4" style="color:var(--text-sub);">
-                        <i class="fa-solid fa-inbox fa-2x mb-2 d-block" style="color:#BBF7D0;"></i>
-                        Không có khách check-in hôm nay
-                    </div>
-                }
-                else
-                {
-                    <table class="admin-table">
+            @if (!Model.Data.CancellationPendingBookings.Any())
+            {
+                <div class="text-center py-5" style="color:var(--text-sub);">
+                    <i class="fa-solid fa-circle-check fa-2x mb-2 d-block" style="color:var(--divider);"></i>
+                    Không có yêu cầu hoàn tiền nào
+                </div>
+            }
+            else
+            {
+                <table class="mgr-table">
+                    <thead>
+                        <tr>
+                            <th>Mã</th><th>Khách hàng</th><th>Nhận phòng</th><th>Tổng tiền</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var b in Model.Data.CancellationPendingBookings.Take(5))
+                        {
+                            <tr>
+                                <td><span style="font-weight:700;color:#DC2626;">#@b.Id</span></td>
+                                <td>
+                                    <div style="font-weight:600;">@(b.Customer?.UserName ?? "—")</div>
+                                    <div style="font-size:.73rem;color:var(--text-sub);">@(b.Customer?.PhoneNumber ?? "")</div>
+                                </td>
+                                <td style="font-size:.82rem;">@b.CheckInDate.ToString("dd/MM/yyyy")</td>
+                                <td style="font-weight:700;color:#DC2626;font-size:.82rem;">@b.TotalAmount.ToString("N0")₫</td>
+                                <td>
+                                    <a asp-page="/Manager/Bookings/Details" asp-route-id="@b.Id" class="btn-mgr-sm btn-warn">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Check-in today -->
+<div class="row g-3">
+    <div class="col-12">
+        <div class="mgr-card">
+            <div class="mgr-card-header">
+                <h5><i class="fa-solid fa-right-to-bracket me-2" style="color:var(--blue);"></i>Check-In hôm nay (@Model.Data.CheckIngToday.Count)</h5>
+            </div>
+            @if (!Model.Data.CheckIngToday.Any())
+            {
+                <div class="text-center py-5" style="color:var(--text-sub);">
+                    <i class="fa-solid fa-inbox fa-2x mb-2 d-block" style="color:var(--divider);"></i>
+                    Không có khách check-in hôm nay
+                </div>
+            }
+            else
+            {
+                <div style="overflow-x:auto;">
+                    <table class="mgr-table">
                         <thead>
                             <tr>
-                                <th>Mã</th>
-                                <th>Khách hàng</th>
-                                <th>Phòng</th>
-                                <th>Check-Out</th>
-                                <th></th>
+                                <th>Mã</th><th>Khách hàng</th><th>Phòng</th><th>Check-Out</th><th></th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var b in Model.Data.CheckIngToday)
                             {
                                 <tr>
-                                    <td><span style="font-weight:700;color:var(--primary);">#@b.Id</span></td>
+                                    <td><span style="font-weight:700;color:var(--blue);">#@b.Id</span></td>
                                     <td>
                                         <div style="font-weight:600;">@(b.Customer?.UserName ?? "—")</div>
                                         <div style="font-size:.73rem;color:var(--text-sub);">@(b.Customer?.PhoneNumber ?? "")</div>
                                     </td>
                                     <td>
-                                        @foreach (var br in b.BookingRooms)
-                                        {
-                                            <span class="status-badge badge-available">@br.Room?.RoomNumber</span>
-                                        }
+                                        <div class="d-flex flex-wrap gap-1">
+                                            @foreach (var br in b.BookingRooms)
+                                            {
+                                                <span class="status-badge badge-available">@br.Room?.RoomNumber</span>
+                                            }
+                                        </div>
                                     </td>
-                                    <td>@b.CheckOutDate.ToString("dd/MM/yyyy")</td>
+                                    <td style="font-size:.82rem;">@b.CheckOutDate.ToString("dd/MM/yyyy")</td>
                                     <td>
-                                        <a asp-page="/Manager/Bookings/Details" asp-route-id="@b.Id"
-                                           class="btn-admin-sm btn-view">
+                                        <a asp-page="/Manager/Bookings/Details" asp-route-id="@b.Id" class="btn-mgr-sm btn-view">
                                             <i class="fa-solid fa-eye"></i>
                                         </a>
                                     </td>
@@ -161,55 +227,8 @@
                             }
                         </tbody>
                     </table>
-                }
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ── QUICK ACTIONS ── -->
-<div class="row g-3 mt-1">
-    <div class="col-12">
-        <div class="admin-card">
-            <div class="admin-card-header">
-                <h5><i class="fa-solid fa-bolt me-2" style="color:#FBBF24;"></i>Thao tác nhanh</h5>
-            </div>
-            <div class="admin-card-body">
-                <div class="row g-3">
-                    <div class="col-6 col-md-3">
-                        <a asp-page="/Manager/Bookings/Index" class="d-block text-center p-3 rounded-3 text-decoration-none"
-                           style="background:#ECFDF5;border:1.5px dashed #6EE7B7;transition:all .2s;"
-                           onmouseover="this.style.background='#D1FAE5'" onmouseout="this.style.background='#ECFDF5'">
-                            <i class="fa-solid fa-calendar-check fa-2x mb-2 d-block" style="color:#0D7055;"></i>
-                            <span style="font-size:.85rem;font-weight:600;color:#0D7055;">Tất cả booking</span>
-                        </a>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <a asp-page="/Manager/Rooms/Index" class="d-block text-center p-3 rounded-3 text-decoration-none"
-                           style="background:#FFF7ED;border:1.5px dashed #FCD34D;transition:all .2s;"
-                           onmouseover="this.style.background='#FEF3C7'" onmouseout="this.style.background='#FFF7ED'">
-                            <i class="fa-solid fa-bed fa-2x mb-2 d-block" style="color:#C2410C;"></i>
-                            <span style="font-size:.85rem;font-weight:600;color:#C2410C;">Quản lý phòng</span>
-                        </a>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <a asp-page="/Manager/Rooms/Create" class="d-block text-center p-3 rounded-3 text-decoration-none"
-                           style="background:#EFF4FF;border:1.5px dashed #93C5FD;transition:all .2s;"
-                           onmouseover="this.style.background='#DBEAFE'" onmouseout="this.style.background='#EFF4FF'">
-                            <i class="fa-solid fa-plus-circle fa-2x mb-2 d-block" style="color:#1565C0;"></i>
-                            <span style="font-size:.85rem;font-weight:600;color:#1565C0;">Thêm phòng mới</span>
-                        </a>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <a asp-page="/Manager/Bookings/Index" asp-route-status="1" class="d-block text-center p-3 rounded-3 text-decoration-none"
-                           style="background:#FEF2F2;border:1.5px dashed #FCA5A5;transition:all .2s;"
-                           onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='#FEF2F2'">
-                            <i class="fa-solid fa-clock fa-2x mb-2 d-block" style="color:#DC2626;"></i>
-                            <span style="font-size:.85rem;font-weight:600;color:#DC2626;">Chờ xác nhận (@Model.Data.PendingCount)</span>
-                        </a>
-                    </div>
                 </div>
-            </div>
+            }
         </div>
     </div>
 </div>

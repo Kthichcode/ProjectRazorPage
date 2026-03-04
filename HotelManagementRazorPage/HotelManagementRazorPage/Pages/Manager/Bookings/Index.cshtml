@@ -5,55 +5,48 @@
     Layout = "/Pages/Manager/_ManagerLayout.cshtml";
 }
 
-<div class="page-header">
-    <h1><i class="fa-solid fa-calendar-check me-2" style="color:var(--primary)"></i>Quản lý đặt phòng</h1>
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a asp-page="/Manager/Index">Dashboard</a></li>
-            <li class="breadcrumb-item active">Đặt phòng</li>
-        </ol>
-    </nav>
+<!-- PAGE HEADER -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="page-title">Quản lý đặt phòng</div>
+        <div class="page-sub">Tra cứu, xác nhận và cập nhật trạng thái đặt phòng</div>
+    </div>
 </div>
 
-<!-- ── FILTER ── -->
-<div class="admin-card mb-3">
-    <div class="admin-card-header">
-        <h5><i class="fa-solid fa-filter me-2"></i>Bộ lọc tìm kiếm</h5>
-    </div>
-    <div class="admin-card-body">
+<!-- FILTER -->
+<div class="mgr-card mb-3">
+    <div style="padding:1.2rem 1.4rem;">
         <form method="get">
             <div class="row g-3 align-items-end">
                 <div class="col-sm-6 col-lg-3">
                     <label class="admin-form-label">Ngày nhận phòng</label>
-                    <input type="date" name="date" value="@Model.FilterDate?.ToString("yyyy-MM-dd")"
-                           class="admin-form-control form-control" />
+                    <input type="date" name="date" value="@(Model.FilterDate?.ToString("yyyy-MM-dd"))" class="admin-form-control" />
                 </div>
                 <div class="col-sm-6 col-lg-3">
                     <label class="admin-form-label">Trạng thái</label>
-                    <select name="status" class="admin-form-control form-control form-select">
-                        <option value="">-- Tất cả --</option>
+                    <select name="status" class="admin-form-control">
+                        <option value="">— Tất cả —</option>
                         <option value="1" selected="@(Model.FilterStatus == BusinessObjects.Enums.BookingStatus.Pending)">Chờ xác nhận</option>
                         <option value="2" selected="@(Model.FilterStatus == BusinessObjects.Enums.BookingStatus.Confirmed)">Đã xác nhận</option>
                         <option value="3" selected="@(Model.FilterStatus == BusinessObjects.Enums.BookingStatus.CheckedIn)">Đang ở</option>
                         <option value="4" selected="@(Model.FilterStatus == BusinessObjects.Enums.BookingStatus.Completed)">Hoàn thành</option>
                         <option value="5" selected="@(Model.FilterStatus == BusinessObjects.Enums.BookingStatus.Cancelled)">Đã hủy</option>
-                        <option value="6" selected="@(Model.FilterStatus == BusinessObjects.Enums.BookingStatus.CancellationPending)">Chờ duyệt hủy</option>
+                        <option value="6" selected="@(Model.FilterStatus == BusinessObjects.Enums.BookingStatus.CancellationPending)">Chờ duyệt hoàn tiền</option>
                     </select>
                 </div>
                 <div class="col-sm-6 col-lg-3">
                     <label class="admin-form-label">Số điện thoại khách</label>
-                    <input type="text" name="phone" value="@Model.FilterPhone"
-                           class="admin-form-control form-control" placeholder="VD: 0912..." />
+                    <input type="text" name="phone" value="@Model.FilterPhone" class="admin-form-control" placeholder="VD: 0912..." />
                 </div>
-                <div class="col-sm-6 col-lg-3">
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn-admin-primary" style="flex:1;">
-                            <i class="fa-solid fa-search"></i> Tìm kiếm
-                        </button>
-                        <a asp-page="/Manager/Bookings/Index" class="btn-admin-sm btn-edit" style="padding:.5rem .9rem;font-size:.9rem;">
-                            <i class="fa-solid fa-rotate-left"></i>
-                        </a>
-                    </div>
+                <div class="col-sm-6 col-lg-3 d-flex gap-2">
+                    <button type="submit" class="btn-mgr-primary flex-grow-1">
+                        <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
+                    </button>
+                    <a asp-page="/Manager/Bookings/Index"
+                       style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;background:var(--bg-alt);border:1px solid var(--divider);border-radius:8px;color:var(--text-sub);text-decoration:none;transition:all .2s;"
+                       onmouseover="this.style.background='var(--divider)'" onmouseout="this.style.background='var(--bg-alt)'">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </a>
                 </div>
             </div>
         </form>
@@ -62,37 +55,38 @@
 
 @if (TempData["Success"] != null)
 {
-    <div class="admin-alert admin-alert-success"><i class="fa-solid fa-circle-check"></i> @TempData["Success"]</div>
+    <div class="mgr-alert mgr-alert-success"><i class="fa-solid fa-circle-check"></i> @TempData["Success"]</div>
 }
 @if (TempData["Error"] != null)
 {
-    <div class="admin-alert admin-alert-danger"><i class="fa-solid fa-circle-exclamation"></i> @TempData["Error"]</div>
+    <div class="mgr-alert mgr-alert-danger"><i class="fa-solid fa-circle-exclamation"></i> @TempData["Error"]</div>
 }
 
-<div class="admin-card">
-    <div class="admin-card-header">
-        <h5><i class="fa-solid fa-list me-2"></i>Danh sách đặt phòng (@Model.Bookings.Count kết quả)</h5>
+<!-- TABLE -->
+<div class="mgr-card">
+    <div class="mgr-card-header">
+        <h5><i class="fa-solid fa-list me-2"></i>Danh sách đặt phòng <span style="color:var(--text-sub);font-weight:400;">(@Model.Bookings.Count kết quả)</span></h5>
     </div>
     <div style="overflow-x:auto;">
-        <table class="admin-table">
+        <table class="mgr-table">
             <thead>
                 <tr>
-                    <th>Mã đặt phòng</th>
+                    <th>Mã</th>
                     <th>Khách hàng</th>
                     <th>Ngày nhận</th>
                     <th>Ngày trả</th>
                     <th>Phòng</th>
                     <th>Tổng tiền</th>
                     <th>Trạng thái</th>
-                    <th style="text-align:center;">Thao tác</th>
+                    <th class="text-center">Thao tác</th>
                 </tr>
             </thead>
             <tbody>
                 @if (!Model.Bookings.Any())
                 {
                     <tr>
-                        <td colspan="8" class="text-center py-4" style="color:var(--text-sub);">
-                            <i class="fa-solid fa-inbox fa-2x mb-2 d-block" style="color:#A7F3D0;"></i>
+                        <td colspan="8" class="text-center py-5" style="color:var(--text-sub);">
+                            <i class="fa-solid fa-calendar-xmark fa-2x mb-2 d-block" style="color:var(--divider);"></i>
                             Không có kết quả phù hợp
                         </td>
                     </tr>
@@ -102,20 +96,22 @@
                     @foreach (var b in Model.Bookings)
                     {
                         <tr>
-                            <td><span style="font-weight:700;color:var(--primary);">#@b.Id</span></td>
+                            <td><span style="font-weight:700;color:var(--blue);">#@b.Id</span></td>
                             <td>
                                 <div style="font-weight:600;">@(b.Customer?.UserName ?? "—")</div>
                                 <div style="font-size:.75rem;color:var(--text-sub);">@(b.Customer?.PhoneNumber ?? "")</div>
                             </td>
-                            <td>@b.CheckInDate.ToString("dd/MM/yyyy")</td>
-                            <td>@b.CheckOutDate.ToString("dd/MM/yyyy")</td>
+                            <td style="font-size:.82rem;">@b.CheckInDate.ToString("dd/MM/yyyy")</td>
+                            <td style="font-size:.82rem;">@b.CheckOutDate.ToString("dd/MM/yyyy")</td>
                             <td>
-                                @foreach (var br in b.BookingRooms)
-                                {
-                                    <span class="status-badge badge-available">@br.Room?.RoomNumber</span>
-                                }
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach (var br in b.BookingRooms)
+                                    {
+                                        <span class="status-badge badge-available">@br.Room?.RoomNumber</span>
+                                    }
+                                </div>
                             </td>
-                            <td><span style="font-weight:700;color:var(--primary);">@b.TotalAmount.ToString("N0")₫</span></td>
+                            <td style="font-weight:700;color:var(--blue);font-size:.82rem;">@b.TotalAmount.ToString("N0")₫</td>
                             <td>
                                 @switch (b.Status)
                                 {
@@ -135,14 +131,14 @@
                                         <span class="status-badge badge-cancelled">Đã hủy</span>
                                         break;
                                     case BusinessObjects.Enums.BookingStatus.CancellationPending:
-                                        <span class="status-badge" style="background:#FEF3C7;color:#92400E;border:1px solid #F59E0B;">
-                                            <i class="fa-solid fa-clock me-1"></i>Chờ duyệt hủy
+                                        <span class="status-badge badge-cancelpending">
+                                            <i class="fa-solid fa-rotate-left"></i> Chờ hoàn tiền
                                         </span>
                                         break;
                                 }
                             </td>
-                            <td style="text-align:center;">
-                                <a asp-page="/Manager/Bookings/Details" asp-route-id="@b.Id" class="btn-admin-sm btn-view">
+                            <td class="text-center">
+                                <a asp-page="/Manager/Bookings/Details" asp-route-id="@b.Id" class="btn-mgr-sm btn-view">
                                     <i class="fa-solid fa-eye"></i> Xem
                                 </a>
                             </td>
