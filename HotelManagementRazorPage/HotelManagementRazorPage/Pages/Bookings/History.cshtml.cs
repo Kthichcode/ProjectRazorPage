@@ -14,12 +14,15 @@ namespace HotelManagementRazorPage.Pages.Bookings
         private readonly IBookingService _bookingService;
         private readonly IVnPayService _vnPayService;
         private readonly IWalletService _walletService;
+        private readonly IReviewService _reviewService;
 
-        public HistoryModel(IBookingService bookingService, IVnPayService vnPayService, IWalletService walletService)
+        public HistoryModel(IBookingService bookingService, IVnPayService vnPayService,
+                            IWalletService walletService, IReviewService reviewService)
         {
             _bookingService = bookingService;
-            _vnPayService = vnPayService;
-            _walletService = walletService;
+            _vnPayService   = vnPayService;
+            _walletService  = walletService;
+            _reviewService  = reviewService;
         }
 
         public List<Booking> Bookings { get; set; } = new();
@@ -28,22 +31,31 @@ namespace HotelManagementRazorPage.Pages.Bookings
         [BindProperty(SupportsGet = true)]
         public BookingStatus? FilterStatus { get; set; }
 
+        /// bookingId -> roomId (first room of booking that can still be reviewed)
+        public Dictionary<int, int> ReviewableBookings { get; set; } = new();
+
         public void OnGet()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var allBookings = _bookingService.GetMyBookings(userId);
 
-            if (FilterStatus.HasValue)
-            {
-                Bookings = allBookings.Where(b => b.Status == FilterStatus.Value).ToList();
-            }
-            else
-            {
-                Bookings = allBookings;
-            }
+            Bookings = (FilterStatus.HasValue
+                ? allBookings.Where(b => b.Status == FilterStatus.Value)
+                : allBookings)
+                .OrderByDescending(b => b.CreatedAt)
+                .ToList();
 
-            Bookings = Bookings.OrderByDescending(b => b.CreatedAt).ToList();
             WalletBalance = _walletService.GetUserWallet(userId!).Balance;
+
+            // For completed bookings, check if user can still leave a review
+            foreach (var b in Bookings.Where(b => b.Status == BookingStatus.Completed))
+            {
+                var roomId = b.BookingRooms.FirstOrDefault()?.RoomId ?? 0;
+                if (roomId > 0 && _reviewService.CanUserReview(userId!, roomId, out _))
+                {
+                    ReviewableBookings[b.Id] = roomId;
+                }
+            }
         }
 
         public IActionResult OnPostCancel(int id)
@@ -63,7 +75,7 @@ namespace HotelManagementRazorPage.Pages.Bookings
 
         public IActionResult OnPostRetryPayment(int id)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId  = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var booking = _bookingService.GetById(id);
 
             if (booking == null || booking.CustomerId != userId || booking.Status != BookingStatus.Pending)

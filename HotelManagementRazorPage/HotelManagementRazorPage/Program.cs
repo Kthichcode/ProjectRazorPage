@@ -62,12 +62,10 @@ app.UseAuthorization();
 app.MapRazorPages();
 app.MapHub<HotelManagementRazorPage.Hubs.RoomHub>("/roomHub");
 
-// ── SEED ADMIN ACCOUNT ──────────────────────────────────────────────
 await SeedAdminAsync(app);
 
 app.Run();
 
-// ─────────────────────────────────────────────────────────────────────
 static async Task SeedAdminAsync(WebApplication app)
 {
     using var scope = app.Services.CreateScope();

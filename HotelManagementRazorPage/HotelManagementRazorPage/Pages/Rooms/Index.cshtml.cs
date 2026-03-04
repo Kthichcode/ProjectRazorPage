@@ -9,15 +9,20 @@ namespace HotelManagementRazorPage.Pages.Rooms
     {
         private readonly IRoomService _roomService;
         private readonly IRoomTypeService _roomTypeService;
+        private readonly IReviewService _reviewService;
 
-        public IndexModel(IRoomService roomService, IRoomTypeService roomTypeService)
+        public IndexModel(IRoomService roomService, IRoomTypeService roomTypeService, IReviewService reviewService)
         {
             _roomService = roomService;
             _roomTypeService = roomTypeService;
+            _reviewService = reviewService;
         }
 
         public List<Room> Rooms { get; set; } = new();
         public List<RoomType> RoomTypes { get; set; } = new();
+
+        /// roomId -> (averageRating, reviewCount)
+        public Dictionary<int, (double Avg, int Count)> RoomRatings { get; set; } = new();
 
         [BindProperty(SupportsGet = true)]
         public DateTime? CheckIn { get; set; }
@@ -42,13 +47,23 @@ namespace HotelManagementRazorPage.Pages.Rooms
             else
             {
                 Rooms = _roomService.GetAll();
-                // If only roomTypeId is set, filter by that
                 if (SelectedRoomTypeId.HasValue)
                 {
                     Rooms = Rooms.Where(r => r.RoomTypeId == SelectedRoomTypeId.Value).ToList();
                     IsSearching = true;
                 }
             }
+
+            // Load all approved reviews once and group by RoomId
+            var allReviews = _reviewService.GetAll()
+                .Where(r => r.IsApproved == true)
+                .GroupBy(r => r.RoomId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => (Avg: g.Average(r => (double)r.Rating), Count: g.Count())
+                );
+
+            RoomRatings = allReviews;
         }
     }
 }

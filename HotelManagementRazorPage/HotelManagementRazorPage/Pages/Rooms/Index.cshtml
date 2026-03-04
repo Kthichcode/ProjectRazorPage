@@ -85,6 +85,16 @@
     .btn-book:hover { background: var(--primary-d); transform: translateY(-1px); }
     .empty-state { text-align: center; padding: 4rem 1rem; color: var(--text-sub); }
     .empty-state i { font-size: 3rem; color: var(--gray-200); display: block; margin-bottom: 1rem; }
+
+    /* ── STAR RATING ── */
+    .room-stars { display: flex; align-items: center; gap: .35rem; margin-bottom: .65rem; }
+    .star-wrap  { display: flex; gap: 2px; }
+    .star-wrap i.filled { color: #F59E0B; font-size: .85rem; }
+    .star-wrap i.half   { color: #F59E0B; font-size: .85rem; }
+    .star-wrap i.empty  { color: #D2D2D7; font-size: .85rem; }
+    .star-avg   { font-size: .8rem; font-weight: 700; color: var(--text); }
+    .star-count { font-size: .75rem; color: var(--text-sub); }
+    .star-none  { font-size: .75rem; color: var(--text-sub); font-style: italic; }
 </style>
 
 <!-- ═══ SEARCH HERO ═══ -->
@@ -200,6 +210,39 @@
                                     @(string.IsNullOrEmpty(room.Description)
                                         ? "Phòng tiện nghi đầy đủ, thiết kế hiện đại mang lại sự thoải mái tuyệt vời."
                                         : room.Description)
+                                </div>
+                                @{
+                                    bool hasRating = Model.RoomRatings.TryGetValue(room.Id, out var rating);
+                                    double avg = hasRating ? rating.Avg : 0;
+                                    int rCount = hasRating ? rating.Count : 0;
+                                }
+                                <div class="room-stars">
+                                    @if (hasRating)
+                                    {
+                                        <div class="star-wrap">
+                                            @for (int s = 1; s <= 5; s++)
+                                            {
+                                                if (avg >= s)
+                                                {
+                                                    <i class="fa-solid fa-star filled"></i>
+                                                }
+                                                else if (avg >= s - 0.5)
+                                                {
+                                                    <i class="fa-solid fa-star-half-stroke half"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="fa-regular fa-star empty"></i>
+                                                }
+                                            }
+                                        </div>
+                                        <span class="star-avg">@avg.ToString("0.0")</span>
+                                        <span class="star-count">(@rCount đánh giá)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="star-none">Chưa có đánh giá</span>
+                                    }
                                 </div>
                                 <div class="room-meta">
                                     <span><i class="fa-solid fa-users me-1"></i>@room.MaxOccupancy khách</span>

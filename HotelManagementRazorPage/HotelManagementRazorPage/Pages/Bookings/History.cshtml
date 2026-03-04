@@ -269,6 +269,53 @@
     .btn-cancel    { background: var(--bg-alt); color: var(--text-sub); border: 1px solid var(--divider); }
     .btn-cancel:hover { border-color: #DC2626; color: #DC2626; background: #FEF2F2; }
     .btn-waiting   { background: var(--bg-alt); color: var(--text-sub); pointer-events: none; border: 1px solid var(--divider); }
+    .btn-review    { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+    .btn-review:hover { background: #F59E0B; color: #fff; border-color: #F59E0B; }
+
+    /* ── REVIEW MODAL ── */
+    .rev-modal-backdrop {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,.45); z-index: 1000;
+        align-items: center; justify-content: center;
+    }
+    .rev-modal-backdrop.open { display: flex; }
+    .rev-modal {
+        background: #fff; border-radius: 20px;
+        padding: 2rem; width: 100%; max-width: 420px;
+        box-shadow: 0 24px 60px rgba(0,0,0,.18);
+        animation: modalIn .22s ease;
+    }
+    @@keyframes modalIn { from { opacity:0; transform:translateY(20px) scale(.97); } to { opacity:1; transform:none; } }
+    .rev-modal-title { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 1.2rem; }
+    .rev-modal textarea {
+        width: 100%; border: 1px solid var(--divider); border-radius: 10px;
+        padding: .7rem .9rem; font-size: .875rem; resize: vertical;
+        min-height: 90px; outline: none; font-family: inherit;
+        transition: border-color .2s;
+    }
+    .rev-modal textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,102,204,.1); }
+    /* interactive star picker */
+    .star-picker { display: flex; gap: 4px; flex-direction: row-reverse; justify-content: flex-end; margin-bottom: 1rem; }
+    .star-picker input { display: none; }
+    .star-picker label {
+        font-size: 1.6rem; color: #D2D2D7; cursor: pointer;
+        transition: color .15s;
+    }
+    .star-picker input:checked ~ label,
+    .star-picker label:hover,
+    .star-picker label:hover ~ label { color: #F59E0B; }
+    .rev-modal-actions { display: flex; gap: .6rem; margin-top: 1.2rem; }
+    .btn-rev-submit {
+        flex: 1; padding: .6rem; border-radius: 10px; border: none;
+        background: var(--blue); color: #fff; font-weight: 700;
+        font-size: .875rem; cursor: pointer; transition: background .2s;
+    }
+    .btn-rev-submit:hover { background: var(--blue-dark); }
+    .btn-rev-cancel-modal {
+        padding: .6rem 1.2rem; border-radius: 10px;
+        border: 1px solid var(--divider); background: none;
+        color: var(--text-sub); font-size: .875rem; cursor: pointer;
+    }
 </style>
 
 <div class="container">
@@ -441,6 +488,15 @@
                                     <i class="fa-solid fa-hourglass-half"></i> Chờ duyệt
                                 </span>
                             }
+
+                            @if (booking.Status == BookingStatus.Completed
+                                 && Model.ReviewableBookings.ContainsKey(booking.Id))
+                            {
+                                <button type="button" class="btn-card btn-review"
+                                        onclick="openReviewModal(@booking.Id, @Model.ReviewableBookings[booking.Id])">
+                                    <i class="fa-solid fa-star"></i> Đánh giá
+                                </button>
+                            }
                         </div>
                     </div>
                 </div>
@@ -448,3 +504,69 @@
         </div>
     }
 </div>
+
+<!-- ── REVIEW MODAL ── -->
+<div id="reviewBackdrop" class="rev-modal-backdrop" onclick="closeOnBackdrop(event)">
+    <div class="rev-modal">
+        <div class="rev-modal-title">
+            <i class="fa-solid fa-star me-2" style="color:#F59E0B;"></i>Đánh giá phòng
+        </div>
+        <form id="reviewForm" method="post" action="">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="ReviewBookingId" id="reviewBookingId" />
+            <input type="hidden" name="ReviewRoomId"   id="reviewRoomId" />
+
+            <label style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-sub);display:block;margin-bottom:.4rem;">
+                Chọn số sao
+            </label>
+            <!-- Stars go right-to-left so CSS sibling trick works -->
+            <div class="star-picker">
+                <input type="radio" name="ReviewRating" id="s5" value="5" checked />
+                <label for="s5" title="5 sao"><i class="fa-solid fa-star"></i></label>
+                <input type="radio" name="ReviewRating" id="s4" value="4" />
+                <label for="s4" title="4 sao"><i class="fa-solid fa-star"></i></label>
+                <input type="radio" name="ReviewRating" id="s3" value="3" />
+                <label for="s3" title="3 sao"><i class="fa-solid fa-star"></i></label>
+                <input type="radio" name="ReviewRating" id="s2" value="2" />
+                <label for="s2" title="2 sao"><i class="fa-solid fa-star"></i></label>
+                <input type="radio" name="ReviewRating" id="s1" value="1" />
+                <label for="s1" title="1 sao"><i class="fa-solid fa-star"></i></label>
+            </div>
+
+            <label style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-sub);display:block;margin-bottom:.4rem;">
+                Nội dung nhận xét
+            </label>
+            <textarea name="ReviewComment" rows="3" placeholder="Chia sẻ trải nghiệm của bạn về phòng..."></textarea>
+
+            <div class="rev-modal-actions">
+                <button type="submit" class="btn-rev-submit">
+                    <i class="fa-solid fa-paper-plane me-1"></i>Gửi đánh giá
+                </button>
+                <button type="button" class="btn-rev-cancel-modal" onclick="closeReviewModal()">
+                    Hủy
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function openReviewModal(bookingId, roomId) {
+        document.getElementById('reviewBookingId').value = bookingId;
+        document.getElementById('reviewRoomId').value   = roomId;
+        // Post to the room detail page review handler
+        document.getElementById('reviewForm').action =
+            '/Rooms/Detail/' + roomId + '?handler=Review';
+        document.getElementById('reviewBackdrop').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeReviewModal() {
+        document.getElementById('reviewBackdrop').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    function closeOnBackdrop(e) {
+        if (e.target === document.getElementById('reviewBackdrop')) closeReviewModal();
+    }
+</script>
+}

@@ -6,10 +6,6 @@ using System.Text.RegularExpressions;
 
 namespace Services
 {
-    /// <summary>
-    /// Smart keyword-based chat service — không cần external API.
-    /// Phân tích tin nhắn tiếng Việt/Anh để tìm phòng phù hợp.
-    /// </summary>
     public class AiChatService : IAiChatService
     {
         private readonly IRoomRepository _roomRepo;
