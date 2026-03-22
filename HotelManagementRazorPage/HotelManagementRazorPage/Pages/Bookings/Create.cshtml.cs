@@ -54,7 +54,7 @@ namespace HotelManagementRazorPage.Pages.Bookings
             if (userId != null)
             {
                 var wallet = _walletService.GetUserWallet(userId);
-                WalletBalance = wallet.Balance;
+                WalletBalance = wallet?.Balance ?? 0;
             }
 
             return Page();
@@ -142,7 +142,7 @@ namespace HotelManagementRazorPage.Pages.Bookings
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId != null)
             {
-                WalletBalance = _walletService.GetUserWallet(userId).Balance;
+                WalletBalance = _walletService.GetUserWallet(userId)?.Balance ?? 0;
             }
         }
     }

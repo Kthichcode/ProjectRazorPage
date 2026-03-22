@@ -9,5 +9,8 @@ namespace Services.Interfaces
 
         /// Broadcasts room CRUD events to all user clients (action = "created" | "updated" | "deleted")
         Task SendRoomUpdate(string action, string roomNumber);
+
+        /// Broadcasts a payment success event to all Staff clients
+        Task SendPaymentSuccess(int bookingId, string customerName, decimal amount);
     }
 }

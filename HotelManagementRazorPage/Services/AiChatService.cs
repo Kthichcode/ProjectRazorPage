@@ -23,9 +23,14 @@ namespace Services
             "gemini-pro"
         ];
         private static string? _cachedModel;
-        private static readonly HashSet<string> _failedModels = new();
+        // Model → thời điểm hết cooldown (thay vì blacklist vĩnh viễn)
+        private static readonly Dictionary<string, DateTime> _modelCooldowns = new();
+        private static readonly TimeSpan _cooldownDuration = TimeSpan.FromMinutes(2);
         private static readonly SemaphoreSlim _lock = new(1, 1);
         private static readonly HttpClient _http = new();
+        // Rate limiting: tối đa 1 request / giây
+        private static DateTime _lastRequestTime = DateTime.MinValue;
+        private static readonly TimeSpan _minRequestInterval = TimeSpan.FromSeconds(1);
 
         public AiChatService(IRoomRepository roomRepo, IConfiguration config)
         {
@@ -33,18 +38,24 @@ namespace Services
             _apiKey   = config["Gemini:ApiKey"] ?? throw new InvalidOperationException("Gemini:ApiKey chưa được cấu hình.");
         }
 
-        // ── Tự động chọn model phù hợp từ Gemini API (bỏ qua model bị blacklist)
+        // Kiểm tra model có đang trong cooldown không
+        private static bool IsModelOnCooldown(string model) =>
+            _modelCooldowns.TryGetValue(model, out var until) && DateTime.UtcNow < until;
+
+        // ── Tự động chọn model phù hợp (cooldown thay vì blacklist vĩnh viễn)
         private async Task<string?> GetModelAsync()
         {
-            if (_cachedModel != null && !_failedModels.Contains(_cachedModel))
+            if (_cachedModel != null && !IsModelOnCooldown(_cachedModel))
                 return _cachedModel;
 
             await _lock.WaitAsync();
             try
             {
                 // Kiểm tra lại sau khi có lock
-                if (_cachedModel != null && !_failedModels.Contains(_cachedModel))
+                if (_cachedModel != null && !IsModelOnCooldown(_cachedModel))
                     return _cachedModel;
+
+                _cachedModel = null; // reset để chọn lại
 
                 // Lấy danh sách model available từ API
                 List<string> available = new();
@@ -79,13 +90,13 @@ namespace Services
                 // Chọn theo ưu tiên, dùng TÊN THỰC TẾ từ available list
                 foreach (var pref in _preferredModels)
                 {
-                    if (_failedModels.Contains(pref)) continue;
+                    if (IsModelOnCooldown(pref)) continue;
 
                     if (available.Any())
                     {
                         // Tìm tên thực tế (vd: "gemini-1.5-flash-8b-001") khớp với pref
                         string? actualName = available.FirstOrDefault(a =>
-                            a.Contains(pref) && !_failedModels.Contains(a));
+                            a.Contains(pref) && !IsModelOnCooldown(a));
                         if (actualName != null) { _cachedModel = actualName; return _cachedModel; }
                     }
                     else
@@ -95,8 +106,8 @@ namespace Services
                     }
                 }
 
-                // Fallback: model available nào chưa fail
-                string? fallback = available.FirstOrDefault(a => !_failedModels.Contains(a));
+                // Fallback: model available nào chưa cooldown
+                string? fallback = available.FirstOrDefault(a => !IsModelOnCooldown(a));
                 _cachedModel = fallback;
                 return _cachedModel;
             }
@@ -157,6 +168,12 @@ namespace Services
 
             for (int attempt = 0; attempt < _preferredModels.Length; attempt++)
             {
+                // Rate limiting: đảm bảo tối thiểu 1s giữa các request
+                var elapsed = DateTime.UtcNow - _lastRequestTime;
+                if (elapsed < _minRequestInterval)
+                    await Task.Delay(_minRequestInterval - elapsed);
+                _lastRequestTime = DateTime.UtcNow;
+
                 string url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={_apiKey}";
                 using var req = new HttpRequestMessage(HttpMethod.Post, url);
                 req.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
@@ -168,9 +185,11 @@ namespace Services
 
                     if ((int)resp.StatusCode == 429)
                     {
-                        // Blacklist model này, thử model kế tiếp
-                        _failedModels.Add(model);
+                        // Đặt cooldown 2 phút, thử model kế tiếp với exponential backoff
+                        _modelCooldowns[model] = DateTime.UtcNow.Add(_cooldownDuration);
                         _cachedModel = null;
+                        int delayMs = 1000 * (int)Math.Pow(2, attempt); // 1s → 2s → 4s...
+                        await Task.Delay(Math.Min(delayMs, 8000));
                         model = await GetModelAsync();
                         if (model == null) break;
                         continue;

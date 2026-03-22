@@ -17,25 +17,28 @@ namespace Services
 
         public void CreateWallet(string userId)
         {
-            if (_walletRepo.GetByUserId(userId) == null)
+            if (_walletRepo.GetByUserId(userId) != null) return;
+            try
             {
-                var wallet = new Wallet
-                {
-                    UserId = userId,
-                    Balance = 0
-                };
+                var wallet = new Wallet { UserId = userId, Balance = 0 };
                 _walletRepo.Add(wallet);
                 _walletRepo.Save();
             }
+            catch (Exception ex) when (
+                ex is Microsoft.EntityFrameworkCore.DbUpdateException ||
+                ex.InnerException?.Message.Contains("FOREIGN KEY") == true)
+            {
+                // UserId không tồn tại trong bảng Users → bỏ qua
+            }
         }
 
-        public Wallet GetUserWallet(string userId)
+        public Wallet? GetUserWallet(string userId)
         {
             var wallet = _walletRepo.GetByUserId(userId);
             if (wallet == null)
             {
                 CreateWallet(userId);
-                wallet = _walletRepo.GetByUserId(userId)!;
+                wallet = _walletRepo.GetByUserId(userId);
             }
             return wallet;
         }
@@ -45,7 +48,7 @@ namespace Services
             if (amountNeeded < 0) throw new ArgumentException("Amount cannot be negative");
 
             var wallet = GetUserWallet(userId);
-
+            if (wallet == null) return 0; // user không tồn tại trong DB
             decimal deducted = 0;
             if (wallet.Balance >= amountNeeded)
             {
@@ -83,6 +86,7 @@ namespace Services
             if (amount < 0) throw new ArgumentException("Amount cannot be negative");
 
             var wallet = GetUserWallet(userId);
+            if (wallet == null) return; // user không tồn tại trong DB
             wallet.Balance += amount;
             _walletRepo.Update(wallet);
 

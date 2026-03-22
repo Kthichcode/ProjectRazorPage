@@ -278,10 +278,53 @@
         @RenderBody()
     </main>
 
+    <!-- Toast Container for Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+        <div id="paymentToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-success text-white">
+                <i class="fa-solid fa-circle-check me-2"></i>
+                <strong class="me-auto">Thanh toán thành công</strong>
+                <small id="toastTime">Vừa xong</small>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                Khách hàng vừa thanh toán thành công.
+            </div>
+        </div>
+    </div>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    
+    <script>
+        const notificationConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/roomHub")
+            .withAutomaticReconnect()
+            .build();
+
+        notificationConnection.on("ReceivePaymentSuccess", function (bookingId, customerName, amount, time) {
+            const toastEl = document.getElementById('paymentToast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastTime = document.getElementById('toastTime');
+            
+            toastMessage.innerHTML = `<strong>${customerName}</strong> đã thanh toán thành công đơn đặt phòng <strong>#${bookingId}</strong> số tiền <strong>${amount.toLocaleString('vi-VN')}₫</strong>.`;
+            toastTime.innerText = time;
+            
+            const toast = new bootstrap.Toast(toastEl, { delay: 10000 });
+            toast.show();
+
+            // Play a subtle notification sound if possible
+            try {
+                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                audio.play();
+            } catch (e) { console.log("Audio play blocked"); }
+        });
+
+        notificationConnection.start().catch(err => console.error(err.toString()));
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

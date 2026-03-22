@@ -11,12 +11,14 @@ namespace HotelManagementRazorPage.Pages.Bookings
         private readonly IVnPayService _vnPayService;
         private readonly IBookingService _bookingService;
         private readonly IWalletService _walletService;
+        private readonly ISignalRService _signalRService;
 
-        public PaymentCallbackModel(IVnPayService vnPayService, IBookingService bookingService, IWalletService walletService)
+        public PaymentCallbackModel(IVnPayService vnPayService, IBookingService bookingService, IWalletService walletService, ISignalRService signalRService)
         {
             _vnPayService = vnPayService;
             _bookingService = bookingService;
             _walletService = walletService;
+            _signalRService = signalRService;
         }
 
         public string Message { get; set; } = "Đang xử lý thanh toán...";

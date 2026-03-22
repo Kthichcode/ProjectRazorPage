@@ -45,7 +45,7 @@ namespace HotelManagementRazorPage.Pages.Bookings
                 .OrderByDescending(b => b.CreatedAt)
                 .ToList();
 
-            WalletBalance = _walletService.GetUserWallet(userId!).Balance;
+            WalletBalance = _walletService.GetUserWallet(userId!)?.Balance ?? 0;
 
             // For completed bookings, check if user can still leave a review
             foreach (var b in Bookings.Where(b => b.Status == BookingStatus.Completed))

@@ -216,7 +216,7 @@
                             <li class="nav-item">
                                 @{
                                     var walletUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                                    var walletBal = walletUserId != null ? WalletService.GetUserWallet(walletUserId).Balance : 0;
+                                    var walletBal = walletUserId != null ? (WalletService.GetUserWallet(walletUserId)?.Balance ?? 0) : 0;
                                 }
                                 <a class="nav-link nav-wallet-pill" asp-page="/Bookings/Wallet">
                                     <i class="fa-solid fa-wallet"></i>@walletBal.ToString("N0")₫

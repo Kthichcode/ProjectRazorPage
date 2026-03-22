@@ -259,6 +259,9 @@ namespace Services
                 _signalRService.SendNewBooking(
                     b.Id, customerName, phoneNumber, roomNums, b.TotalAmount, b.CheckInDate, b.CheckOutDate
                 ).Wait();
+
+                // Gửi thông báo thanh toán thành công cụ thể cho staff
+                _signalRService.SendPaymentSuccess(b.Id, customerName, b.TotalAmount).Wait();
             }
             catch { /* never break main flow */ }
         }

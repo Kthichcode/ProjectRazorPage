@@ -36,5 +36,16 @@ namespace HotelManagementRazorPage.SignalR
         {
             await _hubContext.Clients.All.SendAsync("ReceiveRoomUpdate", action, roomNumber);
         }
+
+        public async Task SendPaymentSuccess(int bookingId, string customerName, decimal amount)
+        {
+            await _hubContext.Clients.All.SendAsync(
+                "ReceivePaymentSuccess",
+                bookingId,
+                customerName,
+                (long)amount,
+                DateTime.Now.ToString("HH:mm dd/MM/yyyy")
+            );
+        }
     }
 }
