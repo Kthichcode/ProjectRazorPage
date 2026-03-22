@@ -13,14 +13,12 @@ namespace Services
         private readonly IRoomRepository _roomRepo;
         private readonly string _apiKey;
 
-        // Danh sách model ưu tiên (free tier quota cao nhất → ít trước nhất)
         private static readonly string[] _preferredModels =
         [
-            "gemini-1.5-flash-8b",  // free tier quota cao nhất
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-pro-latest",
             "gemini-1.5-flash",
-            "gemini-2.0-flash-lite",
-            "gemini-2.0-flash",
-            "gemini-pro"
+            "gemini-1.5-pro"
         ];
         private static string? _cachedModel;
         // Model → thời điểm hết cooldown (thay vì blacklist vĩnh viễn)
@@ -31,6 +29,7 @@ namespace Services
         // Rate limiting: tối đa 1 request / giây
         private static DateTime _lastRequestTime = DateTime.MinValue;
         private static readonly TimeSpan _minRequestInterval = TimeSpan.FromSeconds(1);
+        private static readonly HashSet<string> _knownValidModels = new();
 
         public AiChatService(IRoomRepository roomRepo, IConfiguration config)
         {
@@ -153,7 +152,7 @@ namespace Services
                 parts = new[] { new { text = userMessage } }
             });
 
-            // ── Gọi Gemini API (retry khi 429, thử model khác) ──────────
+            // ── Gọi Gemini API (retry khi lỗi, thử model khác) ──────────
             string? model = await GetModelAsync();
             if (model == null)
                 return new ChatResponse { Message = "⚠️ Không tìm được model Gemini. Vui lòng thử lại sau.", SuggestedRooms = new() };
@@ -165,6 +164,7 @@ namespace Services
                 generationConfig   = new { temperature = 0.7, maxOutputTokens = 800 }
             };
             string bodyJson = JsonSerializer.Serialize(requestBody);
+            string lastError = "Không rõ nguyên nhân";
 
             for (int attempt = 0; attempt < _preferredModels.Length; attempt++)
             {
@@ -183,20 +183,16 @@ namespace Services
                     using var resp = await _http.SendAsync(req);
                     string raw = await resp.Content.ReadAsStringAsync();
 
-                    if ((int)resp.StatusCode == 429)
+                    if (!resp.IsSuccessStatusCode)
                     {
-                        // Đặt cooldown 2 phút, thử model kế tiếp với exponential backoff
+                        lastError = $"HTTP {(int)resp.StatusCode} ({model})";
+                        // Nếu lỗi -> cho model này vào cooldown và thử model khác
                         _modelCooldowns[model] = DateTime.UtcNow.Add(_cooldownDuration);
                         _cachedModel = null;
-                        int delayMs = 1000 * (int)Math.Pow(2, attempt); // 1s → 2s → 4s...
-                        await Task.Delay(Math.Min(delayMs, 8000));
                         model = await GetModelAsync();
                         if (model == null) break;
                         continue;
                     }
-
-                    if (!resp.IsSuccessStatusCode)
-                        return new ChatResponse { Message = $"⚠️ Lỗi dịch vụ AI (HTTP {(int)resp.StatusCode}). Vui lòng thử lại.", SuggestedRooms = new() };
 
                     using var doc = JsonDocument.Parse(raw);
                     string aiText = doc.RootElement
@@ -212,13 +208,17 @@ namespace Services
                         SuggestedRooms = ExtractSuggestedRooms(aiText, rooms)
                     };
                 }
-                catch
+                catch (Exception ex)
                 {
-                    return new ChatResponse { Message = "⚠️ Không thể kết nối AI. Vui lòng thử lại sau.", SuggestedRooms = new() };
+                    lastError = ex.Message;
+                    _modelCooldowns[model] = DateTime.UtcNow.Add(_cooldownDuration);
+                    _cachedModel = null;
+                    model = await GetModelAsync();
+                    if (model == null) break;
                 }
             }
 
-            return new ChatResponse { Message = "⚠️ Tất cả model AI đang quá tải. Vui lòng thử lại sau vài phút.", SuggestedRooms = new() };
+            return new ChatResponse { Message = $"⚠️ Dịch vụ AI hiện không khả dụng. Lỗi: {lastError}", SuggestedRooms = new() };
         }
 
         private List<SuggestedRoom> ExtractSuggestedRooms(string text, List<Room> allRooms)
