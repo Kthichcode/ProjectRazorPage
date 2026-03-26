@@ -377,6 +377,10 @@
                asp-page="/Admin/Index">
                 <i class="fa-solid fa-chart-pie"></i> Tổng quan
             </a>
+            <a class="sidebar-link @(ViewContext.RouteData.Values["page"]?.ToString() == "/Admin/Statistics" ? "active" : "")"
+               asp-page="/Admin/Statistics">
+                <i class="fa-solid fa-chart-line"></i> Thống kê
+            </a>
 
             <div class="sidebar-section-label">Quản lý</div>
             <a class="sidebar-link @(ViewContext.RouteData.Values["page"]?.ToString()?.StartsWith("/Admin/Rooms") == true ? "active" : "")"

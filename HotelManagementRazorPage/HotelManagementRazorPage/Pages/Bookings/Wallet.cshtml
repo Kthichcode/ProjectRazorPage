@@ -53,12 +53,22 @@
                     <tbody>
                         @foreach (var tx in Model.Transactions)
                         {
+                            bool isPayment = tx.Type == WalletTransactionType.Payment;
                             <tr>
                                 <td>
-                                    <i class="fa-solid fa-arrow-down text-success me-2"></i>
+                                    @if (isPayment)
+                                    {
+                                        <i class="fa-solid fa-arrow-up text-danger me-2"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fa-solid fa-arrow-down text-success me-2"></i>
+                                    }
                                     @tx.Description
                                 </td>
-                                <td class="text-end fw-bold text-success">+@tx.Amount.ToString("N0")₫</td>
+                                <td class="text-end fw-bold @(isPayment ? "text-danger" : "text-success")">
+                                    @(isPayment ? "-" : "+")@tx.Amount.ToString("N0")₫
+                                </td>
                                 <td class="text-muted" style="font-size:.85rem;">
                                     @tx.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                                 </td>

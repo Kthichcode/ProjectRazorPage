@@ -8,5 +8,6 @@ namespace Services.Interfaces
     {
         DashboardDto GetDashboardData();
         ManagerDashboardDto GetManagerDashboardData();
+        StatisticsDto GetStatisticsData(int year);
     }
 }

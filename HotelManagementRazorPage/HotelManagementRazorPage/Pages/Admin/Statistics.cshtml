@@ -1,0 +1,359 @@
+@page
+@model HotelManagementRazorPage.Pages.Admin.StatisticsModel
+@{
+    ViewData["Title"] = "Thống kê";
+    Layout = "/Pages/Admin/_AdminLayout.cshtml";
+
+    var labelsJson   = System.Text.Json.JsonSerializer.Serialize(Model.Stats.MonthLabels);
+    var usersJson    = System.Text.Json.JsonSerializer.Serialize(Model.Stats.NewUsersPerMonth);
+    var revenueJson  = System.Text.Json.JsonSerializer.Serialize(Model.Stats.RevenuePerMonth);
+    var bookingsJson = System.Text.Json.JsonSerializer.Serialize(Model.Stats.BookingsPerMonth);
+
+    int currentYear = DateTime.Now.Year;
+    int selectedYear = Model.Year;
+    // Show 3 years back up to current year
+    var years = Enumerable.Range(currentYear - 3, 4).Reverse().ToArray();
+}
+
+<style>
+    .stats-hero {
+        background: linear-gradient(135deg, #0D47A1 0%, #1565C0 50%, #1976D2 100%);
+        border-radius: 20px;
+        padding: 1.6rem 2rem;
+        color: #fff;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .stats-hero::after {
+        content: '';
+        position: absolute;
+        right: -60px; top: -60px;
+        width: 220px; height: 220px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.06);
+        pointer-events: none;
+    }
+    .stats-hero h1 { font-size: 1.5rem; font-weight: 800; margin: 0; }
+    .stats-hero p  { opacity: .8; margin: .25rem 0 0; font-size: .88rem; }
+
+    /* Year dropdown */
+    .year-select-wrap { position: relative; }
+    .year-select {
+        appearance: none;
+        -webkit-appearance: none;
+        background: rgba(255,255,255,.15);
+        border: 2px solid rgba(255,255,255,.45);
+        color: #fff;
+        border-radius: 10px;
+        padding: .4rem 2.4rem .4rem 1rem;
+        font-size: .88rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background .2s, border-color .2s;
+        outline: none;
+    }
+    .year-select:hover, .year-select:focus {
+        background: rgba(255,255,255,.28);
+        border-color: #fff;
+    }
+    .year-select option { background: #0D47A1; color: #fff; }
+    .year-select-icon {
+        position: absolute;
+        right: .7rem; top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255,255,255,.85);
+        font-size: .75rem;
+        pointer-events: none;
+    }
+
+    /* KPI cards */
+    .kpi-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1.3rem 1.5rem;
+        border: 1px solid #E2EAF4;
+        box-shadow: 0 2px 12px rgba(0,0,0,.05);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: transform .2s, box-shadow .2s;
+    }
+    .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(21,101,192,.12); }
+    .kpi-icon {
+        width: 50px; height: 50px;
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.3rem; flex-shrink: 0;
+    }
+    .kpi-value { font-size: 1.55rem; font-weight: 800; line-height: 1.1; color: #1E293B; }
+    .kpi-label { font-size: .78rem; color: #64748B; margin-top: .2rem; font-weight: 500; }
+
+    /* Chart cards */
+    .chart-card {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #E2EAF4;
+        box-shadow: 0 2px 12px rgba(0,0,0,.05);
+        overflow: hidden;
+    }
+    .chart-card-header {
+        padding: 1rem 1.4rem .75rem;
+        border-bottom: 1px solid #F1F5F9;
+        display: flex; align-items: center; gap: .6rem;
+    }
+    .chart-card-header h5 { margin: 0; font-size: .97rem; font-weight: 700; color: #1E293B; }
+    .badge-period {
+        margin-left: auto;
+        background: #EFF4FF; color: #1565C0;
+        border: 1px solid #BFDBFE;
+        border-radius: 20px;
+        font-size: .7rem; font-weight: 700;
+        padding: .18rem .65rem;
+    }
+    .chart-card-body { padding: 1.1rem 1.4rem 1.4rem; }
+</style>
+
+<div class="page-header">
+    <h1><i class="fa-solid fa-chart-line me-2" style="color:var(--primary)"></i>Thống kê</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-page="/Admin/Index">Tổng quan</a></li>
+            <li class="breadcrumb-item active">Thống kê</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Hero banner with year picker -->
+<div class="stats-hero mb-4">
+    <div>
+        <h1><i class="fa-solid fa-chart-bar me-2"></i>Báo cáo thống kê năm @selectedYear</h1>
+        <p>Tổng hợp số liệu tháng 1 – 12/@selectedYear • Số liệu tổng hợp all-time</p>
+    </div>
+    <div class="year-select-wrap">
+        <select class="year-select" id="yearSelect" onchange="location.href='?year='+this.value">
+            @foreach (var y in years)
+            {
+                if (y == selectedYear)
+                {
+                    <option value="@y" selected>@y</option>
+                }
+                else
+                {
+                    <option value="@y">@y</option>
+                }
+            }
+        </select>
+        <i class="fa-solid fa-chevron-down year-select-icon"></i>
+    </div>
+</div>
+
+<!-- KPI Cards (all-time) -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:#EFF4FF;">
+                <i class="fa-solid fa-users" style="color:#1565C0;"></i>
+            </div>
+            <div>
+                <div class="kpi-value">@Model.Stats.TotalUsers.ToString("N0")</div>
+                <div class="kpi-label">Tổng người dùng</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:#F5F3FF;">
+                <i class="fa-solid fa-sack-dollar" style="color:#7C3AED;"></i>
+            </div>
+            <div>
+                <div class="kpi-value" style="font-size:1.15rem;">@Model.Stats.TotalRevenue.ToString("N0")₫</div>
+                <div class="kpi-label">Tổng doanh thu (all-time)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:#FFF7ED;">
+                <i class="fa-solid fa-calendar-check" style="color:#C2410C;"></i>
+            </div>
+            <div>
+                <div class="kpi-value">@Model.Stats.TotalBookings.ToString("N0")</div>
+                <div class="kpi-label">Tổng lượt đặt phòng</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:#F0FDF4;">
+                <i class="fa-solid fa-bed" style="color:#16A34A;"></i>
+            </div>
+            <div>
+                <div class="kpi-value">@Model.Stats.TotalRooms</div>
+                <div class="kpi-label">Tổng số phòng</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Revenue Bar Chart -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <i class="fa-solid fa-coins" style="color:#7C3AED;font-size:1rem;"></i>
+                <h5>Doanh thu theo tháng</h5>
+                <span class="badge-period">Năm @selectedYear</span>
+            </div>
+            <div class="chart-card-body">
+                <canvas id="revenueChart" height="85"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Line Charts Row -->
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <i class="fa-solid fa-user-plus" style="color:#1565C0;font-size:1rem;"></i>
+                <h5>Người dùng mới theo tháng</h5>
+                <span class="badge-period">Năm @selectedYear</span>
+            </div>
+            <div class="chart-card-body">
+                <canvas id="usersChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <i class="fa-solid fa-calendar-days" style="color:#C2410C;font-size:1rem;"></i>
+                <h5>Lượt đặt phòng theo tháng</h5>
+                <span class="badge-period">Năm @selectedYear</span>
+            </div>
+            <div class="chart-card-body">
+                <canvas id="bookingsChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+    const labels   = @Html.Raw(labelsJson);
+    const users    = @Html.Raw(usersJson);
+    const revenue  = @Html.Raw(revenueJson);
+    const bookings = @Html.Raw(bookingsJson);
+
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#64748B';
+    const gridColor = 'rgba(226,234,244,.7)';
+
+    // ── Revenue Bar Chart ──
+    new Chart(document.getElementById('revenueChart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Doanh thu (₫)',
+                data: revenue,
+                backgroundColor: 'rgba(124,58,237,.72)',
+                borderColor: '#7C3AED',
+                borderWidth: 1.5,
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: { label: ctx => ' ' + Number(ctx.raw).toLocaleString('vi-VN') + '₫' }
+                }
+            },
+            scales: {
+                x: { grid: { color: gridColor } },
+                y: {
+                    grid: { color: gridColor },
+                    beginAtZero: true,
+                    ticks: {
+                        callback: v => (v >= 1e6 ? (v/1e6).toFixed(1)+'M'
+                                      : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : v) + '₫'
+                    }
+                }
+            }
+        }
+    });
+
+    // ── Users Line Chart ──
+    new Chart(document.getElementById('usersChart'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Người dùng mới',
+                data: users,
+                borderColor: '#1565C0',
+                backgroundColor: 'rgba(21,101,192,.1)',
+                borderWidth: 2.5,
+                pointBackgroundColor: '#1565C0',
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                fill: true,
+                tension: 0.4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ' ' + ctx.raw + ' người dùng' } }
+            },
+            scales: {
+                x: { grid: { color: gridColor } },
+                y: { grid: { color: gridColor }, beginAtZero: true, ticks: { precision: 0 } }
+            }
+        }
+    });
+
+    // ── Bookings Line Chart ──
+    new Chart(document.getElementById('bookingsChart'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Lượt đặt',
+                data: bookings,
+                borderColor: '#C2410C',
+                backgroundColor: 'rgba(194,65,12,.1)',
+                borderWidth: 2.5,
+                pointBackgroundColor: '#C2410C',
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                fill: true,
+                tension: 0.4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ' ' + ctx.raw + ' lượt đặt' } }
+            },
+            scales: {
+                x: { grid: { color: gridColor } },
+                y: { grid: { color: gridColor }, beginAtZero: true, ticks: { precision: 0 } }
+            }
+        }
+    });
+</script>
+}

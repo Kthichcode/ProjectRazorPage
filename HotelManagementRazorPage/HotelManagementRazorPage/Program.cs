@@ -64,6 +64,7 @@ app.MapRazorPages();
 app.MapHub<HotelManagementRazorPage.Hubs.RoomHub>("/roomHub");
 
 await SeedAdminAsync(app);
+await Seed2025DataAsync(app);
 
 app.Run();
 
@@ -150,5 +151,66 @@ static async Task SeedAdminAsync(WebApplication app)
         }
         if (!await userManager.IsInRoleAsync(staffUser, staffRole))
             await userManager.AddToRoleAsync(staffUser, staffRole);
+    }
+}
+
+// ── Seed sample customers + bookings (2025 & 2026) ────────────────────
+static async Task Seed2025DataAsync(WebApplication app)
+{
+    using var scope = app.Services.CreateScope();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var db          = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    // Grab first available room id for BookingRooms
+    var roomId = db.Rooms.OrderBy(r => r.Id).Select(r => r.Id).FirstOrDefault();
+    if (roomId == 0) return; // no rooms yet – skip
+
+    var seedUsers = new[]
+    {
+        (UserName:"seed2025.user1", FullName:"Nguyễn An",  Year:2025, Month: 2),
+        (UserName:"seed2025.user2", FullName:"Trần Bình",  Year:2025, Month: 4),
+        (UserName:"seed2025.user3", FullName:"Lê Chí",     Year:2025, Month: 6),
+        (UserName:"seed2025.user4", FullName:"Phạm Dũng",  Year:2025, Month: 8),
+        (UserName:"seed2025.user5", FullName:"Hoàng Em",   Year:2025, Month:10),
+        (UserName:"seed2026.user1", FullName:"Vũ Phong",   Year:2026, Month: 2),
+    };
+
+    foreach (var s in seedUsers)
+    {
+        // Skip if this seed user already exists
+        if (await userManager.FindByNameAsync(s.UserName) != null) continue;
+
+        var user = new ApplicationUser
+        {
+            UserName       = s.UserName,
+            Email          = $"{s.UserName}@seed.local",
+            EmailConfirmed = true,
+            FullName       = s.FullName,
+        };
+        var result = await userManager.CreateAsync(user, "Seed@12345");
+        if (!result.Succeeded) continue;
+
+        var checkIn  = new DateTime(s.Year, s.Month, 5,  14, 0, 0, DateTimeKind.Utc);
+        var checkOut = checkIn.AddDays(3);
+        var created  = new DateTime(s.Year, s.Month, 3,  10, 0, 0, DateTimeKind.Utc);
+
+        var booking = new BusinessObjects.Entities.Booking
+        {
+            CustomerId   = user.Id,
+            CheckInDate  = checkIn,
+            CheckOutDate = checkOut,
+            Status       = BusinessObjects.Enums.BookingStatus.Completed,
+            TotalAmount  = 1_500_000m * s.Month,
+            CreatedAt    = created,
+        };
+        db.Bookings.Add(booking);
+        await db.SaveChangesAsync();
+
+        db.BookingRooms.Add(new BusinessObjects.Entities.BookingRoom
+        {
+            BookingId = booking.Id,
+            RoomId    = roomId,
+        });
+        await db.SaveChangesAsync();
     }
 }

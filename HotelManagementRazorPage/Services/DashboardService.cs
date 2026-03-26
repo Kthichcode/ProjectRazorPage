@@ -1,5 +1,7 @@
+using BusinessObjects;
 using BusinessObjects.Entities;
 using BusinessObjects.Enums;
+using Repositories;
 using Repositories.Interfaces;
 using Services.DTOs;
 using Services.Interfaces;
@@ -12,11 +14,13 @@ namespace Services
     {
         private readonly IBookingRepository _bookingRepo;
         private readonly IRoomRepository _roomRepo;
+        private readonly AppDbContext _db;
 
-        public DashboardService(IBookingRepository bookingRepo, IRoomRepository roomRepo)
+        public DashboardService(IBookingRepository bookingRepo, IRoomRepository roomRepo, AppDbContext db)
         {
             _bookingRepo = bookingRepo;
             _roomRepo = roomRepo;
+            _db = db;
         }
 
         public DashboardDto GetDashboardData()
@@ -39,7 +43,7 @@ namespace Services
 
             // 3. Revenue Stats (Only Confirmed, CheckedIn, Completed)
             var paidStatuses = new[] { BookingStatus.Confirmed, BookingStatus.CheckedIn, BookingStatus.Completed };
-            
+
             var paidBookings = bookingsQuery.Where(b => paidStatuses.Contains(b.Status));
 
             dto.RevenueToday = paidBookings
@@ -66,6 +70,64 @@ namespace Services
             dto.TopRoomTypes = topTypes;
 
             return dto;
+        }
+
+        public StatisticsDto GetStatisticsData(int year)
+        {
+            var paidStatuses = new[] { BookingStatus.Confirmed, BookingStatus.CheckedIn, BookingStatus.Completed };
+            var bookingsQuery = _bookingRepo.GetQuery();
+
+            // Build 12 months for the chosen calendar year (Jan–Dec)
+            var months = Enumerable.Range(1, 12)
+                .Select(m => new DateTime(year, m, 1))
+                .ToArray();
+
+            var labels = months.Select(m => $"T{m.Month}/{m.Year}").ToArray();
+
+            // Revenue per month (paid bookings only)
+            var revenuePerMonth = months.Select(m =>
+                bookingsQuery
+                    .Where(b => paidStatuses.Contains(b.Status)
+                             && b.CreatedAt.Year == m.Year
+                             && b.CreatedAt.Month == m.Month)
+                    .Sum(b => (decimal?)b.TotalAmount) ?? 0m
+            ).ToArray();
+
+            // Bookings per month (all statuses)
+            var bookingsPerMonth = months.Select(m =>
+                bookingsQuery.Count(b => b.CreatedAt.Year == m.Year && b.CreatedAt.Month == m.Month)
+            ).ToArray();
+
+            // New users per month: users making their first booking that month (proxy)
+            var firstBookingByUser = bookingsQuery
+                .GroupBy(b => b.CustomerId)
+                .Select(g => g.Min(b => b.CreatedAt))
+                .ToList();
+
+            var newUsersPerMonth = months.Select(m =>
+                firstBookingByUser.Count(d => d.Year == m.Year && d.Month == m.Month)
+            ).ToArray();
+
+            // Totals (all-time, independent of year filter)
+            int totalUsers = _db.Users.Count();
+            decimal totalRevenue = bookingsQuery
+                .Where(b => paidStatuses.Contains(b.Status))
+                .Sum(b => (decimal?)b.TotalAmount) ?? 0m;
+            int totalBookings = bookingsQuery.Count();
+            int totalRooms = _roomRepo.GetAll().Count;
+
+            return new StatisticsDto
+            {
+                MonthLabels      = labels,
+                NewUsersPerMonth = newUsersPerMonth,
+                RevenuePerMonth  = revenuePerMonth,
+                BookingsPerMonth = bookingsPerMonth,
+                TotalUsers       = totalUsers,
+                TotalRevenue     = totalRevenue,
+                TotalBookings    = totalBookings,
+                TotalRooms       = totalRooms,
+                SelectedYear     = year,
+            };
         }
 
         public ManagerDashboardDto GetManagerDashboardData()

@@ -1,4 +1,4 @@
-﻿using BusinessObjects;
+using BusinessObjects;
 using System.Threading.Tasks;
 
 namespace Repositories.Interfaces

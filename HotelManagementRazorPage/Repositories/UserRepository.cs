@@ -1,4 +1,4 @@
-﻿using BusinessObjects;
+using BusinessObjects;
 using Microsoft.EntityFrameworkCore;
 using Repositories.Interfaces;
 using System.Threading.Tasks;
